@@ -305,7 +305,7 @@ def mag_mcq():
         'C': f"Vs = {wrong_Vs5} V,  Is = {Is5} A",
         'D': f"Vs = {wrong_Vs5} V,  Is = {wrong_Is5a} A",
         'answer': 'A',
-        'explanation': rf"Vs = Vp × (Ns/Np) = {Vp5} × {Ns5}/{Np5} = <strong>{Vs5} V</strong>. Output power = {eff5}% × (Vp × Ip) = {eff5/100} × {Pin5} = {Pout5} W. Is = Pout / Vs = {Pout5} / {Vs5} = <strong>{Is5} A</strong>. Option B ignores efficiency. Option C and D use the turns ratio inverted."
+        'explanation': rf"Vs = Vp × (Ns/Np) = {Vp5} × {Ns5}/{Np5} = <strong>{Vs5} V</strong>. Output power = {eff5}% × (Vp × Ip) = {eff5/100} × {Pin5} = {Pout5} W. Is = Pout / Vs = {Pout5} / {Vs5} = <strong>{Is5} A</strong>. The options with Is = {wrong_Is5a} A ignore efficiency, and the options with Vs = {wrong_Vs5} V use the turns ratio inverted (one option makes both slips)."
     })
 
     # --- Q6: Coil in field — which sides experience force? (like AQA Q12) ---
@@ -462,7 +462,7 @@ def mag_mcq():
         'C': r"The particle's kinetic energy remains constant",
         'D': r"The particle's momentum remains constant in magnitude and direction",
         'answer': 'C',
-        'explanation': r"The magnetic force F = BQv is always perpendicular to velocity v. Since Work = F·v = 0 at all times, no work is done and kinetic energy (and therefore speed) is constant — <strong>Answer C</strong>. The direction of the momentum vector does change (circular path), so D is incorrect. A and B are directly contradicted by the work argument."
+        'explanation': r"The magnetic force F = BQv is always perpendicular to velocity v. Since Work = F·v = 0 at all times, no work is done and kinetic energy (and therefore speed) is constant. The direction of the momentum vector does change (circular path), so the momentum is not constant in direction. The statements that the force increases the speed or does positive work are directly contradicted by the work argument."
     })
 
     # --- Q17: Peak power in a transformer/lamp ---
@@ -513,7 +513,7 @@ def mag_mcq():
         'q': rf"A step-up transformer has <strong>{Np19} turns</strong> on the primary coil and <strong>{Ns19} turns</strong> on the secondary coil. An alternating voltage of <strong>{Vp19} V</strong> is applied to the primary. Assuming 100% efficiency, what is the output voltage?",
         'A': f"{opts19[0]} V", 'B': f"{opts19[1]} V", 'C': f"{opts19[2]} V", 'D': f"{opts19[3]} V",
         'answer': ans19,
-        'explanation': rf"Vs/Vp = Ns/Np → Vs = Vp × (Ns/Np) = {Vp19} × ({Ns19}/{Np19}) = <strong>{Vs19} V</strong>. This is a step-up transformer (Ns > Np), so voltage increases. Option {['A','B','C','D'][opts19.index(wrong19a)]} gives the step-down result by inverting the ratio."
+        'explanation': rf"Vs/Vp = Ns/Np → Vs = Vp × (Ns/Np) = {Vp19} × ({Ns19}/{Np19}) = <strong>{Vs19} V</strong>. This is a step-up transformer (Ns > Np), so voltage increases. The option {wrong19a} V gives the step-down result by inverting the ratio."
     })
 
     # --- Q20: Force on circular coil in uniform field ---
@@ -538,7 +538,7 @@ def mag_mcq():
     )
     q_text = chosen['q'] + opts_html
     s_text = (
-        f"<strong>Correct answer: {chosen['answer']}</strong><br><br>"
+        f"The correct option is <strong>{chosen['answer']}</strong>.<br><br>"      # the shuffle in make_problem rewrites this letter
         f"{chosen['explanation']}"
     )
     hint_text = "This is a multiple choice question — eliminate the distractors by checking each option against the physics."
@@ -2250,6 +2250,15 @@ def alevel_physics_magnetism(difficulty, mode, variant_name=None):
         pool = _MAG_POOL_BY_TIER.get(difficulty, _MAG_FOUND_POOL)
         variant = random.choice(pool)
 
-    q, s, hint, marks = variant()
+    result = variant()
+    if isinstance(result, dict):
+        # The three AQA variants (aqa_mag_motor_effect, aqa_mag_particle_path, aqa_mag_faradays_law) return a
+        # {'question', 'solution'} dict, not the (q, s, hint, marks) tuple; unpacking it raised ValueError.
+        result = (
+            result['question'], result['solution'],
+            'Write down the relevant magnetism equation, then substitute the values with units.',
+            {'foundational': 3}.get(difficulty, 4),
+        )
+    q, s, hint, marks = result
     return make_problem(q, s, hint, difficulty, marks, 'alevel', 'physics', 'magnetism')
 

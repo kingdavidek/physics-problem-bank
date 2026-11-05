@@ -10,7 +10,7 @@ from generators.shared.verify_hook import record
 import random
 import math
 from fractions import Fraction
-from generators.shared.utils import make_problem
+from generators.shared.utils import make_problem, money_num
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -645,7 +645,7 @@ def _mens_inter_garden_plot_multipart():
     total_area = round(rect_area + math.pi * width * width / 8, 2)
     arc = round(math.pi * width / 2, 2)
     perimeter = round(2 * length + width + math.pi * width / 2, 2)
-    total_cost = round((rect_area + math.pi * width * width / 8) * cost_per_m2, 2)  # unrounded area
+    total_cost = round(total_area * cost_per_m2, 2)     # review C13: keyed from the rounded area of (b), as the working shows
     intro = (
         f"A garden plot is a rectangle {length} m by {width} m with a semicircle of "
         f"diameter {width} m on one of the shorter sides. Turf costs £{cost_per_m2} per m²."
@@ -697,8 +697,8 @@ def _mens_inter_cone_container_multipart():
         rf"<strong>a)</strong> \(V = \dfrac{{1}}{{3}}\pi r^2 h = \dfrac{{1}}{{3}} \times \pi \times {r}^2 \times {h}\)<br>"
         rf"<strong>= {vol} cm³</strong><br>"
         rf"<strong>b)</strong> Slant height \(l = \sqrt{{{r}^2 + {h}^2}} = {_dp(slant, 2)}\) cm<br>"
-        rf"Curved area = \(\pi r l = \pi \times {r} \times {_dp(slant, 2)}\) = <strong>{curved} cm²</strong><br>"
-        rf"<strong>c)</strong> {curved} cm² = {fmt_dp(curved_m2, 4)} m²; cost = <strong>£{paint_cost}</strong>"
+        rf"Curved area = \(\pi r l\) (using the unrounded slant height) = <strong>{curved} cm²</strong><br>"
+        rf"<strong>c)</strong> {curved} cm² = {fmt_dp(curved_m2, 4)} m²; cost = <strong>£{money_num(paint_cost)}</strong>"
     )
     hint = "Use V = ⅓πr²h; find l = √(r² + h²) then curved area = πrl; convert cm² to m² for the cost."
     record('mens_cone_container', r=r, h=h, cost=cost_per_m2)
@@ -1255,7 +1255,7 @@ def mensuration_mcq():
 def gcse_mensuration_variants(difficulty, mode='practice'):
     if mode == 'mcq':
         return mcq_variants_from_bank_with_procedural(
-            _MENS_MCQ_BANK, procedural_mcq_for('mensuration'), 'mensuration', difficulty
+            _MENS_MCQ_BANK, procedural_mcq_for('mensuration', difficulty), 'mensuration', difficulty
         )
 
     if difficulty == 'foundational':

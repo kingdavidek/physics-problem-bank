@@ -426,9 +426,10 @@ def _loci_ellipse(_p=None, _records=None, ladder=None, dist=None):
         raise Cannot('P must be between the foot and the top of the ladder')
     sx = L - dd
     n = _num
+    co = lambda v: '' if v == 1 else n(v)           # noqa: E731
     patterns = [
         rf'\(-a/{n(L)}, b/{n(L)}\)',
-        rf'= \({n(sx)}a/{n(L)}, {n(dd)}b/{n(L)}\)',
+        rf'= \({co(sx)}a/{n(L)}, {co(dd)}b/{n(L)}\)',      # a coefficient of 1 is not written (a/6, not 1a/6)
         rf'a = {n(L)}x/{n(sx)} and b = {n(L)}y/{n(dd)}',
         rf'\({n(L)}x/{n(sx)}\)² \+ \({n(L)}y/{n(dd)}\)² = {n(L * L)}',
         rf'x²/{n(sx * sx)} \+ y²/{n(dd * dd)} = 1',

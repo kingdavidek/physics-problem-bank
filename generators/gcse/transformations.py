@@ -315,7 +315,7 @@ def _trans_found_reflect_xaxis():
     q = (rf"Triangle PQR has vertices {_fmt_tri(tri)}.<br>"
          rf"Reflect triangle PQR in the x-axis.<br>"
          rf"Write down the coordinates of P'Q'R'.")
-    s = _sol_steps(tri, img, r"Reflection in the x-axis: \((x, y) \to (x, -y)\) — negate the y-coordinate.")
+    s = _sol_steps(tri, img, r"Reflection in the x-axis: \((x, y) \to (x, -y)\), so negate the y-coordinate.")
     hint = "Reflection in the x-axis: keep x, change the sign of y."
     record('trans_apply', kind='reflect', pts=tri, line_word='x-axis')
     return q, s, hint, 2, graded_answer_tri_coords(img)
@@ -327,7 +327,7 @@ def _trans_found_reflect_yaxis():
     q = (rf"Triangle PQR has vertices {_fmt_tri(tri)}.<br>"
          rf"Reflect triangle PQR in the y-axis.<br>"
          rf"Write down the coordinates of P'Q'R'.")
-    s = _sol_steps(tri, img, r"Reflection in the y-axis: \((x, y) \to (-x, y)\) — negate the x-coordinate.")
+    s = _sol_steps(tri, img, r"Reflection in the y-axis: \((x, y) \to (-x, y)\), so negate the x-coordinate.")
     hint = "Reflection in the y-axis: change the sign of x, keep y."
     record('trans_apply', kind='reflect', pts=tri, line_word='y-axis')
     return q, s, hint, 2, graded_answer_tri_coords(img)
@@ -512,6 +512,16 @@ def _trans_found_reflect_yk():
     hint = f"Reflection in y = {k}: x stays the same, new y-coord = {2*k} − old y."
     record('trans_apply', kind='reflect', pts=tri, line_word=f'y = {k}')
     return q, s, hint, 2, graded_answer_tri_coords(img)
+
+
+def _trans_found_reflect_axis():
+    """One slot for a reflection in the x-axis or the y-axis (merges _trans_found_reflect_xaxis and _yaxis; both stay defined)."""
+    return random.choice([_trans_found_reflect_xaxis, _trans_found_reflect_yaxis])()
+
+
+def _trans_found_reflect_line_k():
+    """One slot for a reflection in x = k or y = k (merges _trans_found_reflect_xk and _yk; both stay defined)."""
+    return random.choice([_trans_found_reflect_xk, _trans_found_reflect_yk])()
 
 
 def _trans_found_rotate_90acw():
@@ -1522,14 +1532,13 @@ def transformations_mcq():
 def gcse_transformations_variants(difficulty, mode):
     if mode == 'mcq':
         return mcq_variants_from_bank_with_procedural(
-            _TRANS_MCQ_BANK, procedural_mcq_for('transformations'), 'transformations', difficulty
+            _TRANS_MCQ_BANK, procedural_mcq_for('transformations', difficulty), 'transformations', difficulty
         )
 
     if difficulty == 'foundational':
         pool = [
             _trans_found_translate,
-            _trans_found_reflect_xaxis,
-            _trans_found_reflect_yaxis,
+            _trans_found_reflect_axis,
             _trans_found_reflect_yx,
             _trans_found_rotate_90cw,
             _trans_found_rotate_180,
@@ -1538,8 +1547,7 @@ def gcse_transformations_variants(difficulty, mode):
             _trans_found_describe_reflection_axis,
             _trans_found_describe_rotation_90,
             _trans_found_describe_rotation_180,
-            _trans_found_reflect_xk,
-            _trans_found_reflect_yk,
+            _trans_found_reflect_line_k,
             _trans_found_rotate_90acw,
             _trans_found_identify_type,
         ]
@@ -1551,6 +1559,7 @@ def gcse_transformations_variants(difficulty, mode):
             _trans_inter_enlarge_frac_sf,
             _trans_inter_describe_enlargement_full,
             _trans_inter_find_centre_enlargement,
+            # a negative scale factor is its own skill (Higher), so it keeps its own slot (variety review 2026-10-27)
             _trans_inter_enlarge_neg_sf,
             _trans_inter_reflect_oblique,
             _trans_inter_invariant_reflection,
@@ -1581,7 +1590,7 @@ def gcse_transformations_variants(difficulty, mode):
         ]
     else:  # mixed
         found = random.sample([
-            _trans_found_translate, _trans_found_reflect_xaxis,
+            _trans_found_translate, _trans_found_reflect_axis,
             _trans_found_rotate_90cw, _trans_found_enlarge_origin,
         ], 3)
         inter = random.sample([

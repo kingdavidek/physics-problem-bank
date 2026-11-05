@@ -243,6 +243,8 @@ from generators.shared.answer_checkers import (  # noqa: E402
     check_fraction,
     check_algebraic_fraction,
 )
+from generators.shared.answer_checkers import BEARING_RANGE_FEEDBACK, POWER_TOWER_FEEDBACK  # noqa: E402
+from generators.shared.answer_units import DECIMAL_COMMA_FEEDBACK  # noqa: E402
 from generators.shared.utils import problem_from_choice_output  # noqa: E402
 from app import app  # noqa: E402
 
@@ -757,6 +759,10 @@ def test_foundational_practice_pool_returns_five_tuple():
         assert len(out) == 5, fn.__name__
 
 
+# Phase 3 batch A: multiple choice kinds (graded by the option buttons, so there is no raw answer to type)
+BIDMAS_CHOICE_VARIANTS = {'gcse_bidmas_inverse_check', 'gcse_bidmas_insert_brackets'}
+
+
 def test_bidmas_generator_payload():
     pilot = _bidmas_problem(gcse_bidmas_simple, 'foundational')
     assert pilot.get('correct_answer_raw') is not None
@@ -765,6 +771,9 @@ def test_bidmas_generator_payload():
     for difficulty in ('foundational', 'intermediate', 'difficult'):
         for fn in _bidmas_pool_functions(difficulty):
             problem = _bidmas_problem(fn, difficulty)
+            if fn.__name__ in BIDMAS_CHOICE_VARIANTS:
+                assert problem.get('options') and problem.get('correct_answer'), fn.__name__
+                continue
             assert problem.get('correct_answer_raw') is not None, fn.__name__
             assert problem.get('answer_type') == 'number', fn.__name__
 
@@ -776,6 +785,9 @@ def test_bidmas_variant_queue_always_graded():
         for fn in variants:
             name = fn.__name__
             problem = gcse_maths_bidmas(difficulty, 'practice', variant_name=name)
+            if name in BIDMAS_CHOICE_VARIANTS:
+                assert problem.get('options') and problem.get('correct_answer'), name
+                continue
             assert problem.get('correct_answer_raw') is not None, name
             assert problem.get('answer_type') == 'number', name
 
@@ -883,8 +895,10 @@ MF_DIVISIBILITY_VARIANTS = {
     'gcse_mf_divisibility_digit',
 }
 MF_KEYWORD_VARIANTS = {'gcse_mf_prime', 'gcse_mf_lcm_buses_word'}
-MF_NUMBER_PAIR_VARIANTS = {'gcse_mf_hcf_lcm_product_rule'}
-MF_NUMBER_LIST_VARIANTS = {'gcse_mf_primes_in_range'}
+MF_NUMBER_PAIR_VARIANTS = {'gcse_mf_hcf_lcm_product_rule', 'gcse_mf_lcm_laps'}
+MF_NUMBER_LIST_VARIANTS = {'gcse_mf_primes_in_range', 'gcse_mf_list_factors'}
+MF_FRACTION_VARIANTS = {'gcse_mf_hcf_simplify_fraction'}              # Phase 3 batch A
+MF_FIELDS_VARIANTS = {'gcse_mf_prime_factor_exponents'}
 
 
 def test_multiples_factors_variant_queue_is_graded():
@@ -918,6 +932,10 @@ def test_multiples_factors_variant_queue_is_graded():
                 assert problem.get('answer_type') == 'number_pair', name
             elif name in MF_NUMBER_LIST_VARIANTS:
                 assert problem.get('answer_type') == 'number_list', name
+            elif name in MF_FRACTION_VARIANTS:
+                assert problem.get('answer_type') == 'fraction', name
+            elif name in MF_FIELDS_VARIANTS:
+                assert problem.get('answer_type') == 'number_fields', name
             else:
                 assert problem.get('answer_type') == 'number', name
 
@@ -1537,6 +1555,174 @@ def test_check_algebraic_identity():
     assert check_algebraic('a-b', 'b-a')['correct'] is False
 
 
+def test_check_algebraic_root_brackets():
+    """A root with brackets nested inside it (typed with the √ button or as sqrt) is read whatever the bracket
+    placement, and a sum inside a root keeps its bracket (review 2026-10-26: √((y-3)/(5)) was written √(y-3/5))."""
+    import time
+
+    from generators.shared.answer_checkers import check_algebraic
+
+    right = {
+        'x=√((y-3)/(5))': ('x=√((y-3)/5)', 'x = √((y − 3)/5)', 'x=sqrt((y-3)/5)', 'x=sqrt((y-3)/(5))',
+                           'x=√(y-3)/√5', 'x=sqrt(y-3)/sqrt(5)', 'x=((y-3)/5)^(1/2)', 'x=√(y/5-3/5)',
+                           'x=sqrt(1/5*(y-3))', '√((y-3)/5)'),
+        'x=sqrt((y-3)/5)': ('x=√((y-3)/(5))', 'x=√((y−3)/5)', 'x=√(y-3)/√5'),
+        't=√(s/3)': ('t=√(s/(3))', 't=√s/√3', 't=sqrt(s/3)', 't=(s/3)^(1/2)'),
+        'v=√(2e/11)': ('v=√((2e)/11)', 'v=√(2e)/√(11)', 'v=√((2e)/(11))'),
+        'u=√(v^2-4s)': ('u=√((v^2)-4s)', 'u=sqrt(v^2-4s)'),
+    }
+    wrong = {
+        'x=√((y-3)/(5))': ('x=√(y-3/5)', 'x=√((y+3)/5)', 'x=(y-3)/5', 'x=√((y-3)/(4))', 'x=√(√((y-3)/5))',
+                           'x=√(y)-3/5'),
+        'x=√((y-9)/(2))': ('x=√(y-9/2)',),
+        'u=√(v^2-4s)': ('u=√(v^2)-√(4s)', 'u=v-2√s'),
+        't=√(s/3)': ('t=√(s/(4))', 't=s/3'),
+    }
+    for key, users in right.items():
+        for user in users:
+            assert check_algebraic(key, user)['correct'] is True, (key, user)
+    for key, users in wrong.items():
+        for user in users:
+            assert check_algebraic(key, user)['correct'] is False, (key, user)
+    # the key is shown with its bracket kept (a sum over a number is not y - 3/5)
+    assert check_algebraic('x=√((y-3)/(5))', 'x=1')['normalized_correct'] == 'x=√((y-3)/5)'
+    assert check_algebraic('t=√((2s)/(5))', 't=1')['normalized_correct'] == 't=√(2s/5)'
+    # the caps still hold for roots nested deep inside each other
+    for hostile in ('x=' + '√(' * 40 + 'y' + ')' * 40, 'x=' + '√((' * 30 + 'y' + '))' * 30, 'x=√(' * 100):
+        start = time.time()
+        assert check_algebraic('x=√((y-3)/(5))', hostile)['correct'] is False
+        assert time.time() - start < 1.0, hostile[:20]
+
+
+def test_check_algebraic_plus_minus_division_and_half_power():
+    """2026-10-27: x = ±√(...) is accepted for a key x = √(...) (both roots of a square-root rearrangement); the
+    sign must open the right-hand side; ÷ reads as division and ^0.5 / ^(1/2) as a square root; every cap holds."""
+    import time
+
+    from generators.shared.answer_checkers import check_algebraic
+
+    key = 'x=√((y-3)/(5))'
+    for typed in ('x=±√((y-3)/5)', 'x = +-sqrt((y-3)/5)', 'x=±√(y/5-3/5)', 'x=+/-√((y-3)/5)', 'x = ± sqrt( (y - 3)/5 )',
+                  '±√((y-3)/5)', 'x=±(√(y-3)/√5)', 'x=±((y-3)/5)^(1/2)', 'x=±((y-3)/5)^0.5', 'X=±√((y−3)/5)',
+                  'x=±√((y-3)÷5)'):
+        r = check_algebraic(key, typed)
+        assert r['correct'] is True, (typed, r)
+        assert r['normalized_correct'] == 'x=√((y-3)/5)'          # the key is shown unchanged
+    # the positive root alone is still right (± is accepted, never required)
+    assert check_algebraic(key, 'x=√((y-3)/5)')['correct'] is True
+    # wrong expressions stay wrong with a ±
+    for typed in ('x=±√((y+3)/5)', 'x=±√(y-3/5)', 'x=±√((y-3)/4)', 'x=±(y-3)/5', 'x=±√(y)-3/5', 'x=±√((y-3)/5)+1',
+                  'x=±5√(y-3)', 'x=±√(√((y-3)/5))', 'x=±'):
+        assert check_algebraic(key, typed)['correct'] is False, typed
+    # ∓, or ± anywhere but the front of the right-hand side, or a second sign, is not accepted
+    for typed in ('x=∓√((y-3)/5)', 'x=√((y-3)/5)±', 'x=√((y-3)/5)+-', '±x=√((y-3)/5)', '+-x=√((y-3)/5)', 'x±=√((y-3)/5)',
+                  'x=±±√((y-3)/5)', 'x=±-√((y-3)/5)', 'x=-+√((y-3)/5)', 'x=-√((y-3)/5)', 'x=±√(±(y-3)/5)',
+                  'x=√(±(y-3)/5)', 'x=±√((y-3)/5)=±1', 'y=±√((y-3)/5)', 'x=3±√((y-3)/5)', 'x=±√((y-3)/5)±1'):
+        assert check_algebraic(key, typed)['correct'] is False, typed
+    # a key that is not a single square root never takes a ±
+    for k, typed in (('x=(y-3)/5', 'x=±(y-3)/5'), ('x=(y-3)/5', 'x=+-(y-3)/5'), ('x=3', 'x=±3'), ('x=2+√3', 'x=±(2+√3)'),
+                     ('x=2√(y)', 'x=±2√(y)'), ('y=3x^2', 'y=±3x^2'), ('x=-3', 'x=+-3')):
+        assert check_algebraic(k, typed)['correct'] is False, (k, typed)
+    # the left-hand side, when typed, must be the key's (it used to be ignored)
+    assert check_algebraic('x=(y-3)/5', 'y=(y-3)/5')['correct'] is False
+    assert check_algebraic('x=(y-3)/5', 'x=(y-3)/5')['correct'] is True
+    assert check_algebraic('x=(y-3)/5', '(y-3)/5')['correct'] is True
+    assert check_algebraic('(y-3)/5', 'x=(y-3)/5')['correct'] is True
+    # ± with the form rules: nothing is weakened
+    assert check_algebraic('x=√(y)', 'x=±√(y)', form='simplified')['correct'] is True
+    # ÷ is division; × is a times sign
+    for k, typed in (('x=(y-3)/5', 'x=(y-3)÷5'), ('x=(y-3)/5', '(y-3)÷5'), ('d/50+d/100', 'd÷50+d÷100'),
+                     ('6x', '12x÷2'), ('x=3x', 'x=3×x'), ('2ab', '2×a×b'), ('t=2s/3', 't=2s÷3'), ('(x+2)(x+3)', '(x+2)×(x+3)'),
+                     ('a/b/c', 'a÷b÷c'), ('a/(b*c)', 'a÷(b×c)'), ('1/2x', '1÷2x')):
+        assert check_algebraic(k, typed)['correct'] is True, (k, typed)
+    for k, typed in (('x=(y-3)/5', 'x=(y-3)÷4'), ('x=(y-3)/5', 'x=5÷(y-3)'), ('a/b/c', 'a÷(b÷c)'), ('6x', '12x÷3'),
+                     ('x=(y-3)/5', 'x=(y-3)÷'), ('x=(y-3)/5', 'x=÷5'), ('2ab', '2÷a×b')):
+        assert check_algebraic(k, typed)['correct'] is False, (k, typed)
+    # ^0.5 and ^(1/2) are the square root; other decimal powers are not
+    for k, typed in (('t=√(s/3)', 't=(s/3)^0.5'), ('t=√(s/3)', 't=(s/3)^.5'), ('t=√(s/3)', 't=(s/3)^(0.5)'),
+                     ('t=√(s/3)', 't=(s/3)^(1/2)'), ('t=√(s/3)', 't=(s/3)**0.5'), ('t=√(s/3)', 't=s^0.5/3^0.5'),
+                     ('√x', 'x^0.5'), ('√x', 'x^(1/2)'), ('3√x', '3x^0.5'), ('3√x', '3*x^(1/2)'), ('x^(1/2)', '√x'),
+                     ('x^0.5', 'sqrt(x)'), ('√(x+1)', '(x+1)^0.5'), ('2√2', '2*2^0.5'), ('v=√(2e/m)', 'v=(2e÷m)^0.5')):
+        assert check_algebraic(k, typed)['correct'] is True, (k, typed)
+    for k, typed in (('t=√(s/3)', 't=(s/3)^0.55'), ('t=√(s/3)', 't=(s/3)^0.25'), ('t=√(s/3)', 't=(s/3)^1.5'),
+                     ('t=√(s/3)', 't=(s/3)^5'), ('t=√(s/3)', 't=(s/3)^(1/3)'), ('√x', 'x^0.5x'), ('√x', 'x^0.50.5'),
+                     ('√x', 'x^-0.5'), ('t=√(s/3)', 't=s/3^0.5'), ('√x', 'x^0.5+1')):
+        assert check_algebraic(k, typed)['correct'] is False, (k, typed)
+    # the form rules are not weakened by the new readings
+    assert check_algebraic('x^2+5x+6', '(x+2)(x+3)', form='expanded')['wrong_form'] == 'unexpanded'
+    assert check_algebraic('x^2+5x+6', '(x+2)×(x+3)', form='expanded')['wrong_form'] == 'unexpanded'
+    assert check_algebraic('x^2+5x+6', 'x^2+5x+6', form='expanded')['correct'] is True
+    assert check_algebraic('x^2+5x+6', 'x×x+5×x+6', form='expanded')['correct'] is True
+    assert check_algebraic('(x+2)(x+3)', 'x^2+5x+6', form='factorised')['wrong_form'] == 'unfactorised'
+    assert check_algebraic('(x+2)(x+3)', '(x+2)÷1×(x+3)', form='factorised')['correct'] is True
+    assert check_algebraic('x+3', '(x^2-9)÷(x-3)', form='simplified')['wrong_form'] == 'not_simplified'
+    assert check_algebraic('x+3', '(x^2-9)/(x-3)', form='simplified')['wrong_form'] == 'not_simplified'
+    assert check_algebraic('x+3', 'x+3', form='simplified')['correct'] is True
+    assert check_algebraic('2x+4', '2x+2+2', form='expanded')['wrong_form'] == 'uncollected'
+    # bombs: all refused, all fast
+    bombs = ['x=±' + '√(' * 60 + 'y' + ')' * 60, '±' * 500, 'x=' + '±' * 150 + '√y', '÷' * 300, 'x÷' * 120 + 'x',
+             'x=±' + '((y-3)÷5)^0.5' * 40, 'x=((((y)^0.5)^0.5)^0.5)^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5',
+             'x^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5^0.5',
+             '9^0.5^0.5^0.5' * 30, '(' * 150 + 'x' + ')' * 150 + '^0.5', '9**9**9**9^0.5', '(x+1)^99999^0.5',
+             '(a+b+c+d+e+f)^8÷(a-b+c-d+e-f)^8', 'x=±' + '9÷' * 90 + '9', 'x=±' + 'a÷b×' * 60 + 'c',
+             '+-' * 300, '+/-' * 200 + 'x', 'x=+-' + '(' * 100, '×' * 400, '1÷0', 'x=±1÷0', '0^0.5÷0', 'x=±' + '1' * 3000]
+    for bomb in bombs:
+        for k in (key, 'x+1', '√x', 'x^2+5x+6'):
+            for form in (None, 'expanded', 'factorised', 'simplified'):
+                t0 = time.time()
+                r = check_algebraic(k, bomb, form=form)
+                assert r['correct'] is False, (k, bomb[:40], form, r)
+                assert time.time() - t0 < 2, (k, bomb[:40], form)
+
+
+def test_check_algebraic_plus_minus_review_edges():
+    """Review 2026-10-27 of the plus-or-minus and half-power readings."""
+    from generators.shared.answer_checkers import check_algebraic
+
+    # a half power is read only as ^0.5 or ^(0.5): a bracket that opens there and closes later is not a half power
+    # (it used to turn the unbalanced "(x^(0.5+1)" into the valid "(x^(1/2)+1)", marked right for sqrt(x) + 1)
+    for k, typed in (('√x+1', '(x^(0.5+1)'), ('√x+1', 'x^(0.5+1)'), ('√x+1', '(x^(.5+1)'), ('√(x)+1', '(x**(0.5+1)'),
+                     ('x^(3/2)', 'x^(0.5+1'), ('√x', 'x^(0.5')):
+        assert check_algebraic(k, typed)['correct'] is False, (k, typed)
+    for k, typed in (('√x+1', 'x^(0.5)+1'), ('√x+1', 'x^.5+1'), ('√x+1', '(x^0.5)+1')):
+        assert check_algebraic(k, typed)['correct'] is True, (k, typed)
+    # a sign on the left as well as the right is still a sign on the wrong side (the subject check)
+    for typed in ('±x=±√((y-3)/5)', '+-x=+-√((y-3)/5)', 'x±=±√((y-3)/5)'):
+        assert check_algebraic('x=√((y-3)/(5))', typed)['correct'] is False, typed
+    # only a rearrangement (a key with a subject) takes a plus-or-minus; an expression key does not
+    for k, typed in (('√x', '±√x'), ('√x', '+-√x'), ('x^(1/2)', '±x^0.5'), ('√(x+1)', '±√(x+1)'), ('3√x', '±3√x')):
+        assert check_algebraic(k, typed)['correct'] is False, (k, typed)
+    # the rearrangements that are generated: r = √(A/π) (a radius) and v = √(2E/m) (a speed) accept the ± as mark
+    # schemes do for "make r the subject"; the positive root alone stays right
+    for k, typed in (('r=√(a/π)', 'r=±√(A/π)'), ('r=√(a/π)', 'r=√(A/π)'), ('v=√(2e/11)', 'v=±√(2E/11)'),
+                     ('u=√(v^2-4s)', 'u=±√(v^2-4s)'), ('t=√(s)', 't=±√s')):
+        assert check_algebraic(k, typed)['correct'] is True, (k, typed)
+    # (x^2)^0.5 is |x|, not x: the half power gives no new way past a value or a form check
+    for k, typed, form in (('x', '(x^2)^0.5', None), ('x', '(x^2)^(1/2)', None), ('x(x+3)', '(x^2)^0.5(x+3)', 'factorised'),
+                           ('x^2+3x', '((x^2+3x)^0.5)^2', 'expanded'), ('x+1', '(x^2+2x+1)^0.5', 'simplified'),
+                           ('2x', '(4x^2)^0.5', None)):
+        r = check_algebraic(k, typed, form=form)
+        assert r['correct'] is False, (k, typed, form, r)
+    # a times or divide sign gives no way past a form check either
+    assert check_algebraic('x^2+3x', 'x×(x+3)', form='expanded')['wrong_form'] == 'unexpanded'
+    assert check_algebraic('x+1', '(x^2-1)÷(x-1)', form='simplified')['wrong_form'] == 'not_simplified'
+
+
+def test_recurring_close_is_the_key_rounded():
+    """"Close. ... give it as a fraction" only for the key itself rounded or cut off (review 2026-10-26: any decimal within
+    0.01 used to count, so 0.071429, which is 1/14, was "close" to 1/15)."""
+    from generators.shared.answer_checkers import _RECURRING_FEEDBACK, check_answer
+
+    close = (('1/3', '0.33'), ('1/3', '0.333'), ('1/3', '.33'), ('2/3', '0.67'), ('2/3', '0.66'), ('1/15', '0.067'),
+             ('1/15', '0.0667'), ('1/15', '0.07'), ('1/15', '0.06'), ('1/7', '0.142857'))
+    not_close = (('1/15', '0.071429'), ('5/31', '0.169492'), ('1/3', '0.34'), ('1/3', '0.3'), ('2/3', '0.6'))
+    for key, typed in close:
+        assert check_answer('fraction', key, typed, form='probability')['feedback'] == _RECURRING_FEEDBACK, (key, typed)
+    for key, typed in not_close:
+        r = check_answer('fraction', key, typed, form='probability')
+        assert r['correct'] is False and r['feedback'] != _RECURRING_FEEDBACK, (key, typed)
+
+
 def test_check_algebraic_vector_bc_notation():
     from generators.shared.answer_checkers import check_algebraic
 
@@ -1739,6 +1925,9 @@ def test_surds_variant_queues_are_graded():
                 continue
             if name == 'gcse_surds_practice_compare':
                 assert problem.get('correct_answer') in ('A', 'B'), name
+                continue
+            if name in ('gcse_surds_identify_irrational', 'gcse_surds_match_simplified'):   # Phase 3 batch A: option buttons
+                assert problem.get('options') and problem.get('correct_answer'), name
                 continue
             assert problem.get('correct_answer_raw') is not None, name
 
@@ -6883,6 +7072,7 @@ def test_functions_check_api():
 
 
 ALGEBRA_LINEAR_VARIANTS = (
+    'algebra_practice_linear',          # Phase 1 of the variety plan: the merged slot (the three below are retired names)
     'algebra_practice_linear_1',
     'algebra_practice_linear_2',
     'algebra_practice_linear_3',
@@ -6909,6 +7099,7 @@ ALGEBRA_ALGEBRAIC_VARIANTS = (
     'algebra_practice_factorise_hcf',
     'algebra_practice_change_subject',
     'algebra_practice_quadratic_3',
+    'algebra_practice_factorise_quadratic',     # Phase 1: a>1 factorising, answer like (2x - 3)(x + 1)
 )
 
 ALGEBRA_NUMBER_PAIR_VARIANTS = (
@@ -7985,6 +8176,37 @@ def test_checker_bearing_unit():
     assert ok2['correct'] is True
     bad = check_bearing('045', '46')
     assert bad['correct'] is False
+
+
+def test_checker_bearing_not_modulo_360():
+    """Decision 2026-10-26: a bearing is only accepted as a value from 000 to 360, never modulo 360."""
+    for typed in ('45', '45°', '045', '0045', '45.0', ' 045 ', '045°'):
+        assert check_bearing('045', typed)['correct'] is True, typed
+    for typed in ('405', '-315', '765', '-45', '405°', '1125', '-360', '720'):
+        res = check_bearing('045', typed)
+        assert res['correct'] is False, typed
+        assert res['feedback'] == 'Bearings are between 000° and 360°. Check your angle.', typed
+        assert res.get('out_of_range') is True, typed
+    # an in-range wrong answer keeps the ordinary message
+    assert check_bearing('045', '46')['feedback'] == 'Not quite. Check your bearing.'
+    assert check_bearing('045', '225').get('out_of_range') is None
+    # north: 360 is accepted for a key of 000, and only then
+    for typed in ('0', '000', '0°', '360', '360°'):
+        assert check_bearing('000', typed)['correct'] is True, typed
+    for typed in ('720', '-360', '361'):
+        assert check_bearing('000', typed)['correct'] is False, typed
+    assert check_bearing('045', '360')['correct'] is False
+    assert check_bearing('045', '360').get('out_of_range') is None
+    assert check_bearing('359', '-1')['correct'] is False
+    assert check_bearing('359', '359')['correct'] is True
+    # through the dispatcher and a number_fields part typed as a bearing
+    assert check_answer('bearing', '045', '405')['correct'] is False
+    nf = check_number_fields('045|12', '405|12', field_types=('bearing', 'number'))
+    assert nf['correct'] is False
+    nf_ok = check_number_fields('045|12', '45|12', field_types=('bearing', 'number'))
+    assert nf_ok['correct'] is True
+    # a plain numeric part labelled as a bearing is exact too
+    assert check_number_fields('45|12', '405|12')['correct'] is False
 
 
 def test_bearings_bearing_variants_are_graded():
@@ -9066,7 +9288,7 @@ def test_generator_page_renders_free_response():
                 'subject': 'maths',
                 'topic': 'bidmas',
                 'mode': 'practice',
-                'difficulty': 'foundational',
+                'difficulty': 'intermediate',   # bidmas F has a multiple-choice kind (Phase 3 batch A); I is all free response
                 'action': 'start',
             },
             follow_redirects=True,
@@ -9086,7 +9308,7 @@ def test_quicktest_page_renders_free_response():
                 'subject': 'maths',
                 'topic': 'bidmas',
                 'mode': 'practice',
-                'difficulty': 'foundational',
+                'difficulty': 'intermediate',   # bidmas F has a multiple-choice kind (Phase 3 batch A); I is all free response
             },
             follow_redirects=True,
         )
@@ -9100,41 +9322,47 @@ def test_quicktest_page_renders_free_response():
 
 
 def test_quicktest_next_stores_free_response_answer():
-    with app.test_client() as client:
-        client.post(
-            '/quicktest/start',
-            data={
-                'level': 'gcse',
-                'subject': 'maths',
-                'topic': 'bidmas',
-                'mode': 'practice',
-                'difficulty': 'foundational',
-            },
-            follow_redirects=True,
-        )
-        r = client.post(
-            '/quicktest/next',
-            data={
-                'qt_user_answer': '42',
-                'qt_checked': '1',
-                'qt_correct': '1',
-            },
-            follow_redirects=False,
-        )
-        assert r.status_code in (302, 303), r.data
-        with client.session_transaction() as sess:
-            qt_id = sess.get('qt_id')
-        assert qt_id
-        from models.quicktest import load_quicktest_session
-        from app import get_db
+    # Phase 3 batch A: the bidmas foundational pool now holds a multiple choice kind, which stores a letter, not typed
+    # text; a quiz whose first question is a typed one is drawn again (one in nine draws is the choice kind)
+    for _attempt in range(12):
+        with app.test_client() as client:
+            client.post(
+                '/quicktest/start',
+                data={
+                    'level': 'gcse',
+                    'subject': 'maths',
+                    'topic': 'bidmas',
+                    'mode': 'practice',
+                    'difficulty': 'foundational',
+                },
+                follow_redirects=True,
+            )
+            r = client.post(
+                '/quicktest/next',
+                data={
+                    'qt_user_answer': '42',
+                    'qt_checked': '1',
+                    'qt_correct': '1',
+                },
+                follow_redirects=False,
+            )
+            assert r.status_code in (302, 303), r.data
+            with client.session_transaction() as sess:
+                qt_id = sess.get('qt_id')
+            assert qt_id
+            from models.quicktest import load_quicktest_session
+            from app import get_db
 
-        with get_db() as conn:
-            data = load_quicktest_session(conn, qt_id)
-        answers = data.get('answers') or []
-        assert len(answers) == 1
-        assert answers[0].get('user_answer') == '42'
-        assert answers[0].get('checked') is True
-        assert answers[0].get('correct') is True
+            with get_db() as conn:
+                data = load_quicktest_session(conn, qt_id)
+            answers = data.get('answers') or []
+            assert len(answers) == 1
+            if answers[0].get('user_answer') != '42':
+                continue
+            assert answers[0].get('checked') is True
+            assert answers[0].get('correct') is True
+            return
+    raise AssertionError('no typed-answer quiz question in 12 draws')
 
 
 def test_quicktest_check_wrong_answer_not_session_mismatch():
@@ -9148,22 +9376,27 @@ def test_quicktest_check_wrong_answer_not_session_mismatch():
                 'difficulty': 'foundational',
                 'problem': {'correct_answer_raw': '999', 'answer_type': 'number'},
             }
-        client.post(
-            '/quicktest/start',
-            data={
-                'level': 'gcse',
-                'subject': 'maths',
-                'topic': 'bidmas',
-                'mode': 'practice',
-                'difficulty': 'foundational',
-            },
-            follow_redirects=True,
-        )
-        r = client.get('/quicktest')
-        assert r.status_code == 200, r.data
-        with client.session_transaction() as sess:
-            stored = sess.get('last_problem_payload') or {}
-            problem = stored.get('problem') or {}
+        # the foundational bidmas pool has a multiple-choice slot, which has no typed key: draw again until a typed one
+        # comes up (Phase 3 batch B: this was a rare flake before the pools grew, and is far likelier with the new draws)
+        for _draw in range(20):
+            client.post(
+                '/quicktest/start',
+                data={
+                    'level': 'gcse',
+                    'subject': 'maths',
+                    'topic': 'bidmas',
+                    'mode': 'practice',
+                    'difficulty': 'foundational',
+                },
+                follow_redirects=True,
+            )
+            r = client.get('/quicktest')
+            assert r.status_code == 200, r.data
+            with client.session_transaction() as sess:
+                stored = sess.get('last_problem_payload') or {}
+                problem = stored.get('problem') or {}
+            if problem.get('correct_answer_raw') is not None:
+                break
         assert problem.get('correct_answer_raw') is not None
         assert str(problem.get('correct_answer_raw')) != '999'
         wrong = '5' if str(problem['correct_answer_raw']).strip() != '5' else '7'
@@ -9260,7 +9493,7 @@ def test_quicktest_api_payload_includes_grading_fields():
                 'subject': 'maths',
                 'topic': 'bidmas',
                 'mode': 'practice',
-                'difficulty': 'foundational',
+                'difficulty': 'intermediate',   # bidmas F has a multiple-choice kind (Phase 3 batch A); I is all free response
             },
             headers={'Accept': 'application/json'},
         )
@@ -9283,7 +9516,7 @@ def test_saved_problem_reroll_keeps_free_response_payload():
                 'subject': 'maths',
                 'topic': 'bidmas',
                 'mode': 'practice',
-                'difficulty': 'foundational',
+                'difficulty': 'intermediate',   # bidmas F has a multiple-choice kind (Phase 3 batch A); I is all free response
                 'action': 'start',
             },
             follow_redirects=True,
@@ -9331,7 +9564,7 @@ def _generate_practice_bidmas(client):
             'subject': 'maths',
             'topic': 'bidmas',
             'mode': 'practice',
-            'difficulty': 'foundational',
+            'difficulty': 'intermediate',   # bidmas F has a multiple-choice kind (Phase 3 batch A); I is all free response
             'action': 'start',
         },
         follow_redirects=True,
@@ -9377,7 +9610,7 @@ def test_saved_problem_check_saves_practice_history():
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'bidmas',
-                'difficulty': 'foundational',
+                'difficulty': 'intermediate',
             },
             headers={'Accept': 'application/json'},
         )
@@ -9493,7 +9726,7 @@ def test_check_algebraic_expand_form():
     # a different value is an ordinary wrong, with the ordinary message
     r = check_answer('algebraic', key, '(2x+1)(x+5)', form='expanded')
     assert r['correct'] is False and 'wrong_form' not in r
-    assert r['feedback'] == 'Not quite — check your simplified expression.'
+    assert r['feedback'] == 'Not quite. Check your simplified expression.'
     # no form requested: the old value check, unchanged
     assert check_answer('algebraic', key, '(2x+1)(x+4)')['correct'] is True
     assert check_answer('algebraic', key, '(2x+1)(x+4)', form=None)['correct'] is True
@@ -9546,7 +9779,7 @@ def test_answer_form_validation_and_copy():
     # a form on a type that does not use one is ignored
     assert check_answer('number', '4', '4', form='expanded')['correct'] is True
     assert ANSWER_FORMS == {'expanded', 'factorised', 'simplest_surd', 'simplified', 'probability'}
-    assert {'algebraic', 'surd', 'algebraic_fraction', 'fraction', 'number'} == set(FORM_AWARE_ANSWER_TYPES)
+    assert {'algebraic', 'surd', 'algebraic_fraction', 'fraction', 'number', 'ratio'} == set(FORM_AWARE_ANSWER_TYPES)
     for key, text in _WRONG_FORM_FEEDBACK.items():
         _assert_pupil_copy(text)
         assert text.startswith("That's equal"), key
@@ -9782,7 +10015,7 @@ def test_checker_linear_letter():
         assert check_linear('x=2', typed)['correct'] is True, typed
     # right letter, wrong value: the ordinary message
     r = check_linear('x=2', 'x=3')
-    assert r['correct'] is False and 'wrong_letter' not in r and r['feedback'] == 'Not quite — check your value.'
+    assert r['correct'] is False and 'wrong_letter' not in r and r['feedback'] == 'Not quite. Check your value.'
     assert check_linear('t=-1.5', 't=-3/2')['correct'] is True
     assert check_linear('t=-1.5', 'x=-1.5')['correct'] is False
     # a key with no letter behaves as before: any letter, or none
@@ -9838,6 +10071,36 @@ def test_check_surd_simplest_form():
     assert check_answer('algebraic_fraction', '1|6|3', '√6|2', form='simplest_surd')['correct'] is False
 
 
+def test_check_algebraic_fraction_lowest_terms():
+    """Phase 3 batch B: a fraction answer that asks for "fully simplified" refuses an equal fraction not in lowest terms."""
+    key = 'x+3|x+1'
+    assert check_answer('algebraic_fraction', key, 'x+3|x+1', form='simplified')['correct'] is True
+    # a common bracket gets the bracket message; a common number (review 2026-10-28) the "divide by a number" message
+    for typed, kind in (('(x^2+5x+6)|(x^2+3x+2)', 'not_simplified'), ('(x+3)(x+2)|(x+1)(x+2)', 'not_simplified'),
+                        ('2x+6|2x+2', 'common_factor'), ('3(x+3)|3(x+1)', 'common_factor')):
+        r = check_answer('algebraic_fraction', key, typed, form='simplified')
+        assert r['correct'] is False and r.get('wrong_form') == kind, (typed, r)
+        assert r['feedback'].startswith("That's equal, but it can be simpler."), r
+        _assert_pupil_copy(r['feedback'])
+        assert check_answer('algebraic_fraction', key, typed)['correct'] is True, typed     # without the form it is equal
+    # a fraction of whole numbers: 3/4 is accepted and 6/8 is refused
+    assert check_answer('algebraic_fraction', '3|4', '3|4', form='simplified')['correct'] is True
+    assert check_answer('algebraic_fraction', '3|4', '6|8', form='simplified').get('wrong_form') == 'common_factor'
+    # review 2026-10-28: equal answers that ARE in lowest terms but written another way stay right (a number taken out
+    # of the top alone, signs moved, the bottom factorised or expanded), and a wrong answer gets no form message
+    for key, typed in (('6x + 6|5', '6(x+1)|5'), ('11 - x|x^2 + 5x + 4', '-(x-11)|(x+1)(x+4)'),
+                       ('-2x - 10|x^2 + 4x + 3', '-2(x+5)|(x+1)(x+3)'), ('x + 3|x^2 - 1', 'x+3|(x-1)(x+1)'),
+                       ('x - 4|x + 3', '4-x|-x-3'), ('3|4', '-3|-4'), ('2x|3', '2x|3')):
+        assert check_answer('algebraic_fraction', key, typed, form='simplified')['correct'] is True, (key, typed)
+    r = check_answer('algebraic_fraction', 'x+3|x+1', '2x+6|2x+4', form='simplified')
+    assert r['correct'] is False and 'wrong_form' not in r, r
+    # narrowly scoped: with no form asked for (every older fraction slot) the same entries are right, as before
+    for typed in ('6|8', '2x+6|2x+2', '(x+3)(x+2)|(x+1)(x+2)'):
+        key = '3|4' if typed == '6|8' else 'x+3|x+1'
+        assert check_answer('algebraic_fraction', key, typed)['correct'] is True, typed
+        assert check_answer('algebraic_fraction', key, typed, form='expanded')['correct'] is True, typed
+
+
 def test_check_algebraic_simplified_form():
     key = 'x+4'
     for typed in ('x+4', '4+x', 'x + 4', '(x+4)', '(2x+8)/2'):
@@ -9853,6 +10116,32 @@ def test_check_algebraic_simplified_form():
     assert r['correct'] is False and 'wrong_form' not in r
     # a key that is itself a fraction never insists on a whole answer
     assert check_answer('algebraic', '1/(x+1)', '2/(2x+2)', form='simplified')['correct'] is True
+    # Phase 3 batch A review: a key that is one term (the index-law slots) needs one term back, so the question's own
+    # product, power of a power or quotient typed back is refused with the index-law message
+    for key, good, echoes in (('10*x**6', ('10x^6', '10x⁶', 'x^6*10', '10*x^6'), ('2x^4*5x^2', '2x^4×5x^2', '5*2x^6')),
+                              ('x**7', ('x^7', 'x⁷', 'X^7'), ('x^2*x^5', 'x^2x^5')),
+                              ('5*x**2', ('5x^2', '5x²'), ('30x^4/(6x^2)', '10x^2/2')),
+                              ('8*x**6', ('8x^6',), ('2^3x^6',))):
+        for typed in good:
+            assert check_answer('algebraic', key, typed, form='simplified')['correct'] is True, (key, typed)
+        for typed in echoes:
+            r = check_answer('algebraic', key, typed, form='simplified')
+            assert r['correct'] is False and r['wrong_form'] == 'powers_not_combined', (key, typed, r)
+            _assert_pupil_copy(r['feedback'])
+            assert check_answer('algebraic', key, typed)['correct'] is True, (key, typed)     # equal in value
+    assert check_answer('algebraic', '10*x**6', '10x^5', form='simplified').get('wrong_form') is None
+
+
+def test_check_algebraic_superscripts():
+    """Phase 3 batch A: every superscript digit run is read as a power (only ² was read before), inside the caps."""
+    for key, typed in (('x**3', 'x³'), ('x**10', 'x¹⁰'), ('4*x**10', '4x¹⁰'), ('x**2*y**3', 'x²y³'),
+                       ('x**3 + 3*x**2 - 10*x - 24', 'x³+3x²−10x−24')):
+        assert check_answer('algebraic', key, typed)['correct'] is True, (key, typed)
+    for key, typed in (('x**3', 'x³³'), ('x**3', 'x^³'), ('1/x', 'x⁻¹'), ('x**2', 'x⁹⁹⁹⁹⁹⁹⁹⁹⁹'), ('x**2', 'x' + '²' * 3000)):
+        assert check_answer('algebraic', key, typed)['correct'] is False, (key, typed)
+    # the form rules read a superscript like a caret: a cube of a bracket is not expanded
+    r = check_answer('algebraic', 'x**3 + 3*x**2 + 3*x + 1', '(x+1)³', form='expanded')
+    assert r['correct'] is False and r['wrong_form'] == 'unexpanded', r
 
 
 def test_algebraic_fraction_simplify_generators_carry_form():
@@ -10351,7 +10640,7 @@ def test_set_work_keeps_server_side_checker_fields():
         strip_problem_keys,
     )
 
-    assert set(SERVER_ONLY_KEYS) == {'answer_form', 'answer_step_prereqs'}
+    assert set(SERVER_ONLY_KEYS) == {'answer_form', 'answer_step_prereqs', 'answer_record', 'option_notes'}
     expand = gcse_maths_algebra('intermediate', 'practice', variant_name='algebra_practice_expand_binomial')
     assert expand['answer_form'] == 'expanded'
     m_ = re.search(r'\(([^()]+)\)\s*\(([^()]+)\)', expand['question'])
@@ -10450,7 +10739,1037 @@ def test_graph_reading_bands_follow_the_grid():
     assert float(tol) in (0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 9, 10)
 
 
+# ---------------------------------------------------------------------------------------------------------------
+# Units and symbols typed with a number (review 2026-10-27 finding 13; generators/shared/answer_units.py)
+# ---------------------------------------------------------------------------------------------------------------
+
+UNIT_Q_PERCENT = 'Write 73 as a percentage of 50.'
+UNIT_Q_AREA = 'A rectangle is 5 cm by 7 cm. Work out its area in cm².'
+UNIT_Q_LENGTH_CM = 'Find the length of AB in cm.'
+UNIT_Q_SPEED = 'A car travels 150 km in 2 hours. Find the average speed in km/h.'
+UNIT_Q_COST = 'A laptop costs £275 and a printer costs £825. Work out the total cost.'
+UNIT_Q_PENCE = 'A sweet costs 45p. Work out the cost of 3 sweets in pence.'
+UNIT_Q_NEW_PRICE = 'Increase £80 by 20%. Work out the new price.'
+UNIT_Q_NONE = 'Work out 3 + 4.'
+
+
+def _unit_ok(answer_type, key, typed, question, **kw):
+    result = check_answer(answer_type, key, typed, question=question, **kw)
+    assert result['correct'] is True, (answer_type, key, typed, result)
+    assert 'unit_mismatch' not in result, result
+    return result
+
+
+def _unit_refused(answer_type, key, typed, question, message, **kw):
+    result = check_answer(answer_type, key, typed, question=question, **kw)
+    assert result['correct'] is False and result.get('unit_mismatch') is True, (typed, result)
+    assert result['feedback'] == message, (typed, result['feedback'])
+    return result
+
+
+def test_units_percentage_and_money():
+    for typed in ('146', '146%', '146 %', ' 146% ', '146 percent', '146 per cent'):
+        _unit_ok('number', '146', typed, UNIT_Q_PERCENT)
+    assert check_answer('number', '146', '147%', question=UNIT_Q_PERCENT)['correct'] is False       # still graded
+    # a percentage sign where the question does not ask for one
+    pct_msg = 'Check the units. The question does not ask for a percentage.'
+    _unit_refused('number', '96', '96%', UNIT_Q_NEW_PRICE, pct_msg)
+    _unit_refused('number', '7', '7%', UNIT_Q_NONE, pct_msg)
+    _unit_ok('number', '96', '96', UNIT_Q_NEW_PRICE)
+    _unit_ok('number', '96', '£96', UNIT_Q_NEW_PRICE)
+    # a probability keeps its own percentage rule
+    assert check_answer('number', '0.375', '37.5%', form='probability', question='Find P(red).')['correct'] is True
+    assert check_answer('fraction', '3/8', '37.5%', form='probability', question='Find P(red).')['correct'] is True
+    # money: a symbol either side, thousands separators, spaces
+    for typed in ('1100', '£1100', '£ 1100', '£1,100', '1,100', '1 100', '£1 100', '1100.00', '£1,100.00',
+                  '1100£'):
+        _unit_ok('number', '1100', typed, UNIT_Q_COST)
+    _unit_ok('number', '-5', '-£5', UNIT_Q_COST)
+    _unit_ok('number', '3.5', '£3.50', UNIT_Q_COST)
+    _unit_ok('number', '3.5', '3.5€', 'Convert £3 to € at £1 = €1.17 and work out the total in €.')
+    # pence against pounds: never read as the same number
+    pounds_msg = 'Check the units. The question uses pounds (£).'
+    _unit_refused('number', '1100', '1100p', UNIT_Q_COST, pounds_msg)
+    _unit_refused('number', '1100', '1100 pence', UNIT_Q_COST, pounds_msg)
+    _unit_ok('number', '135', '135p', UNIT_Q_PENCE)
+    _unit_ok('number', '135', '135 pence', UNIT_Q_PENCE)
+    _unit_refused('number', '135', '£1.35', UNIT_Q_PENCE, 'Check the units. The question asks for the answer in pence (p).')
+    _unit_refused('number', '135', '£135', UNIT_Q_PENCE, 'Check the units. The question asks for the answer in pence (p).')
+    q_pounds = 'Work out the cost of 3 sweets in pounds. Each sweet costs 45p.'
+    _unit_refused('number', '1.35', '135p', q_pounds, 'Check the units. The question asks for the answer in pounds (£).')
+    _unit_ok('number', '1.35', '£1.35', q_pounds)
+    # the wrong value is still wrong with its symbol
+    assert check_answer('number', '1100', '£1101', question=UNIT_Q_COST)['correct'] is False
+    assert check_answer('number', '1100', '£1,101', question=UNIT_Q_COST)['feedback'].startswith('Not quite')
+    # separators: exactly groups of three; any other comma is a decimal comma and is refused kindly
+    for typed in ('12,345,678', '12 345 678', '1,100.5'):
+        assert check_answer('number', typed.replace(',', '').replace(' ', ''), typed)['correct'] is True, typed
+    comma_msg = 'Use a decimal point, not a comma. For example, write 3.5.'
+    for typed in ('3,5', '1,10', '1,1', '1,23', '1,2345', '12,34,567', '1 10', '1, 100'):
+        r = check_answer('number', typed.replace(',', '').replace(' ', ''), typed)
+        assert r['correct'] is False, (typed, r)
+        if ',' in typed:
+            assert r['feedback'] == comma_msg and r.get('unit_mismatch') is True, (typed, r)
+    assert check_answer('number', '35', '3,5')['correct'] is False          # was read as 35
+    assert check_answer('number', '35', '35')['correct'] is True
+    # lists keep their commas: number_list is not a number answer
+    assert check_answer('number_list', '1,2,3', '1,2,3')['correct'] is True
+    assert check_answer('number_list', '1100', '1,100')['correct'] is False
+
+
+def test_units_lengths_areas_and_rates():
+    for typed in ('35', '35 cm²', '35cm²', '35 cm^2', '35cm^2', '35 cm2', '35 square cm', '35 sq cm',
+                  '35 centimetres squared', '35 square centimetres'):
+        _unit_ok('number', '35', typed, UNIT_Q_AREA)
+    assert check_answer('number', '35', '36 cm²', question=UNIT_Q_AREA)['correct'] is False
+    area_msg = 'Check the units. The question asks for the answer in cm².'
+    for typed in ('35 m', '35 m²', '35 cm', '35 cm^3', '35 mm²', '35 km', '35 metres squared'):
+        _unit_refused('number', '35', typed, UNIT_Q_AREA, area_msg)
+    for typed in ('12', '12 cm', '12cm', '12 centimetres', '12 CM', '12.0 cm', '12 cm.'):
+        _unit_ok('number', '12', typed, UNIT_Q_LENGTH_CM)
+    cm_msg = 'Check the units. The question asks for the answer in cm.'
+    for typed in ('12 m', '12 mm', '12 km', '12 metres', '12 cm²', '12 kg', '12 s'):
+        _unit_refused('number', '12', typed, UNIT_Q_LENGTH_CM, cm_msg)
+    assert check_answer('number', '12', '13 m', question=UNIT_Q_LENGTH_CM)['correct'] is False
+    # a compound unit
+    for typed in ('75', '75 km/h', '75km/h', '75 kmh', '75 kph', '75 kilometres per hour', '75 km per hour'):
+        _unit_ok('number', '75', typed, UNIT_Q_SPEED)
+    speed_msg = 'Check the units. The question asks for the answer in km/h.'
+    for typed in ('75 m/s', '75 mph', '75 km', '75 km/s', '75 h'):
+        _unit_refused('number', '75', typed, UNIT_Q_SPEED, speed_msg)
+    q_ms = 'A runner covers 100 m in 8 s. Find her speed in m/s.'
+    for typed in ('12.5 m/s', '12.5m/s', '12.5 metres per second', '12.5 m per s', '12.5'):
+        _unit_ok('number', '12.5', typed, q_ms)
+    _unit_refused('number', '12.5', '12.5 km/h', q_ms, 'Check the units. The question asks for the answer in m/s.')
+    # a unit the question does not state: a different scale of the same family is refused, a time is not
+    q_land = 'A rectangle is 5 cm by 7 cm. Work out its area.'
+    _unit_ok('number', '35', '35 cm²', q_land)
+    # the quantity asked for decides the unit's dimension (review 2026-10-28: "35 cm" passed for an area)
+    _unit_refused('number', '35', '35 cm', q_land, 'Check the units. An area is in square units, such as cm².')
+    _unit_refused('number', '35', '35 m²', q_land, 'Check the units. The question uses cm.')
+    _unit_ok('number', '40', '40 km/h', 'A car travels 10 km in 15 minutes. Find its average speed.')
+    # a question that names no quantity takes no unit (whole-change review A3: "3.5 kg" was right for 3 + 0.5)
+    _unit_refused('number', '3.5', '3.5 kg', UNIT_Q_NONE, 'Check the units. Type just the number.')
+    _unit_ok('number', '3.5', '3.5kg', 'A bag has mass 3500 g. What is its mass in kg?')
+    _unit_refused('number', '3.5', '3.5g', 'A bag has mass 3500 g. What is its mass in kg?',
+                  'Check the units. The question asks for the answer in kg.')
+    _unit_ok('number', '3.5', '3.5 litres', 'How many litres are in 3500 ml?')
+    # no question at all: every whitelisted unit passes, an unknown word does not
+    assert check_answer('number', '35', '35 cm²')['correct'] is True
+    assert check_answer('number', '35', '35 m/s')['correct'] is True
+    assert check_answer('number', '35', '35 pupils')['correct'] is False
+    assert check_answer('number', '35', '35 pupils')['feedback'].startswith('Enter a valid number')
+    for typed in ('x = 35', '35 and 36', '35 cmm', '35 foo', 'cm', '£', '%', '35 cm 7'):
+        assert check_answer('number', '35', typed)['correct'] is False, typed
+        assert 'unit_mismatch' not in check_answer('number', '35', typed, question=UNIT_Q_AREA), typed
+
+
+def test_units_other_numeric_types():
+    # surd
+    q_surd = 'Find the length AB in cm. Give your answer as a surd in its simplest form.'
+    for typed in ('2√7', '2√7 cm', '2√7cm', '2sqrt(7) cm', '2√7 centimetres', '2*sqrt(7)cm'):
+        _unit_ok('surd', '2|7', typed, q_surd, form='simplest_surd')
+    _unit_refused('surd', '2|7', '2√7 m', q_surd, 'Check the units. The question asks for the answer in cm.', form='simplest_surd')
+    r = check_answer('surd', '2|7', '√28 cm', form='simplest_surd', question=q_surd)
+    assert r['correct'] is False and r.get('wrong_form') == 'surd_not_simplest', r        # the form rule still applies
+    # pi
+    q_pi = 'A circle has radius 5 cm. Find its circumference in cm, in terms of π.'
+    for typed in ('10', '10π', '10π cm', '10pi cm', '10 π cm', '20π/2 cm', '10 cm'):
+        _unit_ok('pi_multiple', '10', typed, q_pi)
+    _unit_refused('pi_multiple', '10', '10π m', q_pi, 'Check the units. The question asks for the answer in cm.')
+    assert check_answer('pi_multiple', '10', '11π cm', question=q_pi)['correct'] is False
+    # bearing
+    q_brg = 'Find the bearing of B from A.'
+    for typed in ('45', '045', '45°', '045°', '45 degrees', '045 deg', '45 °'):
+        _unit_ok('bearing', '45', typed, q_brg)
+    _unit_refused('bearing', '45', '45 cm', q_brg, 'Check the units. A bearing is an angle in degrees.')
+    _unit_refused('bearing', '45', '45%', q_brg, 'Check the units. A bearing is an angle in degrees.')
+    assert check_answer('bearing', '45', '225°', question=q_brg)['correct'] is False
+    r = check_answer('bearing', '45', '400 degrees', question=q_brg)
+    assert r['feedback'] == BEARING_RANGE_FEEDBACK, r
+    # an angle in degrees (number)
+    q_ang = 'Find the size of angle x.'
+    for typed in ('35', '35°', '35 degrees', '35 °'):
+        _unit_ok('number', '35', typed, q_ang)
+    _unit_refused('number', '35', '35 cm', 'Find the size of angle x in degrees. AB = 5 cm.'
+                  , 'Check the units. The question asks for the answer in degrees.')
+    # standard form, fraction, number_estimate
+    q_sf = 'The mass is 320000 kg. Write it in standard form, in kg.'
+    _unit_ok('standard_form', '3.2|5', '3.2|5', q_sf)
+    _unit_ok('standard_form', '3.2|5', '3.2 kg|5', q_sf)
+    _unit_ok('standard_form', '3.2|5', '3.2|5 kg', q_sf)
+    _unit_refused('standard_form', '3.2|5', '3.2 g|5', q_sf, 'Check the units. The question asks for the answer in kg.')
+    _unit_ok('fraction', '3/4', '3/4 cm', 'What fraction of the 8 cm line is shaded? Give the length in cm.')
+    _unit_ok('number_estimate', '12~2', '12 cm', 'Estimate the length from the graph in cm.')
+    # number_fields: each numeric field takes its own unit, a field in the wrong unit is wrong with the message
+    q_fields = 'A rectangle has length a cm and width b cm. Find a and b, in cm.'
+    for typed in ('3|4', '3 cm|4 cm', '3cm|4', '3|4 cm'):
+        r = check_number_fields('3|4', typed, question=q_fields)
+        assert r['correct'] is True and r['score'] == 2, (typed, r)
+    r = check_number_fields('3|4', '3 cm|4 m', question=q_fields)
+    assert r['correct'] is False and r['score'] == 1 and r['feedback'] == 'Check the units. The question asks for the answer in cm.', r
+    assert r.get('unit_mismatch') is True
+    r = check_number_fields('3|4', '3,5|4', question=q_fields)
+    assert r['correct'] is False and r['feedback'] == 'Use a decimal point, not a comma. For example, write 3.5.', r
+    r = check_number_fields('1100|5', '£1,100|5', question='Find the cost in £ and the number of items.')
+    assert r['correct'] is True, r
+    assert check_answer('number_fields', '3|4', '3 cm|4 m', question=q_fields)['correct'] is False
+    assert check_number_fields('3|4', '3 cm|4 m')['correct'] is True            # no question: nothing to contradict
+    # a field of a mixed key is read by its own checker, which takes the unit as well
+    r = check_number_fields('45|7', '45°|7 cm', field_types=['bearing', 'number'], question='Find the bearing and the length in cm.')
+    assert r['correct'] is True, r
+    # number_fields parts checked on their own (the partial_field route in the app)
+    _unit_ok('number', '4', '4 cm', q_fields)
+
+
+def test_units_are_bounded_and_safe():
+    import time
+    from generators.shared import answer_units
+    start = time.time()
+    hostile = [
+        '1' * 2000 + 'cm', 'cm' * 1000, '£' * 500, '%' * 800, '1 ' * 400 + 'cm', '1,' * 300 + '1', 'sq ' * 300 + 'cm',
+        '/' * 300, '1' + 'per ' * 200 + 'cm', ('1' * 59) + 'cm', ('1' * 61) + 'cm', '£' + '1' * 59,
+        '9' * 30 + '%', 'cm/s/h/m', '1 cm/s/h', '5 __import__("os")', '5 cm; rm -rf', '2^3^4 cm', '5 cm\x00',
+    ]
+    for typed in hostile:
+        for at in ('number', 'surd', 'pi_multiple', 'bearing', 'standard_form', 'fraction', 'number_fields'):
+            key = {'surd': '2|7', 'standard_form': '3.2|5', 'fraction': '1/2', 'number_fields': '1|2'}.get(at, '5')
+            result = check_answer(at, key, typed, question=UNIT_Q_AREA * 40)
+            assert result['correct'] is False, (at, typed[:30], result)
+    assert time.time() - start < 3.0, time.time() - start
+    # a huge question is cut, and the cut question still reads
+    big = ('lorem ipsum ' * 3000) + ' Find the length in cm.'
+    start = time.time()
+    check_answer('number', '5', '5 cm', question=big)
+    assert time.time() - start < 1.0
+    assert len(answer_units.question_plain_text(big)) <= answer_units.MAX_QUESTION_LEN
+    # a drawn question: the markup before the words is dropped before the cut, so the ask is still read (review
+    # 2026-10-28: a velocity-time graph of 10 KB hid "work out the acceleration" and 2.5 m/s passed)
+    drawn = ('<svg><text class="ty" x="1" y="2">Velocity (m/s)</text>' + '<line x1="1" y1="2" x2="3" y2="4"/>' * 400
+             + '</svg><br>Work out the acceleration of the car during the first 10 seconds.')
+    assert len(drawn) > answer_units.MAX_QUESTION_LEN
+    assert answer_units.question_units(drawn).target == 'acceleration'
+    assert check_answer('number', '2.5', '2.5 m/s²', question=drawn)['correct'] is True
+    assert check_answer('number', '2.5', '2.5 m/s', question=drawn)['correct'] is False
+    assert check_answer('number', '2.5', '2.5 m', question=drawn)['correct'] is False
+    huge = '<p>' * 70000 + 'Find the length in cm.'
+    start = time.time()
+    assert len(answer_units.question_plain_text(huge)) <= answer_units.MAX_QUESTION_LEN
+    assert time.time() - start < 1.0
+    # a field longer than the cap is left to the checker untouched
+    assert answer_units.strip_value_units('1' * 61 + ' cm') == ('1' * 61 + ' cm', None)
+    # a non-string is returned as it came
+    assert answer_units.strip_value_units(None) == (None, None)
+    assert answer_units.strip_units('number', 5) == (5, None)
+    # other types are never touched
+    assert answer_units.strip_units('algebraic', '3x cm') == ('3x cm', None)
+    assert answer_units.strip_units('text', '5 cm') == ('5 cm', None)
+    # the whitelist: parse_unit reads these and nothing else
+    for text in ('cm', 'cm^2', 'cm²', 'm/s', 'km/h', 'g/cm³', 'sq cm', 'square metres', 'cubic cm', 'per kg', 'mph'):
+        assert answer_units.parse_unit(text) is not None, text
+    for text in ('', 'foo', 'cm/s/h', 'x', '__import__', 'cm^4', 'sq', 'cm cm', '3', 'cm2x', 'm;s'):
+        assert answer_units.parse_unit(text) is None, text
+    # the question's own wording: what is asked, what is used
+    info = answer_units.question_units('Find the speed in km/h. The graph shows Time (hours) and Distance (km).')
+    assert [sorted(u) for u in info.asked] == [[('h', -1), ('km', 1)]], info.asked
+    assert info.used == {'km', 'h'}
+    assert answer_units.question_units('f(g(3)) where g(x) = 2x').used == set()
+    assert answer_units.question_units('Time (hours)').asked == []
+    # a percentage is asked only by a sentence that asks for one (review 2026-10-28)
+    assert answer_units.question_units('The percentage increase is 20%. Find the original price.').asks_percent is False
+    assert answer_units.question_units('A price rises from £50 to £60. Find the percentage increase.').asks_percent
+    assert answer_units.question_units('Convert 3/4 into a decimal and a percentage.').asks_percent
+    assert answer_units.question_units(None).known is False
+    assert answer_units.question_units('<p>Find x in \\(\\text{cm}\\).</p>').asked
+    assert answer_units.problem_question_text({'question': 'Q', 'answer_format_hint': 'H'}) == 'Q H'
+    assert answer_units.problem_question_text({}) is None and answer_units.problem_question_text(None) is None
+
+
+def test_units_feedback_copy_and_voice():
+    from models import zorp_voice
+    messages = {
+        'Check the units. The question does not ask for a percentage.',
+        'Check the units. A bearing is an angle in degrees.',
+        'Check the units. The question asks for the answer in cm².',
+        'Check the units. The question asks for the answer in km/h.',
+        'Check the units. The question asks for the answer in pence (p).',
+        'Check the units. The question asks for the answer in pounds (£).',
+        'Check the units. The question uses pounds (£).',
+        'Check the units. The question uses cm.',
+        'Check the units. The question asks for the answer in minutes.',
+        'Check the units. The question asks for the answer in litres.',
+        'Check the units. The question asks for the answer in g/cm³.',
+        'Check the units. The question asks for the answer in cm or km.',
+        'Check the units. The question asks for a percentage.',
+        'Check the units. An area is in square units, such as cm².',
+        'Check the units. A volume is in cubic units, such as m³.',
+        'Check the units. A length is in units such as cm, not square or cubic units.',
+        'Check the units. A speed is a distance per time, such as m/s or km/h.',
+        'Check the units. A mass is in units such as g or kg.',
+        'Check the units. A density is a mass per volume, such as g/cm³.',
+        'Check the units. An acceleration is in units such as m/s².',
+        'Check the units. A time is in units such as seconds, minutes or hours.',
+        'Check the units. That unit does not measure what the question asks for.',
+        DECIMAL_COMMA_FEEDBACK,
+        POWER_TOWER_FEEDBACK,
+    }
+    seen = {
+        check_answer('number', '35', '35 m', question=UNIT_Q_AREA)['feedback'],
+        check_answer('number', '12', '12 m', question=UNIT_Q_LENGTH_CM)['feedback'],
+        check_answer('number', '35', '35 m²', question='Find the area of the 5 cm by 7 cm rectangle.')['feedback'],
+        check_answer('number', '96', '96%', question=UNIT_Q_NEW_PRICE)['feedback'],
+        check_answer('number', '135', '£1.35', question=UNIT_Q_PENCE)['feedback'],
+        check_answer('number', '1100', '1100p', question=UNIT_Q_COST)['feedback'],
+        check_answer('number', '35', '3,5')['feedback'],
+        check_answer('algebraic', 'x^8', 'x^2^3')['feedback'],
+        check_answer('number', '35', '35 cm', question='A rectangle is 5 cm by 7 cm. Find its area.')['feedback'],
+        check_answer('number', '8', '8 m', question='Calculate the kinetic energy of the 1 kg ball.')['feedback'],
+        check_answer('number', '75', '75 kg', question='What percentage of the 40 bags are full?')['feedback'],
+    }
+    for text in sorted(messages | seen):
+        _assert_pupil_copy(text)
+        assert re.search(r'[A-Za-z]', text) and text.endswith('.'), text
+    items = [zorp_voice.Item('answer_checkers', 0, 'zorp', 'guide_line', 'line', t) for t in sorted(messages | seen)]
+    assert zorp_voice.lint(items) == [], zorp_voice.lint(items)
+    # every refusal names a unit or says what to write; none says "wrong" or "Not quite"
+    for text in seen:
+        assert not text.startswith('Not quite') and 'Enter a number' not in text, text
+
+
+def test_units_in_the_hint_diagnosis():
+    """The hint rules read the pupil's text with the unit dropped, exactly as the checker does."""
+    from generators.shared import misconceptions
+    from generators.shared.answer_units import problem_question_text
+
+    problem = {'question': 'A shop sells items at £2.80 each. How much do 15 items cost?', 'answer_type': 'number',
+               'correct_answer_raw': '42'}
+
+    def hint(typed, prob=problem, key='42', at='number'):
+        q = problem_question_text(prob)
+        res = check_answer(at, key, typed, question=q)
+        got = misconceptions.diagnose(
+            prob, typed, res, answer_type=at, correct_raw=key,
+            accepts=lambda t: bool(check_answer(at, key, t, question=q).get('correct')),
+            level='gcse', subject='maths', topic='decimals')
+        return res, got
+
+    plain_res, plain = hint('-42')
+    assert plain is not None and plain.rule_id == 'gen.sign', plain
+    for typed in ('-£42', '£-42', '-£42.00'):
+        res, got = hint(typed)
+        assert res['correct'] is False
+        assert got is not None and got.rule_id == plain.rule_id and got.message == plain.message, (typed, got)
+    place_res, place = hint('420')
+    assert place is not None and place.rule_id == 'gen.pow10'
+    for typed in ('£420', '£ 420', '420£', '£420.00'):
+        assert hint(typed)[1] is not None and hint(typed)[1].rule_id == 'gen.pow10', typed
+    # a unit the question refuses is not diagnosed: the unit message stands (the checker's own words)
+    res, got = hint('4.2p')
+    assert res['unit_mismatch'] is True and got is None, (res, got)
+    # a right answer typed with a unit is not diagnosed either
+    res, got = hint('£42')
+    assert res['correct'] is True and got is None
+    # bearing: the three-figure note and the reversed bearing are found through a degree word
+    brg = {'question': 'Find the bearing of B from A.', 'answer_type': 'bearing', 'correct_answer_raw': '45'}
+    res, got = hint('45 degrees', brg, '45', 'bearing')
+    assert res['correct'] is True and got is not None and got.rule_id == 'brg.three_figures', got
+    res, got = hint('225 degrees', brg, '45', 'bearing')
+    assert got is not None and got.rule_id == 'brg.reversed', got
+    res, got = hint('225°', brg, '45', 'bearing')
+    assert got is not None and got.rule_id == 'brg.reversed', got
+    # a percentage answer keeps its sign for the "as a percentage" rule (a unit-free key, the sign not asked)
+    pct = {'question': 'Write 0.37 as a percentage.', 'answer_type': 'number', 'correct_answer_raw': '37'}
+    res, got = hint('0.37%', pct, '37')
+    assert res['correct'] is False and 'unit_mismatch' not in res
+    # the app route: a stored problem carries the question, so the unit rule reaches the API
+    import generators.shared.answer_units as au
+    assert au.problem_question_text(problem).startswith('A shop sells')
+
+
+def test_units_check_api():
+    problem = {
+        'question': 'A rectangle is 5 cm by 7 cm. Work out its area in cm².',
+        'answer_type': 'number',
+        'correct_answer_raw': '35',
+        'answer_format_hint': 'Enter a number',
+    }
+    with app.test_client() as client:
+        def post(typed, body_extra=None):
+            with client.session_transaction() as sess:
+                sess['last_problem_payload'] = {'level': 'gcse', 'subject': 'maths', 'topic': 'mensuration', 'mode': 'practice',
+                                                'difficulty': 'foundational', 'problem': problem}
+            body = {'user_answer': typed, 'correct_answer_raw': '35', 'answer_type': 'number', 'level': 'gcse',
+                    'subject': 'maths', 'topic': 'mensuration', 'difficulty': 'foundational'}
+            body.update(body_extra or {})
+            r = client.post('/api/v1/problems/check', json=body, headers={'Accept': 'application/json'})
+            assert r.status_code == 200, r.data
+            return r.get_json()
+
+        for typed in ('35', '35 cm²', '35cm^2', '35 square cm'):
+            assert post(typed)['correct'] is True, typed
+        for typed in ('35 m', '35 cm', '35 m²'):
+            data = post(typed)
+            assert data['correct'] is False and data['feedback'] == 'Check the units. The question asks for the answer in cm².', data
+        data = post('36 cm²')
+        assert data['correct'] is False and data['feedback'] != 'Correct!'
+        # the question the checker reads is the stored one: a request cannot send its own
+        data = post('35 m', {'question': 'Find x in m.', 'answer_format_hint': 'Enter a number in m'})
+        assert data['correct'] is False
+        # without a stored problem there is no question to disagree with
+        with client.session_transaction() as sess:
+            sess.pop('last_problem_payload', None)
+        r = client.post('/api/v1/problems/check', json={'user_answer': '35 m', 'correct_answer_raw': '35', 'answer_type': 'number'})
+        assert r.get_json()['correct'] is True
+
+
+def test_units_review_2026_10_28():
+    """Independent review of the units change: cross-subject questions, several fields, every grading route."""
+    from generators.shared import answer_units
+    from generators.shared.lesson_quiz import grade_lesson_quiz_problem
+    from models.class_assignments import grade_frozen_answer
+
+    pct_msg = 'Check the units. The question does not ask for a percentage.'
+    # 1. a % on a number in the question is data, not a request for a percentage (0.24% is not 0.24)
+    _unit_refused('number', '0.24', '0.24%', 'Write 24% as a decimal.', pct_msg)
+    _unit_refused('number', '62.5', '62.5%', 'Find 25% of 250.', pct_msg)
+    _unit_refused('number', '100', '100%', 'The percentage increase is 20%. Find the original price.', pct_msg)
+    # ... while "to £60" names a value, not the unit asked for, so the percentage asked is still read
+    _unit_ok('number', '20', '20%', 'A price rises from £50 to £60. Find the percentage increase.')
+    _unit_ok('number', '20', '20%', 'A price rises from £50 to £60. By what percentage has it increased?')
+    _unit_refused('number', '75', '75 t', 'A shop has 40 t-shirts. 30 are blue. What percentage are blue?',
+                  'Check the units. The question asks for a percentage.')
+    # 2. the quantity asked for: a length unit is not an area, a volume or a speed
+    _unit_refused('number', '35', '35 cm', 'A rectangle is 5 cm by 7 cm. Find its area.',
+                  'Check the units. An area is in square units, such as cm².')
+    _unit_refused('number', '60', '60 cm', 'A prism has cross-section 12 cm² and length 5 cm. Find the volume.',
+                  'Check the units. A volume is in cubic units, such as cm³.')
+    _unit_ok('number', '60', '60 cm³', 'A prism has cross-section 12 cm² and length 5 cm. Find the volume.')
+    _unit_refused('number', '8.11', '8.11 cm^2', 'A rectangle has area 73 cm^2 and width 9 cm. Find its length.',
+                  'Check the units. A length is in units such as cm, not square or cubic units.')
+    _unit_refused('number', '17', '17 km', 'A runner travels 85 km in 5 hours. Find its speed.',
+                  'Check the units. A speed is a distance per time, such as m/s or km/h.')
+    _unit_ok('number', '17', '17 km/h', 'A runner travels 85 km in 5 hours. Find its speed.')
+    _unit_refused('number', '4', '4 km', 'A train travels 200 km at 50 km/h. How long does the journey take?',
+                  'Check the units. A time is in units such as seconds, minutes or hours.')
+    _unit_ok('number', '4', '4 hours', 'A train travels 200 km at 50 km/h. How long does the journey take?')
+    _unit_refused('number', '13', '13°', 'A chord is 24 cm long, 5 cm from the centre. Find the radius.',
+                  'Check the units. A length is in units such as cm, not square or cubic units.')
+    _unit_ok('number', '35', '35°', 'Find the size of angle x.')
+    # physics and science: a listed unit cannot measure an energy, and none is converted
+    _unit_refused('number', '8', '8 m', 'Calculate the kinetic energy of a 1 kg mass moving at 4 m/s.',
+                  'Check the units. Energy is in joules (J).')
+    # the SI unit of the quantity asked for counts (whole-change review A3); another scale is never the same number
+    _unit_ok('number', '8', '8 J', 'Calculate the kinetic energy of a 1 kg mass moving at 4 m/s.')
+    _unit_refused('number', '8', '8 kJ', 'Calculate the kinetic energy of a 1 kg mass moving at 4 m/s.',
+                  'Check the units. Energy is in joules (J).')
+    _unit_ok('number', '3000', '3000 m/s', 'Wave frequency 1500 Hz, wavelength 2 m. Calculate the wave speed in m/s.')
+    _unit_ok('number', '-5', '-5 °C', 'The temperature falls from 3 °C by 8 degrees. Find the new temperature.')
+    _unit_ok('number', '300000', '300 000 km/s', 'Enter the rounded speed of light in km/s.')
+    _unit_ok('number', '300000', '300,000 km/s', 'Enter the rounded speed of light in km/s.')
+    _unit_ok('number', '12', '12 s', 'The pendulum swings 10 times in 2 minutes. Find the time period.')
+    _unit_ok('number', '10', '10 ml', 'Find the volume in cm³.')                   # 1 ml is 1 cm³
+    _unit_ok('number', '10', '10 cc', 'Find the volume in cm³.')
+    _unit_ok('number', '3', '3 kJ', 'Give your answer in kJ.')        # listed since whole-change review A3
+    _unit_refused('number', '3', '3 J', 'Give your answer in kJ.', 'Check the units. The question asks for the answer in kJ.')
+    # "how many grams", "how many km": the counted unit is the unit asked for
+    _unit_refused('number', '6', '6 cm3', 'A brine has 3 g of salt in 100 cm3. How many grams are in 200 cm3?',
+                  'Check the units. The question asks for the answer in g.')
+    _unit_ok('number', '6', '6 g', 'A brine has 3 g of salt in 100 cm3. How many grams are in 200 cm3?')
+    # money asked to the penny: a physical unit is refused, money is not a length
+    _unit_refused('number', '4.9', '4.9 kg', '3.0 kg of fruit costs £14.70. Find the cost per kilogram, to the nearest penny.',
+                  'Check the units. The question asks for the answer in pounds (£).')
+    _unit_refused('number', '24', '24p', 'AB = 12 cm. Find the length of PQ.',
+                  'Check the units. A length is in units such as cm, not square or cubic units.')
+    # "all lengths are in cm" states the data's unit; the area asked for is still in cm²
+    _unit_ok('number', '35', '35 cm²', 'All lengths are in cm. The rectangle is 5 by 7. Find its area.')
+    _unit_ok('number', '35', '35 cm²', 'The lengths are measured in cm. Find the area of the rectangle.')
+    # "the length in cm of ..." asks for cm
+    _unit_refused('number', '5', '5 m', 'Find the length in cm of the side AB.', 'Check the units. The question asks for the answer in cm.')
+
+    # 3. several fields: a unit asked for one part is not forced on the others, the same dimension still is
+    q_brg = ('A ship ends up 45 km east and 39 km south of port. Find the bearing of the ship from port (to the nearest '
+             'degree) and its distance from port (to 2 d.p.).')
+    for typed in ('59.55 km|131°', '59.55km|131', '59.55|131 degrees'):
+        assert check_number_fields('59.55|131', typed, question=q_brg)['correct'] is True, typed
+    q_cyc = ('A cyclist travels 88 km in 4 hours. a) Find the speed in km/h. b) How far would the cyclist travel in '
+             'another 3 hours? c) How long would it take to travel 176 km?')
+    assert check_number_fields('22|66|8', '22 km/h|66 km|8 hours', question=q_cyc)['correct'] is True
+    q_map = 'A hiker walks 5 cm on the map. a) Find the real distance in metres. b) Find the total distance in km.'
+    r = check_number_fields('2500|5.65', '2500 cm|5.65 km', question=q_map)
+    assert r['correct'] is False and r['score'] == 1 and r.get('unit_mismatch') is True, r
+    q_dens = 'A material has density 1.0 g/cm^3. (i) Convert the density to kg/m^3. (ii) Find the mass in kg of 2.0 m^3.'
+    assert check_number_fields('1000|2000', '1000 kg/m³|2000 kg', question=q_dens)['correct'] is True
+    q_bucket = ('a) Calculate the full volume of the bucket in cm³ to 2 d.p. b) The bucket is filled to 80%. Find the '
+                'volume of water in litres.')
+    assert check_number_fields('1704.84|1.36', '1704.84 cm³|1.36 litres', question=q_bucket)['correct'] is True
+    # one field of such an answer checked on its own (the app's partial check) follows the same rule
+    assert check_answer('number', '66', '66 km', question=q_cyc, multi_part=True)['correct'] is True
+    assert check_answer('number', '66', '66 km', question=q_cyc)['correct'] is False
+    # 4. every grading route reads the stored question: the lesson quiz and set work refuse a contradicting unit
+    problem = {'question': 'A rectangle is 5 cm by 7 cm. Work out its area in cm².', 'answer_type': 'number',
+               'correct_answer_raw': '35'}
+    assert grade_lesson_quiz_problem(problem, '35 cm²')['correct'] is True
+    graded = grade_lesson_quiz_problem(problem, '35 m')
+    assert graded['correct'] is False and graded['feedback'].startswith('Check the units'), graded
+    assert grade_frozen_answer(problem, '35 cm²')[1] is True and grade_frozen_answer(problem, '35 m')[1] is False
+    # 5. hostile text: lookalike symbols, zero-width and direction marks are never read as a unit or a number
+    q_area = 'A rectangle is 5 cm by 7 cm. Work out its area in cm².'
+    for typed in ('35 сm²', '35 cm²​', '3​5', '‏35%', '35‮ cm', '35 ％', '₤35', '35 c​m',
+                  '35 cm²²', '35 ᶜᵐ', '35⁠cm'):
+        r = check_answer('number', '35', typed, question=q_area)
+        assert r['correct'] is False, (typed, r)
+    import time
+    start = time.time()
+    for typed in ('1' * 55 + ' cm²', '1 ' + 'per ' * 14 + 'cm', '1 ' + 'sq ' * 18 + 'cm', '1' + ' cm' * 19,
+                  '1 ' + 'a' * 57, '£' * 30 + '1', '1' + '%' * 58, '1,' * 29 + '1', '1 ' + '/' * 57):
+        for _ in range(200):
+            check_answer('number', '1', typed, question=q_area)
+            answer_units.strip_value_units(typed, question=q_area, multi=True)
+    assert time.time() - start < 3.0, time.time() - start
+    hostile_q = ('in ' * 2000) + ('find the area of ' * 300) + ('how many ' * 300) + ('to £' * 300)
+    start = time.time()
+    answer_units.question_units(hostile_q + 'x')
+    assert time.time() - start < 1.0, time.time() - start
+    # 6. lists, pairs and coordinates keep their commas
+    assert check_answer('number_list', '3,5', '3,5')['correct'] is True
+    assert check_answer('number_pair', '3|5', '3|5')['correct'] is True
+    # ... and a box of a pair no longer reads a decimal comma as thousands (3,5 was 35)
+    assert check_answer('number_pair', '35|5', '3,5|5')['correct'] is False
+    assert check_answer('number_pair', '1100|5', '1,100|5')['correct'] is True
+    assert check_answer('ratio', '35:2', '3,5:2')['correct'] is False
+    assert check_answer('vector', '3|5', '(3,5)')['correct'] is True
+    assert check_answer('ratio', '3:5', '3:5')['correct'] is True
+
+
+def _draw_slot(topic, name, seed, mode='standard', level='gcse', subject='maths'):
+    """The stored problem of one named practice slot, drawn through its topic (the tier that serves it)."""
+    import random
+    from topic_registry import TOPICS
+    cfg = TOPICS[level][subject][topic]
+    for tier in ('foundational', 'intermediate', 'difficult'):
+        names = set()
+        for i in range(30):
+            random.seed(i)
+            names.update(v.__name__ for v in cfg['variants_func'](tier, mode) or [])
+        if name in names:
+            random.seed(seed)
+            return cfg['func'](tier, mode, variant_name=name)
+    raise AssertionError(f'{topic}/{name} is not served in {mode} mode')
+
+
+def test_review_pass1_nearest_penny_is_pounds():
+    """Whole-change review A1 (2026-10-29): "to the nearest penny" is an accuracy for an amount in pounds.
+
+    It was read as "answer in pence": £5.97 was refused ("asks for the answer in pence") and 5.97p, which is 5.97
+    pence, was marked right; the hint diagnosis was silenced for every £ answer. "in pence" still asks for pence."""
+    from generators.shared.answer_units import problem_question_text
+    from generators.shared.lesson_quiz import grade_lesson_quiz_problem
+    from generators.shared.misconceptions import diagnose
+    from models.class_assignments import grade_frozen_answer
+
+    pounds_msg = 'Check the units. The question asks for the answer in pounds (£).'
+    q = '1.2 kg of fruit costs £7.16. Find the cost per kilogram, to the nearest penny. Enter a number'
+    for typed in ('£5.97', '5.97', '5.97 pounds', '£5.97/kg', '£5.97 per kg', '£ 5.97'):
+        _unit_ok('number', '5.97', typed, q)
+    for typed in ('5.97p', '5.97 pence', '597p'):
+        _unit_refused('number', '5.97', typed, q, pounds_msg)
+    q2 = 'After 3 years of compound growth at 2% per year, an investment is worth £4331.92. Find the original investment to the nearest penny.'
+    for typed in ('£4082.13', '£4,082.13', '4082.13'):
+        _unit_ok('number', '4082.13', typed, q2)
+    _unit_refused('number', '4082.13', '4082.13p', q2, pounds_msg)
+    # "nearest cent" is euros; "in pence" and "how many pence" still ask for pence, "nearest pound" for pounds
+    q_eur = 'A meal costs €12.40 and a drink €3.15. Work out the total, to the nearest cent.'
+    _unit_ok('number', '15.55', '€15.55', q_eur)
+    _unit_refused('number', '15.55', '£15.55', q_eur, 'Check the units. The question asks for the answer in euros (€).')
+    _unit_ok('number', '135', '135p', 'A sweet costs 45p. Work out the cost of 3 sweets in pence, to the nearest penny.')
+    _unit_refused('number', '135', '£1.35', 'How many pence is £1.35 to the nearest penny?',
+                  'Check the units. The question asks for the answer in pence (p).')
+    _unit_refused('number', '12', '12p', 'Find the price to the nearest pound.', pounds_msg)
+
+    # every slot that says "to the nearest penny", through every grading route
+    slots = [('number', '_number_inter_repeated_percentage_change'), ('number', '_number_diff_compound_interest'),
+             ('number', '_number_diff_reverse_compound'), ('fdp', 'gcse_fdp_simple_vs_compound'),
+             ('fdp', 'gcse_fdp_compound_percentage'), ('decimals', 'gcse_dec_practice_word_unit_price')]
+    seen = 0
+    with app.test_client() as client:
+        for topic, name in slots:
+            for seed in range(4):
+                problem = _draw_slot(topic, name, seed)
+                if 'nearest penny' not in problem['question']:
+                    continue                    # gcse_fdp_compound_percentage says it only when it rounds
+                seen += 1
+                key, at, qt = str(problem['correct_answer_raw']), problem['answer_type'], problem_question_text(problem)
+                for typed in (key, '£' + key, key + ' pounds'):
+                    assert check_answer(at, key, typed, question=qt)['correct'] is True, (name, typed)
+                    assert grade_lesson_quiz_problem(problem, typed)['correct'] is True, (name, typed)
+                    assert grade_frozen_answer(problem, typed)[1] is True, (name, typed)
+                r = check_answer(at, key, key + 'p', question=qt)
+                assert r['correct'] is False and r['feedback'] == pounds_msg, (name, r)
+                assert grade_frozen_answer(problem, key + 'p')[1] is False
+                with client.session_transaction() as sess:
+                    sess['last_problem_payload'] = {'level': 'gcse', 'subject': 'maths', 'topic': topic,
+                                                    'mode': 'practice', 'difficulty': 'difficult', 'problem': problem}
+                for typed, right in (('£' + key, True), (key + 'p', False)):
+                    data = client.post('/api/v1/problems/check', json={'user_answer': typed, 'correct_answer_raw': key,
+                                       'answer_type': at}, headers={'Accept': 'application/json'}).get_json()
+                    assert data['correct'] is right, (name, typed, data)
+                # a wrong amount in pounds reaches the hint diagnosis (it was silenced as a unit mismatch)
+                if name == 'gcse_fdp_simple_vs_compound':
+                    hits = 0
+                    for w in set(re.findall(r'£(\d+\.\d\d)', problem['solution'])) - {key}:
+                        rules = []
+                        for typed in (w, '£' + w):
+                            res = check_answer(at, key, typed, question=qt)
+                            assert not res.get('unit_mismatch'), (typed, res)
+                            d = diagnose(problem, typed, res, answer_type=at, correct_raw=key, level='gcse',
+                                         subject='maths', topic=topic,
+                                         accepts=lambda t: check_answer(at, key, t, question=qt)['correct'])
+                            rules.append(d and d.rule_id)
+                        assert rules[0] == rules[1], (w, rules)       # the same slip with or without the £
+                        hits += bool(rules[1])
+                    assert hits, problem['solution']
+    assert seen >= 16, seen
+
+
+def test_review_fix1a_unit_of_the_right_kind():
+    """Whole-change review A3 (2026-10-29, finished in fix pass 1a, 2026-11-03): never a unit of the wrong kind.
+
+    Questions that name no unit accepted any unit ("61 kg", "61 km/h" and "£61" for an angle), and questions that
+    measure one kind of quantity accepted a unit of another ("0 cm" for a number of points, "5 cm" for a scale factor,
+    "-4°" for a gradient, "80 cm" for a volume in cm3, "448 hours" for money). An angle takes degrees only; money only
+    where the question names a currency; where the quantity asked for cannot be read the bare number is right and a
+    unit is refused kindly."""
+    import random
+    from topic_registry import TOPICS
+    from generators.shared.answer_units import problem_question_text, question_plain_text, question_units
+
+    kind = 'Check the units. Type just the number.'
+    angle = 'Check the units. An angle is in degrees.'
+    # 1. drawn angle questions (geometry_angles, Foundation): degrees only, the bare number always
+    func = TOPICS['gcse']['maths']['geometry_angles']['func']
+    seen = 0
+    for seed in range(40):
+        random.seed(seed)
+        p = func('foundational', 'standard')
+        if p.get('answer_type') != 'number' or 'degrees optional' not in str(p.get('answer_format_hint') or p['question']):
+            continue
+        key, q = str(p['correct_answer_raw']), problem_question_text(p)
+        qu = question_units(q)
+        if qu.target not in ('angle', None) or re.search(r'\d\s*(?:mm|cm|km|m|kg|g|s)\b|[£€$]', question_plain_text(q)):
+            continue                    # an angle asked for, or a question about angles only
+        seen += 1
+        for typed in (key, key + '°', key + ' degrees'):
+            _unit_ok('number', key, typed, q)
+        for typed in (key + ' cm', key + ' kg', key + ' km/h', key + ' litres', key + ' seconds', '£' + key):
+            r = check_answer('number', key, typed, question=q)
+            assert r['correct'] is False and r.get('unit_mismatch') and r['feedback'] in (angle, kind), (seed, typed, r)
+    assert seen >= 15, seen
+
+    # 2. the unit named or asked for is taken, a unit of another kind never is
+    bits = 'A file is 3 MB. How many bits is that?'
+    _unit_ok('number', '5', '5 bits', bits)
+    for typed in ('5 kg', '5 m/s', '£5'):
+        assert check_answer('number', '5', typed, question=bits)['correct'] is False, typed
+    cases = [
+        # (question, key, accepted, refused)
+        ('A and B are 11 cm apart. Construct the locus of points 3 cm from A and the locus of points 3 cm from B. '
+         'How many points satisfy both conditions simultaneously?', '0', (), ('0 cm', '0 cm²')),
+        ('A shape has area 6 cm^2. It is enlarged to give an image with area 24 cm^2. Find the scale factor of the '
+         'enlargement.', '2', (), ('2 cm', '2 cm²')),
+        ('A line is parallel to y = −4x + 3. What is its gradient?', '-4', (), ('-4°', '-4 degrees')),
+        ('The triangle numbers are 1, 3, 6, 10, 15, ... Find the 6th triangle number.', '21', (), ('21°',)),
+        ('Two 40 cm3 samples of water mixed give 80 cm3. What volume in cm3 do you record?', '80', ('80 cm³', '80 cm3'),
+         ('80 cm', '80 cm²', '80 kg')),
+        ('A ladder reaches 6 m up a wall. Its foot is 8 m from the wall. How long is the ladder?', '10', ('10 m',),
+         ('10 m²', '10°', '10 kg', '£10')),
+        ('Priya invests £400 at 4% simple interest per year. How much is in the account after 3 years?', '448',
+         ('£448',), ('448 hours', '448 years', '448 kg')),
+        ('A worker earns £345 in year 1. Each year their salary increases by £45. Find the salary in year 5.', '525',
+         ('£525',), ('525 years', '525 hours')),
+        ('The graph shows the lines l_1 (blue) and l_2 (red). 0 5 10 15 20 l₁ l₂ Write down the y-intercept of line '
+         'l₁.', '5', (), ('5 litres', '5 ml')),
+        ('The hourly wages of part-time workers are: 14, 11, 19, 27, 24, 29, 28. Find the median.', '24', (),
+         ('£24', '24p')),
+        ('Simplify 5(m + 7) - 5m. Your answer is a number, so the expression has the same value for every integer m. '
+         'What is it?', '35', (), ('35 m', '35 cm')),
+        ('The running speeds (km/h) of a group of athletes are: 4, 12, 6, 4, 12. Find the mean.', '7.6', ('7.6 km/h',),
+         ('7.6 hours', '7.6 km', '7.6°')),
+        ('A recipe uses 100 g of flour for 8 people. How much flour is needed for 18 people?', '225', ('225 g',),
+         ('225 kg', '225 cm', '£225')),
+        ('A tap fills a 40 litre tank in 8 minutes. Find the rate.', '5', (), ('5 litres', '5 minutes')),
+        ('Find the probability that the bus is late on exactly one of the two days. It is late on 2 days in 10.', '0.2',
+         (), ('0.2 days', '0.2 hours')),
+        ('The daily temperatures (°C) recorded over a week are: 50, 41, 15, 27, 31, 5. Find the range.', '45',
+         ('45°', '45°C'), ('45 hours', '45 kg')),
+        # fix review 2026-11-03: a letter in an inequality is a variable, so the drawn axis "... 14 16 t (minutes)"
+        # is not 16 tonnes (the mean of race times in minutes was refused as two kinds of quantity)
+        ('The frequency polygon shows the times taken by some runners to finish a race. The classes are 20 &lt; t ≤ 30, '
+         '30 &lt; t ≤ 40, 40 &lt; t ≤ 50. <svg><text>20</text><text>30</text><text>16</text><text>t (minutes)</text></svg> '
+         'Work out an estimate for the mean.', '39', ('39 minutes',), ('39 kg', '39 cm')),
+        ('The frequency polygon shows the heights of some plants. The classes are 0 &lt; h ≤ 10, 10 &lt; h ≤ 20. <svg><text>'
+         '14</text><text>16</text><text>h (cm)</text></svg> Work out an estimate for the mean.', '27', ('27 cm',),
+         ('27 hours', '27 kg')),
+    ]
+    for q, key, good, bad in cases:
+        _unit_ok('number', key, key, q)
+        for typed in good:
+            _unit_ok('number', key, typed, q)
+        for typed in bad:
+            r = check_answer('number', key, typed, question=q)
+            assert r['correct'] is False and r.get('unit_mismatch') is True, (q[:40], typed, r)
+            assert r['feedback'].startswith('Check the units.'), (typed, r)
+    # one field of an answer in several fields: a unit of any kind the question measures or asks for
+    q = ('A box has a square base of side 7 cm. The total surface area of the box is 176 cm^2. Find the height and '
+         'volume of the box.')
+    assert check_number_fields('4.54|222.25', '4.54 cm|222.25 cm³', question=q)['correct'] is True
+    assert check_number_fields('4.54|222.25', '4.54 kg|222.25', question=q)['correct'] is False
+
+
+def test_review_fix1a_simplest_form_fractions_and_ratios():
+    """Whole-change review C2 and C3 (fix pass 1a, 2026-11-03): "in its simplest form" is enforced.
+
+    The fraction checker compared values only, so 48/88 was right for 6/11, 0.8 and 12/15 for 4/5 and 6 26/60 for
+    6 13/30; the ratio checker normalised both sides, so 45:55 typed back for "Simplify the ratio 45:55" was right.
+    The 'simplified' form now refuses them with the kind form message, on every slot that asks."""
+    from generators.shared.answer_checkers import problem_answer_form
+    from generators.shared.answer_units import problem_question_text
+    from generators.shared.lesson_quiz import grade_lesson_quiz_problem
+    from models.class_assignments import grade_frozen_answer
+
+    form = 'simplified'
+    for key, typed, kind in (('6/11', '48/88', 'common_factor'), ('4/5', '12/15', 'common_factor'),
+                             ('4/5', '0.8', 'decimal_not_fraction'), ('193/30', '6 26/60', 'common_factor'),
+                             ('193/30', '386/60', 'common_factor'), ('3/5', '0.6', 'decimal_not_fraction'),
+                             ('7/20', '35/100', 'common_factor'), ('9/40', '18/80', 'common_factor')):
+        assert check_answer('fraction', key, typed)['correct'] is True, (key, typed)      # equal, with no form
+        r = check_answer('fraction', key, typed, form=form)
+        assert r['correct'] is False and r['wrong_form'] == kind, (key, typed, r)
+        assert r['feedback'].startswith("That's equal"), r
+        _assert_pupil_copy(r['feedback'])
+    for key, typed in (('6/11', '6/11'), ('6/11', ' 6 / 11 '), ('193/30', '6 13/30'), ('193/30', '193/30'),
+                       ('4/5', '⅘'), ('4/5', '4/5')):
+        assert check_answer('fraction', key, typed, form=form)['correct'] is True, (key, typed)
+    for key, typed in (('4/5', '4/6'), ('2/3', '0.67')):
+        r = check_answer('fraction', key, typed, form=form)
+        assert r['correct'] is False and 'wrong_form' not in r, r                        # wrong, not a form slip
+    # ratios
+    for key, typed in (('9|11', '45:55'), ('9|11', '18:22'), ('8|21', '16:42')):
+        assert check_answer('ratio', key, typed)['correct'] is True
+        r = check_answer('ratio', key, typed, form=form)
+        assert r['correct'] is False and r['wrong_form'] == 'ratio_not_simplest', r
+        _assert_pupil_copy(r['feedback'])
+    for typed in ('9:11', '9 : 11'):
+        assert check_answer('ratio', '9|11', typed, form=form)['correct'] is True
+    assert check_answer('ratio', '9|11', '11:9', form=form)['correct'] is False
+
+    # every practice slot that asks for the simplest form carries the form, through every grading route
+    slots = [('multiples_factors', 'gcse_mf_hcf_simplify_fraction'), ('decimals', 'gcse_dec_practice_decimal_to_fraction'),
+             ('decimals', 'gcse_dec_recurring'), ('fdp', 'gcse_fdp_add_subtract_fractions'),
+             ('fdp', 'gcse_fdp_decimal_to_fraction'), ('fdp', 'gcse_fdp_percentage_to_fraction'),
+             ('fdp', 'gcse_fdp_fraction_of_another'), ('fdp', 'gcse_fdp_multiply_divide_fractions'),
+             ('fdp', 'gcse_fdp_mixed_add_subtract'), ('fdp', 'gcse_fdp_mixed_multiply_divide'),
+             ('number', '_number_diff_recurring_decimal_fraction'), ('ratio_proportion', '_ratio_found_16'),
+             ('ratio_proportion', '_ratio_found_04'), ('ratio_proportion', '_ratio_found_01'),
+             ('ratio_proportion', '_ratio_found_08'), ('ratio_proportion', '_ratio_inter_06'),
+             ('ratio_proportion', 'gcse_ratio_expression_ratio')]
+    with app.test_client() as client:
+        for topic, name in slots:
+            for seed in range(3):
+                problem = _draw_slot(topic, name, seed)
+                at, key, q = problem['answer_type'], str(problem['correct_answer_raw']), problem_question_text(problem)
+                assert problem.get('answer_form') == form, (name, problem.get('answer_form'))
+                assert re.search(r'simplif|simplest', q, re.I), (name, q[:80])
+                if at == 'fraction':
+                    a, b = (int(x) for x in key.split('/'))
+                    wrong = f'{3 * a}/{3 * b}'
+                else:
+                    a, b = (int(x) for x in key.split('|'))
+                    wrong = f'{3 * a}:{3 * b}'
+                right = key if at == 'fraction' else f'{a}:{b}'
+                assert check_answer(at, key, right, form=problem_answer_form(problem), question=q)['correct'] is True
+                r = check_answer(at, key, wrong, form=problem_answer_form(problem), question=q)
+                assert r['correct'] is False and r.get('wrong_form'), (name, wrong, r)
+                assert grade_lesson_quiz_problem(problem, wrong)['correct'] is False, name
+                assert grade_frozen_answer(problem, wrong)[1] is False, name
+                with client.session_transaction() as sess:
+                    sess['last_problem_payload'] = {'level': 'gcse', 'subject': 'maths', 'topic': topic,
+                                                    'mode': 'practice', 'difficulty': 'difficult', 'problem': problem}
+                for typed, ok in ((right, True), (wrong, False)):
+                    data = client.post('/api/v1/problems/check', json={'user_answer': typed, 'correct_answer_raw': key,
+                                       'answer_type': at}, headers={'Accept': 'application/json'}).get_json()
+                    assert data['correct'] is ok, (name, typed, data)
+    # the question's own number typed back (the review's repro)
+    q = 'Find the highest common factor of 48 and 88. Use it to write 48/88 in its simplest form.'
+    assert check_answer('fraction', '6/11', '48/88', form=form, question=q)['correct'] is False
+    assert check_answer('ratio', '9|11', '45:55', form=form, question='Simplify the ratio 45:55.')['correct'] is False
+
+
+def test_review_fix1a_number_with_its_letter():
+    """Whole-change review C12 (fix pass 1a, 2026-11-03): "find the value of x" with a number key takes "x = 20".
+
+    The same wording is keyed as `linear` in some slots and `number` in others, so "x = 20" was right in one and
+    "Enter a valid number" in the next. A number answer now takes a leading "<letter> =" when the letter is the one
+    the question asks the value of, and refuses another letter with the linear checker's message. With no question,
+    no letter asked, or an expression asked ("the value of x^2 + y^2"), nothing changes."""
+    from generators.shared.answer_checkers import problem_answer_form
+    from generators.shared.answer_units import problem_question_text, question_plain_text
+
+    q = 'There are 4x + 6 green marbles and 3x + 6 white marbles. The ratio of green to white is 9 : 7. Find the value of x.'
+    for typed in ('x = 12', 'x=12', 'X = 12', ' x = 12 ', '12'):
+        assert check_answer('number', '12', typed, question=q)['correct'] is True, typed
+    r = check_answer('number', '12', 'y = 12', question=q)
+    assert r['correct'] is False and r.get('wrong_letter') is True, r
+    assert r['feedback'] == 'Check the letter. This question asks you to find x.', r
+    _assert_pupil_copy(r['feedback'])
+    assert check_answer('number', '12', 'x = 13', question=q)['feedback'] == 'Not quite. Check your working.'
+    unread = 'Enter a valid number or fraction with one slash (e.g. 1/16).'
+    for question in (None, 'Work out 5 + 7.', 'Solve. Then work out the value of x^2 + y^2.',
+                     'Write down the minimum value of y = (x + 6)^2 - 3.', 'Find the value of x and the value of y.',
+                     'Find the value of 3x + 2.'):
+        assert check_answer('number', '12', 'x = 12', question=question)['feedback'] == unread, question
+    assert check_answer('number', '3', 'q = 3', question='Given that x^2 + 6x + 12 = (x + 3)^2 + q for all values '
+                        'of x, find the value of q.')['correct'] is True
+    assert check_answer('number', '8', 't = 8', question='For what value of t is b parallel to a?')['correct'] is True
+    # a unit after the letter is read as before
+    qp = 'The shorter sides are x cm and (x + 14) cm. The hypotenuse is (x + 16) cm. Find the value of x.'
+    assert check_answer('number', '10', 'x = 10 cm', question=qp)['correct'] is True
+    assert check_answer('number', '10', 'x = 10 kg', question=qp)['correct'] is False
+
+    slots = [('pythagoras', '_py_d9_algebraic_sides'), ('ratio_proportion', 'gcse_ratio_algebraic_parts'),
+             ('statistics', 'gcse_stats_missing_frequency_mean'), ('graphs', 'gcse_gra_circle_equation'),
+             ('quadratic_simultaneous_equations', 'gcse_qsim_d_largest_k_miss'),
+             ('completing_the_square', 'gcse_cts_f_find_q_given_p'), ('completing_the_square', 'gcse_cts_f_negative_half')]
+    with app.test_client() as client:
+        for topic, name in slots:
+            for seed in range(12):              # a slot may word some draws another way ("Write down the radius")
+                problem = _draw_slot(topic, name, seed)
+                key, qt = str(problem['correct_answer_raw']), problem_question_text(problem)
+                m = re.search(r'value of ([a-z])\b', question_plain_text(qt))
+                if m:
+                    break
+            assert m and problem['answer_type'] == 'number', (name, qt[-120:])
+            letter = m.group(1)
+            other = 'z' if letter != 'z' else 'w'
+            form = problem_answer_form(problem)
+            assert check_answer('number', key, f'{letter} = {key}', question=qt, form=form)['correct'] is True, name
+            assert check_answer('number', key, f'{other} = {key}', question=qt, form=form).get('wrong_letter'), name
+            with client.session_transaction() as sess:
+                sess['last_problem_payload'] = {'level': 'gcse', 'subject': 'maths', 'topic': topic,
+                                                'mode': 'practice', 'difficulty': 'difficult', 'problem': problem}
+            data = client.post('/api/v1/problems/check', json={'user_answer': f'{letter} = {key}',
+                               'correct_answer_raw': key, 'answer_type': 'number'},
+                               headers={'Accept': 'application/json'}).get_json()
+            assert data['correct'] is True, (name, data)
+
+
+def test_review_pass1_session_question_units():
+    """Whole-change review A2 (2026-10-29): a session copy of a drawn question keeps the words the unit rules read.
+
+    ``app._slim_problem_for_session`` cuts a question to 4,000 characters, and a drawn question carries 6 to 11 KB of
+    SVG before its ask, so Quick Test, saved, shared, suggestion and lesson-quiz checks read "convert 10 centimetres to
+    inches" without "Give your answer in inches" and took "4 cm". The slim copy now carries the tag-free text."""
+    import random
+    import flask
+    import app as app_module
+    from topic_registry import TOPICS
+    from generators.shared import answer_units
+
+    # 1. the conversion graph from the review, synced as Quick Test does, checked through the API
+    graphs = TOPICS['gcse']['maths']['graphs']['func']
+    problem = None
+    for seed in range(200):
+        random.seed(seed)
+        p = graphs('intermediate', 'standard', variant_name='gcse_gra_conversion_graph')
+        if len(p['question']) > 4000 and re.search(r'Give your answer in (?:inches|centimetres)', p['question']):
+            problem = p
+            break
+    assert problem is not None
+    key = str(problem['correct_answer_raw'])
+    asked = 'inches' if problem['question'].rstrip().endswith('in inches.') else 'cm'
+    wrong = 'cm' if asked == 'inches' else 'inches'
+    with app.test_request_context():
+        app_module._sync_last_problem_payload(problem, level='gcse', subject='maths', topic='graphs', mode='standard',
+                                              difficulty='intermediate', source='quicktest')
+        stored = dict(flask.session['last_problem_payload'])
+    assert len(stored['problem']['question']) == 4000              # the cookie copy is still cut
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess['last_problem_payload'] = stored
+        for typed, right in ((key, True), (f'{key} {asked}', True), (f'{key} {wrong}', False)):
+            data = client.post('/api/v1/problems/check', json={'user_answer': typed, 'correct_answer_raw': key,
+                               'answer_type': problem['answer_type']}, headers={'Accept': 'application/json'}).get_json()
+            assert data['correct'] is right, (typed, data)
+            if not right:
+                assert data['feedback'].startswith('Check the units. The question asks for the answer in'), data
+
+    # 2. every long drawn question reads the same units from its session copy as from the whole problem, and the
+    #    session copy (cut question plus its text) is no bigger a cookie than the whole problem practice stores (or
+    #    small: a question just over the cut keeps nearly all of it as well as its text)
+    ser = app.session_interface.get_signing_serializer(app)
+    attrs = ('known', 'asked', 'used', 'asked_currency', 'currencies', 'asks_percent', 'mentions_percent', 'target')
+    compared = 0
+    for level, subject, topic in (('gcse', 'maths', 'graphs'), ('gcse', 'maths', 'statistics'),
+                                  ('gcse', 'maths', 'probability'), ('gcse', 'maths', 'graphical_simultaneous_equations'),
+                                  ('eursc', 'science', 'measurement')):
+        func = TOPICS[level][subject][topic]['func']
+        for diff in ('foundational', 'intermediate', 'difficult'):
+            for seed in range(12):
+                random.seed(seed)
+                p = func(diff, 'standard')
+                if not isinstance(p, dict) or len(str(p.get('question') or '')) <= 4000:
+                    continue
+                slim = app_module._slim_problem_for_session(p)
+                assert answer_units.UNITS_TEXT_KEY in slim and answer_units.UNITS_TEXT_KEY not in p
+                whole = answer_units.question_units(answer_units.problem_question_text(p))
+                cut = answer_units.question_units(answer_units.problem_question_text(slim))
+                assert [getattr(whole, a) for a in attrs] == [getattr(cut, a) for a in attrs], ('units', topic, diff, seed)
+                size = len(ser.dumps({'problem': slim}))
+                assert size <= max(len(ser.dumps({'problem': p})), 2500), (topic, diff, seed, size)
+                compared += 1
+    assert compared >= 30, compared
+    # a short question is stored whole and carries no extra text
+    assert answer_units.UNITS_TEXT_KEY not in app_module._slim_problem_for_session({'question': 'Find x in cm.'})
+    # the extra text is only ever read from a stored problem: a request cannot send one
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess['last_problem_payload'] = {'level': 'gcse', 'subject': 'maths', 'topic': 'mensuration',
+                                            'mode': 'practice', 'difficulty': 'foundational',
+                                            'problem': {'question': 'Find the length in cm.', 'answer_type': 'number',
+                                                        'correct_answer_raw': '5'}}
+        data = client.post('/api/v1/problems/check', json={'user_answer': '5 m', 'correct_answer_raw': '5',
+                           'answer_type': 'number', answer_units.UNITS_TEXT_KEY: 'Find the length in m.'}).get_json()
+        assert data['correct'] is False, data
+
+def test_check_algebraic_power_precedence():
+    """x*x^6 is x^7 (it was read as x^(2^6)), and the other rewrites of x*x keep ordinary precedence."""
+    from generators.shared.answer_checkers import _normalize_algebraic_string, _algebraic_prepare_for_sympy, has_power_tower
+    ok = [
+        ('x^7', 'x*x^6'), ('x^7', 'x*x**6'), ('x^7', 'x^6*x'), ('x^7', 'x^6x'), ('x^7', 'x*x^2*x^4'), ('x^7', 'x * x ^ 6'),
+        ('x^2', 'x*x'), ('x^2', 'x²'), ('x^3', 'x*x*x'), ('x^4', 'x*x*x*x'), ('3*x^2', 'x*x*3'), ('3*x^2', '3x*x'),
+        ('2*x^3', '2x^3'), ('2*x^3', '2*x**3'), ('2*x^3', '2x³'), ('2*x^3', 'x^3*2'), ('2*x^3', '2*x*x*x'),
+        ('8*x^3', '(2x)^3'), ('8*x^3', '8x^3'), ('8*x^3', '2^3x^3'), ('x^6', '(x^2)^3'), ('x^6', '(x^3)^2'), ('x^6', '(x^2)**3'),
+        ('x^2*y', 'x*x*y'), ('x^2*y', 'y*x*x'), ('x^2*y^2', 'x*x*y*y'), ('x^2 + x', 'x*x + x'), ('x^3', 'x*x(x)'),
+        ('2^x*x', '2^x*x'), ('1/x', '1/x'), ('x', '1/x*x^2'), ('x', 'x^2/x'), ('1', 'x/x'),
+        ('a^2*b', 'a*a*b'), ('a^3*b^2', 'a^2*a*b*b'),
+    ]
+    for key, typed in ok:
+        r = check_answer('algebraic', key, typed)
+        assert r['correct'] is True, (key, typed, r)
+    bad = [
+        ('x^7', 'x^8'), ('x^7', 'x^2*x^6'), ('x^7', 'x^12'), ('x^7', 'x^64'), ('2*x^3', '2x^2'), ('2*x^3', '(2x)^3'),
+        ('x^6', 'x^5'), ('2^x*x', '2^(x*x)'), ('1/x', '1/x^2'), ('x^2', 'x'), ('x^2', '2x'),
+    ]
+    for key, typed in bad:
+        assert check_answer('algebraic', key, typed)['correct'] is False, (key, typed)
+    # the old rewrite: x*x^6 became x^2^6; 2^x*x became 2^x^2; 1/x*x became 1/x^2
+    assert _normalize_algebraic_string('x*x^6') == 'x*x^6'
+    assert _algebraic_prepare_for_sympy('x*x^6') == 'x*x**6'
+    assert _algebraic_prepare_for_sympy('2^x*x') == '2**x*x'
+    assert _algebraic_prepare_for_sympy('1/x*x') == '1/x*x'
+    assert _normalize_algebraic_string('x*x') == 'x^2' and _algebraic_prepare_for_sympy('x*x*y') == 'x**2*y'
+    # a power written straight on a power is refused, with brackets as the remedy
+    for typed in ('x^2^3', 'x**2**3', 'x ^ 2 ^ 3', '2^x^2', 'x^-2^3', 'x^a^b'):
+        assert has_power_tower(typed), typed
+        r = check_answer('algebraic', 'x^6', typed)
+        assert r['correct'] is False and r['feedback'] == POWER_TOWER_FEEDBACK and r.get('power_tower') is True, (typed, r)
+        r = check_answer('algebraic', 'x^8', typed)
+        assert r['correct'] is False and r['feedback'] == POWER_TOWER_FEEDBACK, (typed, r)
+    for typed in ('(x^2)^3', 'x^(2*3)', 'x^6', 'x^2*x^3', 'x^2y^3', '3x^2y^2', '2^x*x^2', 'x^2+x^3', '(x^2)^3*y^2', '2^3'):
+        assert not has_power_tower(typed), typed
+    assert check_answer('algebraic', 'x^8', 'x^(2*4)')['feedback'] != POWER_TOWER_FEEDBACK
+    assert check_answer('algebraic', 'x^6', '(x^2)^3')['correct'] is True
+    assert check_answer('algebraic', 'x^6', 'x^2^3', form='simplified')['feedback'] == POWER_TOWER_FEEDBACK
+    # the form rules still see the written structure
+    r = check_answer('algebraic', 'x^7', 'x*x^6', form='simplified')
+    assert r['correct'] is False and r['wrong_form'] == 'powers_not_combined', r
+    r = check_answer('algebraic', 'x^7', 'x^6*x', form='simplified')
+    assert r['correct'] is False and r['wrong_form'] == 'powers_not_combined', r
+    assert check_answer('algebraic', 'x^7', 'x^7', form='simplified')['correct'] is True
+    assert check_answer('algebraic', 'x^7', 'x**7', form='simplified')['correct'] is True
+    r = check_answer('algebraic', '2*x^3', '2x^3', form='simplified')
+    assert r['correct'] is True, r
+    r = check_answer('algebraic', '2*x^3', '2*x*x^2', form='simplified')
+    assert r['correct'] is False and r['wrong_form'] == 'powers_not_combined', r
+    r = check_answer('algebraic', '8*x^3', '(2x)^3', form='simplified')
+    assert r['correct'] is False and r['wrong_form'] == 'powers_not_combined', r
+    assert check_answer('algebraic', '8*x^3', '8x^3', form='simplified')['correct'] is True
+    r = check_answer('algebraic', '6*x^2', '(2x)(3x)', form='simplified')
+    assert r['correct'] is False and r['wrong_form'] == 'powers_not_combined', r
+    r = check_answer('algebraic', '8*x^3', '(2x)^3', form='expanded')
+    assert r['correct'] is True, r
+    assert check_answer('algebraic', 'x^6', '(x^2)^3', form='expanded')['correct'] is True
+    assert check_answer('algebraic', 'x^2+2*x+1', 'x*x+2x+1', form='expanded')['correct'] is True
+    assert check_answer('algebraic', 'x^2+2*x+1', 'x*x+x+x+1', form='expanded')['wrong_form'] == 'uncollected'
+    r = check_answer('algebraic', 'x^2+2*x+1', '(x+1)*(x+1)', form='expanded')
+    assert r['wrong_form'] == 'unexpanded', r
+    r = check_answer('algebraic', '(x+1)^2', '(x+1)*(x+1)', form='factorised')
+    assert r['correct'] is True, r
+    # (x^2)^3 total power: a power on a power is counted once, so the cap no longer refuses it; real excess still is
+    assert check_answer('algebraic', 'x^8', '((x^2)^2)^2')['correct'] is True
+    assert check_answer('algebraic', 'x^9', '(x^3)^3')['correct'] is False          # total power 9 is over the cap of 8
+    # a power of a product counts each power inside it once too (review 2026-10-28: (2x^2)^3 totalled 9)
+    assert check_answer('algebraic', '8*x^6', '(2x^2)^3')['correct'] is True
+    assert check_answer('algebraic', 'x^4*y^2', '(x^2y)^2')['correct'] is True
+    assert check_answer('algebraic', '8*x^6', '(2x^2)^3', form='simplified')['wrong_form'] == 'powers_not_combined'
+    assert check_answer('algebraic', 'x^9', '(x*x^2)^3')['correct'] is False        # still over the cap
+    # a bracketed exponent or a superscript after a caret is a tower as well
+    for typed in ('x^(2)^3', 'x**(2)**3', 'x^2²'):
+        assert check_answer('algebraic', 'x^6', typed)['feedback'] == POWER_TOWER_FEEDBACK, typed
+
+
+def test_power_tower_other_types():
+    # towers are refused in the other expression types too; ordinary powers are untouched
+    r = check_answer('algebraic_fraction', 'x|x', 'x^2^3|x')
+    assert r.get('power_tower') is True and r['correct'] is False, r
+    r = check_answer('quadratic_roots', '2,3', 'x^2^3')
+    assert r.get('power_tower') is True, r
+    assert check_answer('algebraic_fraction', 'x^2|x', 'x^2|x')['correct'] is True
+
+
+def test_web_quicktest_start_mirrors_the_api_gates():
+    # Whole-change review A4: the form route had no difficulty gate, no validation and no rate limit.
+    import app as app_module
+
+    body = {'level': 'gcse', 'subject': 'maths', 'topic': 'bearings', 'mode': 'standard'}
+    with app.test_client() as client:
+        r = client.post('/quicktest/start', data={**body, 'difficulty': 'difficult'})
+        assert r.status_code == 302 and r.headers['Location'].endswith('/'), (r.status_code, r.headers.get('Location'))
+        with client.session_transaction() as sess:
+            assert not sess.get('qt_id'), dict(sess)
+        r = client.post('/quicktest/start', data={**body, 'difficulty': 'bogus'})
+        assert r.status_code == 302 and r.headers['Location'].endswith('/'), r.headers.get('Location')
+        r = client.post('/quicktest/start', data={**body, 'difficulty': 'foundational'})
+        assert r.status_code == 302 and r.headers['Location'].endswith('/quicktest'), r.headers.get('Location')
+    old_disabled, old_limit = app_module._rate_limits_disabled, app_module.QUICKTEST_DAILY_LIMIT
+    app_module._rate_limits_disabled = lambda: False
+    app_module.QUICKTEST_DAILY_LIMIT = 1
+    try:
+        with app.test_client() as client:
+            env = {'REMOTE_ADDR': '10.77.66.55'}
+            first = client.post('/quicktest/start', data={**body, 'difficulty': 'foundational'}, environ_overrides=env)
+            second = client.post('/quicktest/start', data={**body, 'difficulty': 'foundational'}, environ_overrides=env)
+            assert first.headers['Location'].endswith('/quicktest'), first.headers.get('Location')
+            assert second.headers['Location'].endswith('/'), second.headers.get('Location')
+    finally:
+        app_module._rate_limits_disabled, app_module.QUICKTEST_DAILY_LIMIT = old_disabled, old_limit
+
+
 def main():
+    test_units_percentage_and_money()
+    test_units_lengths_areas_and_rates()
+    test_units_other_numeric_types()
+    test_units_are_bounded_and_safe()
+    test_units_feedback_copy_and_voice()
+    test_units_in_the_hint_diagnosis()
+    test_units_check_api()
+    test_units_review_2026_10_28()
+    test_review_pass1_nearest_penny_is_pounds()
+    test_review_pass1_session_question_units()
+    test_review_fix1a_unit_of_the_right_kind()
+    test_review_fix1a_simplest_form_fractions_and_ratios()
+    test_review_fix1a_number_with_its_letter()
+    test_check_algebraic_power_precedence()
+    test_power_tower_other_types()
     test_checker_unit()
     test_checker_standard_form_unit()
     test_checker_number_pair_and_list_unit()
@@ -10780,6 +12099,7 @@ def main():
     test_compound_measures_check_api()
     test_compound_measures_keyword_check_api()
     test_checker_bearing_unit()
+    test_checker_bearing_not_modulo_360()
     test_bearings_bearing_variants_are_graded()
     test_bearings_number_variants_are_graded()
     test_bearings_keyword_variants_are_graded()
@@ -10834,6 +12154,10 @@ def main():
     test_shared_question_renders_trackable_free_response()
     test_suggestion_view_renders_trackable_free_response()
     test_check_algebraic_expand_form()
+    test_check_algebraic_root_brackets()
+    test_check_algebraic_plus_minus_division_and_half_power()
+    test_check_algebraic_plus_minus_review_edges()
+    test_recurring_close_is_the_key_rounded()
     test_check_algebraic_factorise_form()
     test_answer_form_validation_and_copy()
     test_expand_factorise_generators_carry_form()
@@ -10845,6 +12169,8 @@ def main():
     test_linear_generators_name_a_letter_the_question_uses()
     test_check_surd_simplest_form()
     test_check_algebraic_simplified_form()
+    test_check_algebraic_fraction_lowest_terms()
+    test_check_algebraic_superscripts()
     test_algebraic_fraction_simplify_generators_carry_form()
     test_surd_simplify_generators_carry_form()
     test_surd_form_check_api_is_session_bound()
@@ -10860,6 +12186,7 @@ def main():
     test_ordered_proof_generators_carry_alternative_orders()
     test_ordered_proof_check_api_uses_the_stored_orders()
     test_set_work_keeps_server_side_checker_fields()
+    test_web_quicktest_start_mirrors_the_api_gates()
     print('test_answer_check_smoke: all checks passed')
 
 

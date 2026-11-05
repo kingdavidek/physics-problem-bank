@@ -868,5 +868,18 @@
     </div>
     {% endif %}
     <p class="free-response-feedback" aria-live="polite"></p>
+    {% if fr_hint_ladder %}
+    <div class="free-response-hint" aria-live="polite" data-more="{{ ladder_copy.more }}">
+        <div class="hint-card" hidden>
+            <p class="hint-card-title">{{ ladder_copy.hint }}</p>
+            <div class="hint-card-text free-response-hint-line"></div>
+            <div class="hint-card-more" hidden>
+                <p class="hint-card-title hint-card-subtitle">{{ ladder_copy.bigger }}</p>
+                <div class="hint-card-text free-response-hint-bigger"></div>
+            </div>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm free-response-hint-more" hidden>{{ ladder_copy.more }}</button>
+    </div>
+    {% endif %}
 </div>
 {% endif %}

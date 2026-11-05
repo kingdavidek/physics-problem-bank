@@ -1,4 +1,8 @@
-"""Set GCSE maths variant functions to 3 practice + 3 MCQ variants per tier."""
+"""Set GCSE maths variant functions to 3 practice + 3 MCQ variants per tier.
+
+DO NOT RUN.  A one-off migration script kept for the record: it rewrites the tier pools of generators/gcse/ and would
+undo the pool changes of docs/GCSE_MATHS_VARIETY.md (merged and retired slots) and later work.
+"""
 import re
 from pathlib import Path
 

@@ -8,6 +8,7 @@ from decimal import Decimal, ROUND_HALF_UP
 import sympy as sp
 
 from generators.shared.utils import (
+    money_num,
     make_problem,
     bracket_neg,
     problem_from_choice_output,
@@ -20,9 +21,10 @@ from generators.shared.utils import (
     problem_extra_from_graded_answer,
     signed_term,
     coef,
+    ordinal_suffix,
 )
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
-from generators.shared.answer_checkers import FORM_EXPANDED, FORM_FACTORISED, FORM_SIMPLEST_SURD
+from generators.shared.answer_checkers import FORM_EXPANDED, FORM_FACTORISED, FORM_SIMPLEST_SURD, linear_format_hint
 from models import svg_kit
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -44,6 +46,9 @@ from generators.shared.variant_utils import (
 
 
 def _bidmas_problem_from_output(out, difficulty):
+    choice = problem_from_choice_output(out, difficulty, 'gcse', 'maths', 'bidmas')
+    if choice:                              # Phase 3: the inverse-check and insert-the-brackets kinds are multiple choice
+        return choice
     if len(out) >= 5:
         q, s, hint, marks, raw = out[:5]
         return make_problem(
@@ -93,6 +98,7 @@ def gcse_maths_bidmas(difficulty, mode, variant_name=None):
         return gcse_maths_bidmas_mcq(difficulty, variant_name)
     if variant_name:
         return _basic_maths_practice('bidmas', difficulty, mode, variant_name)
+    from generators.gcse import maths_variety_a as va
     pools = {
         'foundational': [
             gcse_bidmas_simple, gcse_bidmas_brackets,
@@ -101,6 +107,7 @@ def gcse_maths_bidmas(difficulty, mode, variant_name=None):
             gcse_bidmas_proc_subtract_multiply,
             gcse_bidmas_proc_divide_add,
             gcse_bidmas_proc_two_products,
+            va.gcse_bidmas_inverse_check,
         ],
         'intermediate': [
             gcse_bidmas_mixed, gcse_neg_powers,
@@ -108,6 +115,7 @@ def gcse_maths_bidmas(difficulty, mode, variant_name=None):
             gcse_bidmas_proc_nested_brackets,
             gcse_bidmas_proc_power_then_multiply,
             gcse_bidmas_proc_bracket_over_divisor,
+            va.gcse_bidmas_missing_number, va.gcse_bidmas_roots_indices, va.gcse_bidmas_fraction_bar,
         ],
         'difficult': [
             gcse_bidmas_hard, gcse_bidmas_with_negatives,
@@ -115,6 +123,9 @@ def gcse_maths_bidmas(difficulty, mode, variant_name=None):
             gcse_bidmas_proc_square_bracket_divide,
             gcse_bidmas_proc_nested_inner_bracket,
             gcse_bidmas_proc_negative_coefficient,
+            va.gcse_bidmas_neg_indices_division, va.gcse_bidmas_insert_brackets,
+            va.gcse_bidmas_fraction_bar_negatives, va.gcse_bidmas_substitute_negatives,
+            va.gcse_bidmas_decimals,
         ],
     }
     variant = random.choice(pools.get(difficulty, pools['foundational']))
@@ -578,8 +589,9 @@ def _fdp_number_list_answer(values, format_hint=None):
     return payload
 
 
-def _fdp_fraction_answer(value):
-    return {'type': 'fraction', 'value': str(value)}
+def _fdp_fraction_answer(value, form=None):
+    """A fraction key; form 'simplified' where the question asks for the simplest form (whole-change review C2)."""
+    return {'type': 'fraction', 'value': str(value), **({'form': form} if form else {})}
 
 
 def _fdp_problem_from_output(out, difficulty):
@@ -643,7 +655,7 @@ def gcse_fdp_decimal_to_fraction():
         "write the fraction, then simplify."
     )
     record('fdp_decimal_to_fraction', dec=dec_str)
-    return q, s, hint, 1, _fdp_fraction_answer(frac)
+    return q, s, hint, 1, _fdp_fraction_answer(frac, form='simplified')
 
 def gcse_fdp_fraction_to_decimal():
     a, b = _fdp_random_terminating_fraction()
@@ -668,7 +680,7 @@ def gcse_fdp_percentage_to_fraction():
         f"Example: 20% = 20/100 = 1/5. Here: {pct}% = {pct}/100, then simplify to {ans}."
     )
     record('fdp_pct_to_fraction', pct=pct)
-    return q, s, hint, 1, _fdp_fraction_answer(ans)
+    return q, s, hint, 1, _fdp_fraction_answer(ans, form='simplified')
 
 def gcse_fdp_fraction_to_percentage():
     a, b = _fdp_random_terminating_fraction()
@@ -765,14 +777,14 @@ def gcse_fdp_percentage_decrease():
     new_amount = round(amount - decrease, 2)
     q = rf"The price of an item is £{amount}. It is reduced by {pct}% in a sale. Find the sale price."
     s = (
-        rf"Discount = {pct}% of £{amount} = £{decrease}<br>"
-        rf"Sale price = £{amount} − £{decrease} = <strong>£{new_amount}</strong><br>"
-        rf"Multiplier method: £{amount} × {1 - pct/100} = £{new_amount}"
+        rf"Discount = {pct}% of £{amount} = £{money_num(decrease)}<br>"
+        rf"Sale price = £{amount} − £{money_num(decrease)} = <strong>£{money_num(new_amount)}</strong><br>"
+        rf"Multiplier method: £{amount} × {1 - pct/100} = £{money_num(new_amount)}"
     )
     hint = (
         "<strong>Key idea:</strong> a reduction subtracts a percentage of the original price.<br>"
-        f"1. Discount = {pct}% of £{amount} = £{decrease}<br>"
-        f"2. Sale price = £{amount} − £{decrease}<br>"
+        f"1. Discount = {pct}% of £{amount} = £{money_num(decrease)}<br>"
+        f"2. Sale price = £{amount} − £{money_num(decrease)}<br>"
         f"Or use multiplier {1 - pct/100}: £{amount} × {1 - pct/100}."
     )
     record('num_pct_change', amount=amount, pct=pct, sign='down')
@@ -811,11 +823,11 @@ def gcse_fdp_reverse_percentage():
     multiplier = 1 - pct / 100
     original = random.choice([40, 50, 60, 80, 100, 120])
     final = round(original * multiplier, 2)
-    q = rf"After a {pct}% reduction, the price is £{final}. Find the original price."
+    q = rf"After a {pct}% reduction, the price is £{money_num(final)}. Find the original price."
     s = (
         rf"A {pct}% reduction uses multiplier {multiplier}.<br>"
         rf"Original × {multiplier} = {final}<br>"
-        rf"Original = {final} ÷ {multiplier} = <strong>£{original}</strong>"
+        rf"Original = {final} ÷ {multiplier} = <strong>£{money_num(original)}</strong>"
     )
     hint = (
         "<strong>Key idea:</strong> reverse percentages undo the multiplier — divide, don't subtract the %.<br>"
@@ -869,8 +881,8 @@ def gcse_fdp_compound_percentage():
         + (", to the nearest penny." if needs_rounding else ".")
     )
     s = (
-        rf"After {pct1}% increase: £{amount} × {1 + pct1/100} = £{after_first}<br>"
-        rf"Then {pct2}% decrease: £{after_first} × {1 - pct2/100} = <strong>£{final}</strong><br>"
+        rf"After {pct1}% increase: £{amount} × {1 + pct1/100} = £{money_num(after_first)}<br>"
+        rf"Then {pct2}% decrease: £{money_num(after_first)} × {1 - pct2/100} = <strong>£{money_num(final)}</strong><br>"
         rf"Overall multiplier: {1 + pct1/100} × {1 - pct2/100} = "
         rf"{round((1 + pct1/100) * (1 - pct2/100), 4)}"
     )
@@ -893,14 +905,14 @@ def gcse_fdp_reverse_percentage_two_step():
     final = round(mid * (1 - pct_down / 100), 2)
     q = (
         rf"After a {pct_up}% increase followed by a {pct_down}% decrease, "
-        rf"the price is £{final}. Find the original price, to the nearest pound."
+        rf"the price is £{money_num(final)}. Find the original price, to the nearest pound."
     )
     s = (
         rf"Combined multiplier = {1 + pct_up/100} × {1 - pct_down/100} = "
         rf"{round((1 + pct_up/100) * (1 - pct_down/100), 4)}<br>"
         rf"Original × {round((1 + pct_up/100) * (1 - pct_down/100), 4)} = {final}<br>"
         rf"Original = {final} ÷ {round((1 + pct_up/100) * (1 - pct_down/100), 4)} "
-        rf"= <strong>£{original}</strong>"
+        rf"= <strong>£{money_num(original)}</strong>"
     )
     combined = round((1 + pct_up/100) * (1 - pct_down/100), 4)
     hint = (
@@ -1013,6 +1025,7 @@ def gcse_maths_fdp(difficulty, mode, variant_name=None):
         return gcse_maths_fdp_mcq(difficulty, variant_name)
     if variant_name:
         return _basic_maths_practice('fdp', difficulty, mode, variant_name)
+    from generators.gcse import maths_variety_a as va
     if difficulty == 'foundational':
         variant = random.choice([
             gcse_fdp_decimal_to_percentage,
@@ -1020,19 +1033,23 @@ def gcse_maths_fdp(difficulty, mode, variant_name=None):
             gcse_fdp_decimal_to_fraction,
             gcse_fdp_fraction_to_decimal,
             gcse_fdp_percentage_to_fraction,
-            gcse_fdp_fraction_to_percentage
+            gcse_fdp_fraction_to_percentage,
+            va.gcse_fdp_add_subtract_fractions,
+            va.gcse_fdp_fraction_of_another,
+            va.gcse_fdp_percentage_of_another,
         ])
     elif difficulty == 'intermediate':
         variant = random.choice([
-            gcse_fdp_fraction_to_decimal,
-            gcse_fdp_percentage_to_fraction,
-            gcse_fdp_fraction_to_percentage,
             gcse_fdp_fraction_of_amount,
             gcse_fdp_percentage_increase,
             gcse_fdp_percentage_decrease,
             gcse_fdp_percentage_change,
             gcse_fdp_reverse_percentage,
             gcse_fdp_order_mixed_values,
+            va.gcse_fdp_multiply_divide_fractions,
+            va.gcse_fdp_mixed_add_subtract,
+            va.gcse_fdp_mixed_multiply_divide,
+            va.gcse_fdp_simple_interest,
         ])
     else:
         variant = random.choice([
@@ -1044,6 +1061,7 @@ def gcse_maths_fdp(difficulty, mode, variant_name=None):
             gcse_fdp_profit_loss_percentage,
             gcse_fdp_best_value_comparison,
             gcse_fdp_fraction_word_problem,
+            va.gcse_fdp_simple_vs_compound,
         ])
 
     return _fdp_problem(variant, difficulty)
@@ -1180,6 +1198,8 @@ def _mf_random_composite(lo=12, hi=120):
 def _mf_random_pair(lo=6, hi=72):
     a = random.randint(lo, hi)
     b = random.randint(lo, hi)
+    while b == a:   # two equal numbers make HCF/LCM questions degenerate
+        b = random.randint(lo, hi)
     return a, b
 
 
@@ -1307,8 +1327,8 @@ def gcse_mf_find_multiple():
     n = random.randint(3, 15)
     k = random.randint(3, 12)
     ans = n * k
-    q = rf"Write down the {k}th multiple of {n}."
-    s = rf"The {k}th multiple of {n} is {n} × {k} = <strong>{ans}</strong>"
+    q = rf"Write down the {k}{ordinal_suffix(k)} multiple of {n}."
+    s = rf"The {k}{ordinal_suffix(k)} multiple of {n} is {n} × {k} = <strong>{ans}</strong>"
     hint = "Multiply the number by the position in the list."
     record('mf_multiple', n=n, k=k)
     return q, s, hint, 1, ans
@@ -1605,22 +1625,30 @@ def gcse_maths_multiples_factors(difficulty, mode, variant_name=None):
         return gcse_maths_multiples_factors_mcq(difficulty, variant_name)
     if variant_name:
         return _basic_maths_practice('multiples_factors', difficulty, mode, variant_name)
+    from generators.gcse import maths_variety_a as va
     if difficulty == 'foundational':
         variant = random.choice([
             gcse_mf_find_multiple,
             gcse_mf_find_factor,
-            gcse_mf_prime
-        ])
-    elif difficulty == 'intermediate':
-        variant = random.choice([
+            gcse_mf_prime,
             gcse_mf_factor_pairs,
             gcse_mf_hcf,
             gcse_mf_lcm,
+            va.gcse_mf_list_factors,
+            va.gcse_mf_next_multiple,
+            va.gcse_mf_count_factors,
+        ])
+    elif difficulty == 'intermediate':
+        variant = random.choice([
             gcse_mf_lcm_buses_word,
             gcse_mf_hcf_tiles_word,
             gcse_mf_common_factors_count,
             gcse_mf_hcf_using_primes,
             gcse_mf_divisibility_digit,
+            va.gcse_mf_prime_factor_exponents,
+            va.gcse_mf_hcf_simplify_fraction,
+            va.gcse_mf_lcm_laps,
+            va.gcse_mf_multiples_count,
         ])
     else:
         variant = random.choice([
@@ -1631,6 +1659,8 @@ def gcse_maths_multiples_factors(difficulty, mode, variant_name=None):
             gcse_mf_number_from_hcf_lcm,
             gcse_mf_lcm_from_prime_forms,
             gcse_mf_primes_in_range,
+            va.gcse_mf_square_multiplier,
+            va.gcse_mf_factor_count_from_primes,
         ])
 
     return _mf_problem_from_output(variant(), difficulty)
@@ -1688,8 +1718,9 @@ def _dec_number_list_answer(values, format_hint=None):
     return payload
 
 
-def _dec_fraction_answer(value):
-    return {'type': 'fraction', 'value': str(value)}
+def _dec_fraction_answer(value, form=None):
+    """A fraction key; form 'simplified' where the question asks for the simplest form (whole-change review C2)."""
+    return {'type': 'fraction', 'value': str(value), **({'form': form} if form else {})}
 
 
 def _dec_problem_from_output(out, difficulty):
@@ -1840,18 +1871,21 @@ def gcse_dec_divide():
 def gcse_dec_round():
     """Foundational: round a decimal to a specified number of decimal places"""
     import random
-    n = round(random.uniform(0.001, 999.999), 4)
+    # Phase 3 batch A review (moved to the foundational tier): the number always has four decimal places, the last one
+    # not 0, so it is never already rounded ("Round 605.944 to 3 decimal places" was its own answer); the rounding is
+    # half up on the exact value (round() on a float rounds 2.675 down); no em dash in the working.
+    n_str = f"{random.randint(0, 999)}.{random.randint(0, 999):03d}{random.randint(1, 9)}"
+    n = float(n_str)
     dp = random.choice([1, 2, 3])
-    result = round(n, dp)
-    n_str = f"{fmt_dp(n, 4)}"
-    parts = n_str.split('.')
-    decide_digit = parts[1][dp] if len(parts) > 1 and len(parts[1]) > dp else '0'
+    result_str = fmt_dp(n_str, dp)
+    result = float(result_str)
+    decide_digit = n_str.split('.')[1][dp]
     ordinals = ['', '1st', '2nd', '3rd', '4th']
-    q = rf"Round {n} to {dp} decimal place{'s' if dp > 1 else ''}."
+    q = rf"Round {n_str} to {dp} decimal place{'s' if dp > 1 else ''}."
     s = (
-        rf"Identify the deciding digit — the {ordinals[dp + 1]} decimal place: <strong>{decide_digit}</strong><br>"
+        rf"Identify the deciding digit, the {ordinals[dp + 1]} decimal place: <strong>{decide_digit}</strong><br>"
         rf"{'5 or more → round the last kept digit up.' if int(decide_digit) >= 5 else 'Less than 5 → keep the last digit unchanged.'}<br>"
-        rf"<strong>{result}</strong>"
+        rf"<strong>{result_str}</strong>"
     )
     hint = (
         rf"Find the digit one place beyond where you are rounding. "
@@ -1909,10 +1943,11 @@ def gcse_dec_practice_word_total():
     unit = round(random.choice([1.25, 1.50, 2.35, 2.80, 3.45, 4.20]), 2)
     qty = random.randint(4, 15)
     total = round(unit * qty, 2)
-    q = rf"A shop sells items at £{unit} each. How much do {qty} items cost?"
+    # Phase 3 batch A review (moved to the foundational tier): money is shown to the penny ("£4.2 each" before)
+    q = rf"A shop sells items at £{fmt_dp(unit, 2)} each. How much do {qty} items cost?"
     s = (
         rf"Total cost = unit price × quantity<br>"
-        rf"£{unit} × {qty} = <strong>£{total}</strong><br>"
+        rf"£{fmt_dp(unit, 2)} × {qty} = <strong>£{fmt_dp(total, 2)}</strong><br>"
         rf"(Multiply as whole numbers if helpful, then place the decimal point.)"
     )
     hint = (
@@ -1946,7 +1981,7 @@ def gcse_dec_practice_decimal_to_fraction():
         r"other than 1 divides both."
     )
     record('fdp_decimal_to_fraction', dec=dec_str)
-    return q, s, hint, 2, _dec_fraction_answer(f'{num}/{den}')
+    return q, s, hint, 2, _dec_fraction_answer(f'{num}/{den}', form='simplified')
 
 
 def gcse_dec_practice_estimate_product():
@@ -2011,7 +2046,7 @@ def gcse_dec_recurring():
     s, hint = _fdp_recurring_algebra_steps(num, den)
     q = rf"Write {dec} as a fraction in its simplest form. Show your working."
     record('num_recurring_text', dec=dec)
-    return q, s, hint, 3, _dec_fraction_answer(f'{num}/{den}')
+    return q, s, hint, 3, _dec_fraction_answer(f'{num}/{den}', form='simplified')
 
 
 def gcse_dec_practice_mixed_ops():
@@ -2228,13 +2263,13 @@ def gcse_dec_proc_multi_step_shop():
     discount = round(subtotal * discount_pct / 100, 2)
     total = round(subtotal - discount, 2)
     q = (
-        rf"{qty} items cost £{unit} each. "
+        rf"{qty} items cost £{money_num(unit)} each. "
         rf"A <strong>{discount_pct}%</strong> discount is applied to the total. "
         rf"What is the final price?"
     )
     s = (
         rf"Step 1 — full price before discount:<br>"
-        rf"£{unit} × {qty} = £{fmt_dp(subtotal, 2)}<br>"
+        rf"£{money_num(unit)} × {qty} = £{fmt_dp(subtotal, 2)}<br>"
         rf"Step 2 — discount ({discount_pct}% of £{fmt_dp(subtotal, 2)}):<br>"
         rf"{discount_pct}% × £{fmt_dp(subtotal, 2)} = £{fmt_dp(discount, 2)}<br>"
         rf"Step 3 — subtract discount:<br>"
@@ -2306,6 +2341,7 @@ def gcse_maths_decimals(difficulty, mode, variant_name=None):
         return gcse_maths_decimals_mcq(difficulty, variant_name)
     if variant_name:
         return _basic_maths_practice('decimals', difficulty, mode, variant_name)
+    from generators.gcse import maths_variety_a as va
     pools = {
         'foundational': [
             gcse_dec_ordering, gcse_dec_add_subtract,
@@ -2314,22 +2350,27 @@ def gcse_maths_decimals(difficulty, mode, variant_name=None):
             gcse_dec_proc_three_add,
             gcse_dec_proc_divide_power10,
             gcse_dec_proc_difference,
+            gcse_dec_practice_word_total,
+            va.gcse_dec_subtract_from_whole,
         ],
         'intermediate': [
             gcse_dec_multiply, gcse_dec_divide, gcse_dec_fraction_to_decimal, gcse_dec_round,
-            gcse_dec_practice_word_total, gcse_dec_practice_decimal_to_fraction,
-            gcse_dec_practice_estimate_product, gcse_dec_practice_order_mixed,
             gcse_dec_proc_money_change,
+            gcse_dec_practice_decimal_to_fraction,
+            gcse_dec_practice_estimate_product, gcse_dec_practice_order_mixed,
             gcse_dec_proc_mean,
             gcse_dec_proc_map_scale,
+            va.gcse_dec_known_product,
         ],
         'difficult': [
-            gcse_dec_recurring, gcse_dec_divide, gcse_dec_multiply, gcse_dec_round,
+            gcse_dec_recurring, gcse_dec_multiply,
             gcse_dec_practice_mixed_ops, gcse_dec_practice_bounds,
             gcse_dec_practice_word_unit_price,
             gcse_dec_proc_multi_step_shop,
             gcse_dec_proc_bounds_dynamic,
             gcse_dec_proc_density,
+            va.gcse_dec_known_division,
+            va.gcse_dec_rounding_error,
         ],
     }
     variant = random.choice(pools.get(difficulty, pools['foundational']))
@@ -2411,17 +2452,21 @@ def gcse_neg_add_subtract():
     import random
     a = random.randint(-10, 10)
     b = random.randint(-10, 10)
+    while a == 0 or b == 0:         # Phase 3 (2026-10-27): reachable from the queue now, so no 0 operands
+        a = random.randint(-10, 10)
+        b = random.randint(-10, 10)
     op = random.choice(['+', '−'])
+    record('num_directed', a=a, op='+' if op == '+' else '-', b=b)
     if op == '+':
         result = a + b
-        q = rf"Calculate {a} + ({b})"
+        q = rf"Calculate {a} + {bracket_neg(b)}"
         if b < 0:
             s = rf"Adding a negative is the same as subtracting: {a} + ({b}) = {a} − {abs(b)} = <strong>{result}</strong>"
         else:
             s = rf"{a} + {b} = <strong>{result}</strong>"
     else:
         result = a - b
-        q = rf"Calculate {a} − ({b})"
+        q = rf"Calculate {a} − {bracket_neg(b)}"
         if b < 0:
             s = rf"Subtracting a negative is the same as adding: {a} − ({b}) = {a} + {abs(b)} = <strong>{result}</strong>"
         else:
@@ -2437,17 +2482,19 @@ def gcse_neg_multiply_divide():
     op = random.choice(['×', '÷'])
     if op == '×':
         result = a * b
+        record('product', a=a, b=b)
         sign_result = "positive (−  ×  − = +)" if a < 0 and b < 0 else "negative (different signs)" if (a < 0) != (b < 0) else "positive"
-        q = rf"Calculate {a} × {b}"
-        s = rf"Signs: {'same signs → positive' if (a<0)==(b<0) else 'different signs → negative'}<br>{a} × {b} = <strong>{result}</strong>"
+        q = rf"Calculate {a} × {bracket_neg(b)}"
+        s = rf"Signs: {'same signs → positive' if (a<0)==(b<0) else 'different signs → negative'}<br>{a} × {bracket_neg(b)} = <strong>{result}</strong>"
     else:
         # make sure it divides cleanly
         result = a
         b_use = random.choice([-4, -3, -2, 2, 3, 4])
         a_use = result * b_use
-        q = rf"Calculate {a_use} ÷ {b_use}"
+        record('quotient', a=a_use, b=b_use)
+        q = rf"Calculate {a_use} ÷ {bracket_neg(b_use)}"
         res = a_use // b_use
-        s = rf"Signs: {'same signs → positive' if (a_use<0)==(b_use<0) else 'different signs → negative'}<br>{a_use} ÷ {b_use} = <strong>{res}</strong>"
+        s = rf"Signs: {'same signs → positive' if (a_use<0)==(b_use<0) else 'different signs → negative'}<br>{a_use} ÷ {bracket_neg(b_use)} = <strong>{res}</strong>"
         hint = r"Same signs → positive result. Different signs → negative result."
         return q, s, hint, 1, res
     hint = r"Same signs → positive result. Different signs → negative result."
@@ -2472,7 +2519,7 @@ def gcse_neg_powers():
         result = with_bracket
         q = rf"Calculate \( \left(-{n}\right)^{{{p}}} \)"
         s = (
-            rf"\( \left(-{n}\right)^{{{p}}} = {expand_a} = <strong>{with_bracket}</strong> \)<br>"
+            rf"\( \left(-{n}\right)^{{{p}}} = {expand_a} = \) <strong>\( {with_bracket} \)</strong><br>"
             rf"The negative is <strong>inside</strong> the brackets, so it is raised to the power."
         )
         record('arith', expr=f"(-{n})^{p}")
@@ -2484,7 +2531,7 @@ def gcse_neg_powers():
         result = without_bracket
         q = rf"Calculate \( -\left({n}\right)^{{{p}}} \)"
         s = (
-            rf"\( -\left({n}\right)^{{{p}}} = -\left({n**p}\right) = <strong>{without_bracket}</strong> \)<br>"
+            rf"\( -\left({n}\right)^{{{p}}} = -\left({n**p}\right) = \) <strong>\( {without_bracket} \)</strong><br>"
             rf"Only <strong>{n}</strong> is {power_phrase}; the minus sign stays <strong>outside</strong> the brackets."
         )
         record('arith', expr=f"-({n})^{p}")
@@ -2803,7 +2850,7 @@ def _algebra_problem_from_output(out, difficulty):
                 extra = {
                     'correct_answer_raw': _algebra_linear_raw(raw),
                     'answer_type': 'linear',
-                    'answer_format_hint': 'Enter the value (e.g. x = 3 or just 3)',
+                    'answer_format_hint': linear_format_hint(_algebra_linear_raw(raw)),
                 }
             elif raw_type == 'quadratic_roots':
                 roots = raw.get('roots') or ()
@@ -2885,6 +2932,16 @@ def algebra_practice_linear_3():
     return _algebra_linear_equation(3, 15, 2, 25, 20, 100)
 
 
+def algebra_practice_linear():
+    """Solve ax + b = c: the one foundational slot for the three number ranges of linear_1, linear_2 and linear_3.
+
+    Merged 2026-10-27 (docs/GCSE_MATHS_VARIETY.md, Phase 1). It draws a range at random and calls that variant, so it
+    can ask every question the three could ask; the three stay defined (retired, register.RETIRED) because a stored
+    queue or a saved problem may still name them.
+    """
+    return random.choice([algebra_practice_linear_1, algebra_practice_linear_2, algebra_practice_linear_3])()
+
+
 def _algebra_factorise_problem(r1_range, r2_range):
     x = sp.Symbol('x')
     r1 = random.randint(*r1_range)
@@ -2893,7 +2950,9 @@ def _algebra_factorise_problem(r1_range, r2_range):
         r2 = random.randint(*r2_range)
     expr = sp.expand((x - r1) * (x - r2))
     q = rf"Solve: \( {sp.latex(expr)} = 0 \)"
-    s = rf"Factorise: \( (x {signed_term(-r1)})(x {signed_term(-r2)}) = 0 \)<br>\( x = \boxed{{{r1}}} \) or \( x = \boxed{{{r2}}} \)"
+    def factor(r):              # review C10: a root of 0 gives the factor x, not (x + 0)
+        return 'x' if r == 0 else f'(x {signed_term(-r)})'
+    s = rf"Factorise: \( {factor(r1)}{factor(r2)} = 0 \)<br>\( x = \boxed{{{r1}}} \) or \( x = \boxed{{{r2}}} \)"
     hint = r"Factorise, then set each bracket equal to zero."
     return q, s, hint, 3, _algebra_quadratic_roots_answer(r1, r2)
 
@@ -2911,6 +2970,17 @@ def algebra_practice_factorise_2():
 @verifies('alg', task='solve_poly')
 def algebra_practice_factorise_3():
     return _algebra_factorise_problem((-10, 10), (-10, 10))
+
+
+def algebra_practice_factorise():
+    """Solve x^2 + bx + c = 0 by factorising: the one intermediate slot for the three number ranges of factorise_1,
+    factorise_2 and factorise_3.
+
+    Merged in Phase 3 batch A (docs/GCSE_MATHS_VARIETY.md). It draws a range at random and calls that variant, so it
+    can ask every question the three could ask; the three stay defined (retired, register.RETIRED) because a stored
+    queue or a saved problem may still name them.
+    """
+    return random.choice([algebra_practice_factorise_1, algebra_practice_factorise_2, algebra_practice_factorise_3])()
 
 
 def _algebra_quadratic_formula_problem():
@@ -3198,6 +3268,39 @@ def algebra_practice_consecutive_integers():
     return q, s, hint, 4, _algebra_linear_answer(start)
 
 
+@verifies('alg', task='factorise')
+def algebra_practice_factorise_quadratic():
+    """Factorise ax^2 + bx + c with a > 1 (Higher content; added in Phase 1 so the difficult tier keeps 7 kinds)."""
+    while True:
+        p, r = random.choice([(1, 2), (1, 3), (2, 1), (3, 1), (2, 3), (3, 2), (1, 4), (4, 1)])
+        q = random.choice([-4, -3, -2, -1, 1, 2, 3, 4])
+        s_ = random.choice([-4, -3, -2, -1, 1, 2, 3, 4])
+        a, b, c = p * r, p * s_ + q * r, q * s_
+        # brackets with no common factor, nothing left to take out, and a middle term (not a difference of squares)
+        if b != 0 and math.gcd(p, q) == 1 and math.gcd(r, s_) == 1 and math.gcd(math.gcd(a, abs(b)), abs(c)) == 1:
+            break
+    x = sp.Symbol('x')
+    expr = a * x**2 + b * x + c
+    factored = f"({_lin_str(p, q)})({_lin_str(r, s_)})"
+    q_text = rf"Factorise fully: \( {sp.latex(expr)} \)"
+
+    def x_term(k):          # '+ 4x', '- x' (a term after the first)
+        return f"- {'' if k == -1 else -k}x" if k < 0 else f"+ {'' if k == 1 else k}x"
+
+    first = 'x' if p == 1 else f'{p}x'
+    bracket = _lin_str(r, s_)
+    # the two numbers are p*s and q*r: they multiply to a*c and add to b
+    sol = (rf"\( a \times c = {a} \times {'(' + str(c) + ')' if c < 0 else c} = {a * c} \). "
+           rf"Two numbers that multiply to {a * c} and add to {b}: {p * s_} and {q * r}.<br>"
+           rf"Split the middle term: \( {a}x^{{2}} {x_term(p * s_)} {x_term(q * r)} {signed_term(c)} \)<br>"
+           rf"Factorise in pairs: \( {first}({bracket}) {signed_term(q)}({bracket}) \)<br>"
+           rf"\( {sp.latex(expr)} = \boxed{{{factored}}} \)")
+    hint = r"Look for two brackets whose first terms multiply to the \(x^2\) term and whose last terms multiply to the constant."
+    return q_text, sol, hint, 3, _algebra_algebraic_answer(
+        factored, format_hint='e.g. (2x + 1)(x - 3)', form=FORM_FACTORISED,
+    )
+
+
 def gcse_maths_algebra(difficulty, mode, variant_name=None):
     if mode == 'mcq':
         from generators.gcse.maths_basic_topics_mcq import gcse_maths_algebra_mcq
@@ -3205,21 +3308,29 @@ def gcse_maths_algebra(difficulty, mode, variant_name=None):
     if variant_name:
         return _basic_maths_practice('algebra', difficulty, mode, variant_name)
 
+    from generators.gcse import maths_variety_a as va
     pools = {
         'foundational': [
-            algebra_practice_linear_1,
-            algebra_practice_linear_2,
-            algebra_practice_linear_3,
-        ],
-        'intermediate': [
-            algebra_practice_factorise_1,
-            algebra_practice_factorise_2,
-            algebra_practice_factorise_3,
-            algebra_practice_expand_binomial,
-            algebra_practice_linear_both_sides,
+            algebra_practice_linear,
             algebra_practice_substitution,
             algebra_practice_factorise_hcf,
             algebra_practice_change_subject,
+            va.algebra_practice_collect_terms,
+            va.algebra_practice_index_laws_simplify,
+            va.algebra_practice_expand_single,
+            va.algebra_practice_form_expression,
+            va.algebra_practice_form_equation_shape,
+        ],
+        'intermediate': [
+            algebra_practice_factorise,
+            algebra_practice_expand_binomial,
+            algebra_practice_linear_both_sides,
+            va.algebra_practice_factorise_simple,
+            va.algebra_practice_difference_two_squares,
+            va.algebra_practice_index_laws_coefficients,
+            va.algebra_practice_solve_fraction_equation,
+            va.algebra_practice_form_equation_angles,
+            va.algebra_practice_expand_two_brackets,
         ],
         'difficult': [
             algebra_practice_quadratic_1,
@@ -3228,8 +3339,9 @@ def gcse_maths_algebra(difficulty, mode, variant_name=None):
             algebra_practice_expand_mixed,
             algebra_practice_brackets_both_sides,
             algebra_practice_consecutive_integers,
-            algebra_practice_quadratic_2,
-            algebra_practice_quadratic_3,
+            algebra_practice_factorise_quadratic,
+            va.algebra_practice_expand_three_binomials,
+            va.algebra_practice_form_quadratic_area,
         ],
     }
     variant = random.choice(pools.get(difficulty, pools['foundational']))
@@ -3453,7 +3565,7 @@ def _surd_problem_from_output(out, difficulty):
                         str(radicand) if coeff == 1 else f'{coeff}|{radicand}'
                     ),
                     'answer_type': 'surd',
-                    'answer_format_hint': 'e.g. √113 — use the √ button if needed',
+                    'answer_format_hint': 'e.g. √113 (use the √ button if needed)',
                 }
         elif isinstance(raw, dict) and raw.get('type') == 'algebraic':
             if raw.get('kind') == 'surd_binomial':
@@ -3464,12 +3576,14 @@ def _surd_problem_from_output(out, difficulty):
                 extra = {
                     'correct_answer_raw': f'{const}|{coef}|{rad}|{sign}',
                     'answer_type': 'algebraic',
+                    # Whole-change review C1: the default example was built from the key itself.  A fixed neutral
+                    # example (a second one when the key happens to be the first) never is the answer.
                     'answer_format_hint': raw.get(
                         'format_hint',
                         (
-                            f'e.g. {const} + {coef}√{rad}'
-                            if sign == '+'
-                            else f'e.g. {const} − {coef}√{rad}'
+                            'e.g. 3 + 2√5' if (const, coef, rad, sign) != (3, 2, 5, '+') else 'e.g. 4 + 3√2'
+                        ) if sign == '+' else (
+                            'e.g. 3 − 2√5' if (const, coef, rad, sign) != (3, 2, 5, '-') else 'e.g. 4 − 3√2'
                         ),
                     ),
                 }
@@ -3909,7 +4023,7 @@ def gcse_surds_identity():
          r"Here p = √a and q = √b:<br>"
          r"(√a)² − (√b)² = <strong>a − b</strong>")
     hint = r"(√a + √b)(√a − √b) is a difference of two squares pattern."
-    return q_text, s, hint, 2, _algebraic_answer('a-b', 'e.g. a - b', form=FORM_EXPANDED)
+    return q_text, s, hint, 2, _algebraic_answer('a-b', 'e.g. 2a - b', form=FORM_EXPANDED)
 
 
 gcse_surds_identity._fixed_stem = True
@@ -3976,7 +4090,7 @@ def gcse_surds_practice_divide():
     """Divide one surd by another and simplify."""
     a, b, ans, working, raw = _surd_random_divide()
     q = rf"Simplify: \( \dfrac{{\sqrt{{{a}}}}}{{\sqrt{{{b}}}}} \)"
-    s = rf"{working} → <strong>{ans}</strong>"
+    s = rf"{working} \) → <strong>{ans}</strong>"
     hint = r"Use √a ÷ √b = √(a/b), then simplify the surd if possible."
     return q, s, hint, 2, raw
 
@@ -4026,7 +4140,7 @@ def gcse_surds_practice_surd_equation():
     q = rf"Solve: \( \sqrt{{x + {offset}}} = {rhs} \)"
     s = (
         rf"Square both sides: \( x + {offset} = {rhs**2} \)<br>"
-        rf"\( x = {rhs**2} - {offset} = <strong>{x_val}</strong> \)"
+        rf"\( x = {rhs**2} - {offset} = \) <strong>\( {x_val} \)</strong>"
     )
     hint = r"Square both sides to remove the square root, then solve the linear equation."
     return q, s, hint, 3, x_val
@@ -4099,12 +4213,18 @@ def gcse_maths_surds(difficulty, mode, variant_name=None):
         return gcse_maths_surds_mcq(difficulty, variant_name)
     if variant_name:
         return _basic_maths_practice('surds', difficulty, mode, variant_name)
+    from generators.gcse import maths_variety_a as va
     pools = {
         'foundational': [
             gcse_surds_simplify,
             gcse_surds_simplify_multiple,
             gcse_surds_add_subtract,
             gcse_surds_multiply,
+            gcse_surds_practice_divide,
+            gcse_surds_practice_compare,
+            va.gcse_surds_identify_irrational,
+            va.gcse_surds_square_of_surd,
+            va.gcse_surds_add_like,
         ],
         'intermediate': [
             gcse_surds_expand_simple,
@@ -4114,10 +4234,12 @@ def gcse_maths_surds(difficulty, mode, variant_name=None):
             gcse_surds_rationalise_simple,
             gcse_surds_rationalise_compound,
             gcse_surds_rationalise_binomial_diff,
-            gcse_surds_practice_divide,
-            gcse_surds_practice_compare,
             gcse_surds_practice_mixed_simplify,
             gcse_surds_practice_double_bracket,
+            va.gcse_surds_expand_single_bracket,
+            va.gcse_surds_multiply_coefficients,
+            va.gcse_surds_rationalise_coefficient,
+            va.gcse_surds_match_simplified,
         ],
         'difficult': [
             gcse_surds_show_that_rationalise,
@@ -4128,6 +4250,7 @@ def gcse_maths_surds(difficulty, mode, variant_name=None):
             gcse_surds_practice_rationalise_binomial_diff,
             gcse_surds_practice_between_which_integers,
             gcse_surds_practice_perimeter_exact,
+            va.gcse_surds_pythagoras_exact,
         ],
     }
     variant = random.choice(pools.get(difficulty, pools['foundational']))
@@ -4588,7 +4711,7 @@ def _vectors_magnitude_steps(x, y, decimal_places=3):
     sq_sum = x * x + y * y
     mag = math.sqrt(sq_sum)
     steps = [
-        "<strong>Step 1</strong> — the magnitude is the length of the vector (distance from the origin). "
+        "<strong>Step 1</strong>: the magnitude is the length of the vector (distance from the origin). "
         "Use Pythagoras on the right-angled triangle formed by the components:",
         rf"|v| = √(x² + y²) = √({bracket_neg(x)}² + {bracket_neg(y)}²) = √({x * x} + {y * y}) = √{sq_sum}",
     ]
@@ -4741,7 +4864,7 @@ def _vec_problem_from_output(out, difficulty):
                             str(radicand) if coeff == 1 else f'{coeff}|{radicand}'
                         ),
                         'answer_type': 'surd',
-                        'answer_format_hint': 'e.g. √13 — use the √ button if needed',
+                        'answer_format_hint': 'e.g. √13 (use the √ button if needed)',
                     }
             elif raw_type == 'vector_combo':
                 coeffs = raw.get('coefficients') or ()
@@ -4866,6 +4989,11 @@ def _vectors_found_magnitude_6_8():
     s, hint = _vectors_magnitude_steps(x, y)
     record('vec_magnitude', x=x, y=y)
     return q, s, hint, 2, _vec_magnitude_answer(x, y)
+
+def _vectors_found_magnitude_triple():
+    """One slot for the magnitude of a column vector with a Pythagorean triple (merges _vectors_found_magnitude_3_4 and
+    _vectors_found_magnitude_6_8, the 3-4-5 multiples and the other triples; both stay defined, retired)."""
+    return random.choice([_vectors_found_magnitude_3_4, _vectors_found_magnitude_6_8])()
 
 def _vectors_found_add_simple():
     a = (random.randint(1,5), random.randint(-3,6))
@@ -5502,7 +5630,7 @@ def _vectors_diff_geometry_parallelogram():
     s = (rf"In parallelogram ABCD, \(\overrightarrow{{AB}} = \overrightarrow{{DC}}\) (opposite sides equal and parallel)."
          rf"<br>\(\overrightarrow{{AB}} = \begin{{pmatrix}} {ab[0]} \\ {ab[1]} \end{{pmatrix}}\)."
          rf" Since DC = AB, D = C \(-\) AB = \(({c[0]}-{ab[0]},\ {c[1]}-{ab[1]}) = ({d[0]},{d[1]})\)."
-         rf"<br>Alternatively: D = A + C \(-\) B = ({a[0]}+{c[0]}\(-\){b[0]},\ {a[1]}+{c[1]}\(-\){b[1]}) = ({d[0]},{d[1]})\).")
+         rf"<br>Alternatively: D = A + C \(-\) B = \(({a[0]}+{c[0]}-{b[0]},\ {a[1]}+{c[1]}-{b[1]}) = ({d[0]},{d[1]})\).")
     hint = "Use D = A + C − B (the diagonal property: midpoints of AC and BD must coincide)."
     record('vec_parallelogram', ax=a[0], ay=a[1], bx=b[0], by=b[1], cx=c[0], cy=c[1])
     return q, s, hint, 3, _vec_number_pair_answer(d[0], d[1], "x", "y")
@@ -5616,8 +5744,8 @@ _VECTORS_MCQ_RAW = [
     {"difficulty": "foundational", "q": "Which of these is a vector quantity?", "opts": ["A  Speed","B  Distance","C  Velocity","D  Time"], "ans":"C", "sol": "Velocity has magnitude <em>and</em> direction; speed and distance do not. Answer: <strong>C</strong>", "hint":"Velocity has both speed and direction — that makes it a vector."},
     {"difficulty": "foundational", "q": r"What does \(\begin{pmatrix} 2 \\ -3 \end{pmatrix}\) represent?", "opts":["A  2 left, 3 up","B  2 right, 3 down","C  2 right, 3 up","D  2 left, 3 down"], "ans":"B", "sol": "Top = +2 (right), bottom = −3 (down). Answer: <strong>B</strong>", "hint":"Top = horizontal (positive = right), bottom = vertical (negative = down)."},
     {"difficulty": "foundational", "q": r"Vector \(\mathbf{a} = \begin{pmatrix} 1 \\ 2 \end{pmatrix}\) and \(\mathbf{b} = \begin{pmatrix} 3 \\ -1 \end{pmatrix}\). Find \(\mathbf{a} + \mathbf{b}\).", "opts":["A  (4, 1)","B  (4, 3)","C  (2, 3)","D  (2, 1)"], "ans":"A", "sol": "Add tops: 1+3=4. Add bottoms: 2+(−1)=1. Answer: <strong>(4, 1)</strong>", "hint":"Add the x's separately, then the y's: 1+3=4, 2+(-1)=1."},
-    {"difficulty": "intermediate", "q": r"If \(\mathbf{a} = \begin{pmatrix} 2 \\ 5 \end{pmatrix}\), what is \(-2\mathbf{a}\)?", "opts":["A  (-4, -10)","B  (-4, 10)","C  (4, -10)","D  (-2, -5)"], "ans":"A", "sol": "Multiply each component by −2: (−4, −10). Answer: <strong>A</strong>", "hint":"Multiply each component by -2."},
-    {"difficulty": "intermediate", "q": r"The magnitude of \(\begin{pmatrix} 6 \\ 8 \end{pmatrix}\) is:", "opts":["A  10","B  14","C  100","D  0"], "ans":"A", "sol": r"√(6²+8²) = √(36+64) = √100 = <strong>10</strong>. Answer: A", "hint":r"Use Pythagoras: √(6²+8²) = √(36+64) = 10."},
+    {"difficulty": "foundational", "q": r"If \(\mathbf{a} = \begin{pmatrix} 2 \\ 5 \end{pmatrix}\), what is \(-2\mathbf{a}\)?", "opts":["A  (-4, -10)","B  (-4, 10)","C  (4, -10)","D  (-2, -5)"], "ans":"A", "sol": "Multiply each component by −2: (−4, −10). Answer: <strong>A</strong>", "hint":"Multiply each component by -2."},
+    {"difficulty": "intermediate", "q": r"The magnitude of \(\begin{pmatrix} 6 \\ 8 \end{pmatrix}\) is:", "opts":["A  10","B  14","C  100","D  48"], "ans":"A", "sol": r"√(6²+8²) = √(36+64) = √100 = <strong>10</strong>. Answer: A", "hint":r"Use Pythagoras: √(6²+8²) = √(36+64) = 10."},
     {"difficulty": "intermediate", "q": r"Which vector is parallel to \(\begin{pmatrix} 2 \\ 4 \end{pmatrix}\)?", "opts":["A  (1,2)","B  (2,1)","C  (4,2)","D  (4,4)"], "ans":"A", "sol": "(1,2) = ½ × (2,4) — same direction, half the length. Answer: <strong>A</strong>", "hint":"Parallel vectors are scalar multiples: (1,2) = 0.5 × (2,4)."},
     {"difficulty": "difficult", "q": r"The vector \(\overrightarrow{AB} = \begin{pmatrix} -3 \\ 1 \end{pmatrix}\) means:", "opts":["A  move 3 left, 1 up","B  move 3 right, 1 down","C  move 1 left, 3 up","D  move 3 left, 1 down"], "ans":"A", "sol": "−3 = 3 left, +1 = 1 up. Answer: <strong>A</strong>", "hint":"Negative x = left, positive y = up."},
     {"difficulty": "difficult", "q": r"If \(\mathbf{a} = \begin{pmatrix} 4 \\ -2 \end{pmatrix}\) and \(\mathbf{b} = \begin{pmatrix} 1 \\ 3 \end{pmatrix}\), then \(\mathbf{a} - \mathbf{b}\) =", "opts":["A  (3, -5)","B  (5, 1)","C  (5, -1)","D  (-3, 5)"], "ans":"A", "sol": "Subtract tops: 4−1=3. Subtract bottoms: −2−3=−5. Answer: <strong>A</strong>", "hint":"Subtract components: 4-1=3, -2-3=-5."},
@@ -5642,14 +5770,13 @@ def vectors_mcq():
 def gcse_vectors_variants(difficulty, mode):
     if mode == 'mcq':
         return mcq_variants_from_bank_with_procedural(
-            _VECTORS_MCQ_BANK, procedural_mcq_for('vectors'), 'vectors', difficulty
+            _VECTORS_MCQ_BANK, procedural_mcq_for('vectors', difficulty), 'vectors', difficulty
         )
 
     if difficulty == 'foundational':
         pool = [
             _vectors_found_column_meaning,
-            _vectors_found_magnitude_3_4,
-            _vectors_found_magnitude_6_8,
+            _vectors_found_magnitude_triple,
             _vectors_found_add_simple,
             _vectors_found_subtract_simple,
             _vectors_found_scalar_multiply,
@@ -5692,15 +5819,13 @@ def gcse_vectors_variants(difficulty, mode):
             _vectors_diff_geometry_parallelogram,
             _vectors_diff_vector_method_simultaneous,
             _vectors_diff_ratio_collinear,
-            _vectors_diff_vector_proof_sim,
             _vectors_diff_parallel_unit,
             _vectors_diff_geometric_ratio,
         ]
     else:   # mixed – blend of all, 4 found + 4 inter + 2 diff
         found = random.sample([
             _vectors_found_column_meaning,
-            _vectors_found_magnitude_3_4,
-            _vectors_found_magnitude_6_8,
+            _vectors_found_magnitude_triple,
             _vectors_found_add_simple,
             _vectors_found_subtract_simple,
             _vectors_found_scalar_multiply,
@@ -5741,7 +5866,6 @@ def gcse_vectors_variants(difficulty, mode):
             _vectors_diff_geometry_parallelogram,
             _vectors_diff_vector_method_simultaneous,
             _vectors_diff_ratio_collinear,
-            _vectors_diff_vector_proof_sim,
             _vectors_diff_parallel_unit,
             _vectors_diff_geometric_ratio,
         ], 2)
@@ -6327,7 +6451,7 @@ def _trig_problem_from_output(out, difficulty):
                             str(radicand) if coeff == 1 else f'{coeff}|{radicand}'
                         ),
                         'answer_type': 'surd',
-                        'answer_format_hint': 'e.g. √3 — use the √ button if needed',
+                        'answer_format_hint': 'e.g. √3 (use the √ button if needed)',
                     }
             elif raw_type == 'algebraic_fraction' and raw.get('kind') == 'surd_over_int':
                 coef = int(raw['coef'])
@@ -6358,8 +6482,10 @@ def _trig_problem_from_output(out, difficulty):
                         'answer_field_types': list(field_types) if field_types else (
                             ['number'] * len(labels)
                         ),
-                        'answer_format_hint': 'Complete every proof step',
+                        'answer_format_hint': raw.get('format_hint', 'Complete every proof step'),
                     }
+            else:
+                extra = problem_extra_from_graded_answer(raw)      # Phase 3 batch C1: a coordinate pair read from a graph
         elif isinstance(raw, str) and '/' in raw:
             extra = {
                 'correct_answer_raw': raw,
@@ -7059,6 +7185,7 @@ def _trig_diff_exact_compound():
 
 _TRIG_MCQ_RAW = [
         {
+            "concept": True,
             "q": "What does SOH CAH TOA help you remember?",
             "opts": ["A  The three trigonometric ratios", "B  The order of operations", "C  How to solve quadratics", "D  The names of the sides of a triangle"],
             "ans": "A",
@@ -7077,6 +7204,8 @@ _TRIG_MCQ_RAW = [
             "hint": "cos 60° = 1/2."
         },
         {
+            "concept": True,
+            "difficulty": "difficult",   # Higher content, was banded foundational / intermediate by position (Phase 2)
             "q": "Which rule should you use to find a missing side when you know two sides and the included angle in a non-right triangle?",
             "opts": ["A  Sine rule", "B  Cosine rule", "C  Pythagoras' theorem", "D  SOH CAH TOA"],
             "ans": "B",
@@ -7095,6 +7224,7 @@ _TRIG_MCQ_RAW = [
             "hint": "Opposite = 3, adjacent = 4. Hypotenuse = \u221a(3\u00b2+4\u00b2) = 5."
         },
         {
+            "concept": True,
             "q": "Which of these is NOT a standard right-angled triangle trigonometric ratio at GCSE?",
             "opts": ["A  sin", "B  cos", "C  tan", "D  sec"],
             "ans": "D",
@@ -7107,12 +7237,15 @@ _TRIG_MCQ_RAW = [
             "hint": "sin 45° = 1/\u221a2 = \u221a2/2."
         },
         {
+            "concept": True,
             "q": "The angle of elevation is measured:",
             "opts": ["A  upward from the horizontal", "B  downward from the horizontal", "C  upward from the vertical", "D  downward from the vertical"],
             "ans": "A",
             "hint": "Elevation = looking up from horizontal."
         },
         {
+            "concept": True,
+            "difficulty": "difficult",   # Higher content, was banded foundational / intermediate by position (Phase 2)
             "q": "In 3D trigonometry, what is usually the best first step?",
             "opts": ["A  Use the sine rule directly", "B  Identify a right-angled triangle within the 3D shape", "C  Apply Pythagoras in three dimensions at once", "D  Guess the answer"],
             "ans": "B",
@@ -7125,6 +7258,7 @@ _TRIG_MCQ_RAW = [
             "hint": "tan 30° = 1/\u221a3 = \u221a3/3."
         },
         {
+            "concept": True,
             "q": "To find an angle when all three sides of a triangle are known, which rule do you use?",
             "opts": ["A  Sine rule", "B  Cosine rule (rearranged for angle)", "C  Pythagoras' theorem", "D  SOH CAH TOA"],
             "ans": "B",
@@ -7148,6 +7282,7 @@ _TRIG_MCQ_RAW = [
             "hint": "tan\u202f\u03b8 = 20/20 = 1, so \u03b8 = 45\u00b0."
         },
         {
+            "concept": True,
             "q": r"When using \(\dfrac{a}{\sin A} = \dfrac{b}{\sin B}\) and \(\sin A > 1\) is obtained, this means:",
             "opts": ["A  There are two solutions", "B  The triangle is right-angled", "C  No such triangle exists", "D  A is a reflex angle"],
             "ans": "C",
@@ -7172,7 +7307,7 @@ def trigonometry_mcq():
 def gcse_trigonometry_variants(difficulty, mode):
     if mode == 'mcq':
         return mcq_variants_from_bank_with_procedural(
-            _TRIG_MCQ_BANK, procedural_mcq_for('trigonometry'), 'trigonometry', difficulty
+            _TRIG_MCQ_BANK, procedural_mcq_for('trigonometry', difficulty), 'trigonometry', difficulty
         )
     if difficulty == 'foundational':
         pool = [
@@ -7188,6 +7323,7 @@ def gcse_trigonometry_variants(difficulty, mode):
             _trig_found_exact_values,
         ]
     elif difficulty == 'intermediate':
+        from generators.gcse import maths_variety_c as vc      # Phase 3 batch C1: the sine and cosine graphs
         pool = [
             _trig_inter_two_step,
             _trig_inter_bearing,
@@ -7199,8 +7335,11 @@ def gcse_trigonometry_variants(difficulty, mode):
             _trig_inter_converse_pyth,
             _trig_inter_compound,
             _trig_inter_sine_find_side,
+            vc.gcse_trig_graph_read,
+            vc.gcse_trig_graph_feature,
         ]
     elif difficulty == 'difficult':
+        from generators.gcse import maths_variety_c as vc      # Phase 3 batch C1: solving sin, cos or tan x = k
         pool = [
             _trig_diff_sine_rule_side,
             _trig_diff_cosine_rule_side,
@@ -7211,6 +7350,7 @@ def gcse_trigonometry_variants(difficulty, mode):
             _trig_diff_area_find_side,
             _trig_diff_bearing_nonright,
             _trig_diff_exact_compound,
+            vc.gcse_trig_solve_two_solutions,
         ]
     else:  # mixed
         found = random.sample([

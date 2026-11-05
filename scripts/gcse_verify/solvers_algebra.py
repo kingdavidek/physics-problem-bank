@@ -587,7 +587,41 @@ def alg(_p, task=None, _records=None, **kw):
     out = fn(ctx, **kw)
     if isinstance(out, Verdict):
         out = [out]
+    if task in _GRID_TASKS:
+        out = list(out) + _grid_checks(ctx)
     return out
+
+
+# The graph tasks whose answer is read off the drawing (not counted or taken from the stated equations): the grid must
+# have a line at every whole number of each axis (``_grid_checks``).
+_GRID_TASKS = frozenset({
+    'gsim_point', 'gsim_y_at_x', 'gsim_x_marked', 'gsim_both_points', 'gsim_which_point', 'gsim_equations_from_graph',
+    'gsim_context',                                                                     # the older reading slots (batch C2)
+    'gsim_coord', 'gsim_intercept', 'gsim_gradient', 'gsim_x_values', 'gsim_context_cost', 'gsim_context_cheaper',
+    'gsim_second_intercept', 'gsim_tangent_k',                                          # the batch B reading slots
+})
+
+
+@solver('alg_form_expr', problem=True)
+def alg_form_expr(_p=None, _records=None, kind=None, var1='', var2='', k1=None, k2=None):
+    """Phase 3 batch A: an expression written from a description, compared with the keyed expression by value."""
+    k1, k2 = sympy.Integer(int(k1)), sympy.Integer(int(k2))
+    if kind == 'cost':          # k1 of one item at var1 each and k2 of another at var2 each
+        want = k1 * sym(var1) + k2 * sym(var2)
+    elif kind == 'ages':        # n + (n + k1) + k2 n
+        n = sym(var1)
+        want = n + (n + k1) + k2 * n
+    elif kind == 'perimeter':   # 2w + 2(w + k1)
+        w = sym(var1)
+        want = 2 * w + 2 * (w + k1)
+    else:
+        raise Cannot(f'unknown expression kind {kind!r}')
+    got = read_val(str(_p.get('correct_answer_raw')))
+    if got is None:
+        raise Cannot(f"cannot read the key {_p.get('correct_answer_raw')!r}")
+    if not equivalent(got, want):
+        return [Verdict(False, f"key {_p.get('correct_answer_raw')!r} but the description gives {want}")]
+    return [Verdict(True)]
 
 
 # ───────────────────────────── tasks: equations ─────────────────────────────
@@ -754,8 +788,15 @@ def t_simplify(ctx, form='expanded', **kw):
     segs = [s for s in ctx.segs if not re.search(r'[=<>]', s) and not re.fullmatch(_VAR, s.strip())]
     if len(segs) != 1:
         raise Cannot(f'expected one expression, found {segs}')
-    e = sympy.simplify(expr(segs[0]))
-    return judge(ctx, 'val', e, form=form or None)
+    raw = expr(segs[0])
+    # Runtime (batch B review, 2026-10-28): cancel(together()) puts a rational expression in lowest terms at a seventh
+    # of the cost of simplify() (0.32 s against 2.24 s over the default run's 322 questions, with the same value and
+    # the same number of expanded terms every time). simplify() is still tried whenever that form does not match the
+    # key, so a key is passed exactly when it was passed before.
+    verdicts = judge(ctx, 'val', sympy.cancel(sympy.together(raw)), form=form or None)
+    if all(v.ok for v in verdicts):
+        return verdicts
+    return judge(ctx, 'val', sympy.simplify(raw), form=form or None)
 
 
 @task('factorise')
@@ -1525,6 +1566,47 @@ def _drawn_lines_cross(d):
         return None
     x = (c2 - c1) / (m1 - m2)
     return x, m1 * x + c1
+
+
+_SVG_TEXT_RE = re.compile(r'<text x="([-\d.]+)" y="([-\d.]+)"[^>]*text-anchor="(\w+)"[^>]*>([^<]*)</text>')
+_SVG_LINE_RE = re.compile(r'<line x1="([-\d.]+)" y1="([-\d.]+)" x2="([-\d.]+)" y2="([-\d.]+)"')
+
+
+def _grid_checks(ctx):
+    """On a graph the pupil reads a value from, every whole number between the labelled extremes of each axis has a
+    grid line (faint or numbered), so no reading falls between the lines (variety plan 23.2, batch C2: the older
+    reading slots turned the faint grid on; C2 review: this check pins it). The axes are calibrated from the numbered
+    ticks (x labels are centred on their tick, a y label's baseline sits 4 px under its tick)."""
+    m = re.search(r'<svg.*?</svg>', ctx.raw, re.S)
+    if not m:
+        return [Verdict(False, 'no drawing to read from')]
+    svg = m.group(0)
+    xs, ys = [], []
+    for x, y, anchor, t in _SVG_TEXT_RE.findall(svg):
+        try:
+            v = Fraction(t)
+        except ValueError:
+            continue
+        if anchor == 'middle':
+            xs.append((float(x), v))
+        elif anchor == 'end':
+            ys.append((float(y) - 4, v))
+    lines = _SVG_LINE_RE.findall(svg)
+    vert = {float(x1) for x1, _y1, x2, _y2 in lines if x1 == x2}
+    hor = {float(y1) for _x1, y1, _x2, y2 in lines if y1 == y2}
+    out = []
+    for name, pairs, drawn in (('x', xs, vert), ('y', ys, hor)):
+        if len(pairs) < 2:
+            out.append(Verdict(False, f'the {name} axis has fewer than two numbered ticks'))
+            continue
+        (p0, v0), (p1, v1) = min(pairs, key=lambda t: t[1]), max(pairs, key=lambda t: t[1])
+        scale = (p1 - p0) / float(v1 - v0)
+        missing = [v for v in range(int(v0.__ceil__()), int(v1.__floor__()) + 1)
+                   if not any(abs(p0 + scale * (v - float(v0)) - px) <= 0.6 for px in drawn)]
+        if missing:
+            out.append(Verdict(False, f'no grid line at {name} = {missing[:5]}{"..." if len(missing) > 5 else ""}: '
+                                      f'a reading there falls between the lines'))
+    return out
 
 
 def _drawn_checks(ctx, d):

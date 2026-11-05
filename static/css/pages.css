@@ -802,28 +802,6 @@ a.list-row {
     font-size: 1.05rem;
     line-height: 1.55;
 }
-.practice-hint-drawer {
-    margin-top: var(--space-4);
-    padding: var(--space-3);
-    border-radius: var(--radius);
-    border: 1px dashed var(--ink-300);
-    background: var(--ink-100);
-}
-.practice-hint-drawer:not([open]) .practice-hint-body {
-    display: none;
-}
-.practice-hint-drawer-label {
-    font-weight: 700;
-    color: var(--ink-700);
-    cursor: pointer;
-    list-style: none;
-}
-.practice-hint-drawer-label::-webkit-details-marker { display: none; }
-.practice-hint-body {
-    margin-top: var(--space-2);
-    font-size: var(--text-sm);
-    line-height: 1.5;
-}
 .answer-reveal-footer {
     padding: var(--space-4);
 }

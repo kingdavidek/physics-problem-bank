@@ -64,6 +64,8 @@ LESSON_ONLY = {'lesson-pages.css', 'lesson-assist.css'}
 # 4,844 -> 6,445 bytes (face colour props, .zk/.zf ink classes, .zorp-face pivots, twinkle and zzz
 # keyframes with reduced/data-motion mirrors, minus the old data-mouth rules); chrome.css lost the
 # eight face show-rules (about 600 bytes). Tree now 233,523 (core 208,531).
+# GCSE maths hints Phase 3 (2026-10-26): practice.css +566 bytes (hint ladder lines and the locked-answer note, no motion).
+# Tree now 237,644 (core 212,652); caps unchanged.
 CSS_BUDGET_BYTES = 246_000
 # Core sheets loaded on every page after the U8.6 lesson split.
 # S0 added fonts.css (~1KB) plus legal-footer / email-verify chrome.
@@ -96,6 +98,7 @@ CSS_BUDGET_BYTES = 246_000
 # pivots, wildcard reduced/data-motion mirrors). Budgets NOT raised. Tree now 234,544 (core 209,552).
 # E8 Phase 3 (2026-09-29): motion.css 7,466 -> 7,895 bytes (arm pivot switch to view-box, flip wrapper,
 # front-layer arm rule, plate pivot). Budgets NOT raised. Tree now 234,973 (core 209,981).
+# GCSE maths hints Phase 3 (2026-10-26): practice.css +566 bytes; core now 212,652, headroom 3,348. Cap unchanged.
 CSS_CORE_BUDGET_BYTES = 216_000
 
 

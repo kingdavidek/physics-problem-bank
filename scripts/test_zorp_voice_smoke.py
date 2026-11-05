@@ -39,6 +39,7 @@ MIN_ITEMS = {
     'static/js/feed.js': 1,
     'models/buddy.py': 10 + 4,
     'models/bot.py': 4,
+    'generators/shared/misconceptions.py': 12,   # the hint messages (docs/GCSE_MATHS_HINTS.md section 6)
     'app.py': 7,
     'static/js/site.js': 2,
     'templates/welcome.html': 11,
@@ -57,7 +58,8 @@ MIN_LINES = {'static/js/guide-catalog.js': 31, 'models/buddy.py': 10, 'app.py': 
 # Sources that only ever speak in one voice (section 3.3.2: Zorp never speaks in notifications or in
 # grading feedback, and the system voice has no character). Templates mix both, by attribute.
 ZORP_ONLY = ('static/js/guide-catalog.js', 'static/js/guide.js', 'static/js/study-buddy.js', 'models/buddy.py')
-SYSTEM_ONLY = ('app.py', 'static/js/site.js', 'static/js/notifications.js', 'static/js/feed.js', 'models/bot.py')
+SYSTEM_ONLY = ('app.py', 'static/js/site.js', 'static/js/notifications.js', 'static/js/feed.js', 'models/bot.py',
+               'generators/shared/misconceptions.py')
 
 BOT_NOTE = 'A Problem Bank bot, not a person.'
 
@@ -327,6 +329,53 @@ def test_lint_catches_each_rule():
     assert any(v.rule == 'exclamation' and 'of Zorp lines' in v.detail for v in voice.lint(loud))
 
 
+def test_hint_messages():
+    """The hint catalogue (generators/shared/misconceptions.py MESSAGES, NUDGES and LADDER_COPY) is read by the lint, on the stricter
+    system_hint surface: house style, length, reading level and kind wording are errors there."""
+    from generators.shared import misconceptions
+
+    items = [i for i in _items() if i.surface == 'system_hint']
+    seen = {i.where: i.text for i in items}
+    want = dict(misconceptions.MESSAGES)
+    want.update({'nudge:' + k: v for k, v in misconceptions.NUDGES.items()})            # Phase 3: rung 1 lines
+    want.update({'ladder:' + k: v for k, v in misconceptions.LADDER_COPY.items()})     # Phase 3: the words around the ladder
+    from generators.shared import mcq_notes
+    want.update({'note:' + k: v for k, v in mcq_notes.NOTES.items()})                  # Phase 4: multiple-choice distractor notes
+    want.update({'note:' + k: v for k, v in mcq_notes.BANK_NOTES.items()})
+    want['nudge:default'] = misconceptions.NUDGE_DEFAULT                               # whole-change review 2026-11-03 (F10)
+    assert seen == want, 'the extractor must see every message, nudge, ladder line and distractor note, unchanged'
+    assert all(i.voice == 'system' and i.path in ('generators/shared/misconceptions.py', 'generators/shared/mcq_notes.py', 'generators/shared/misconception_5b.py') for i in items)
+    found = [v for v in voice.lint(items) if v.level in ('error', 'warn')]
+    assert not found, 'hint copy violations:\n  ' + _fmt(found)
+    assert voice.HINT_MAX_CHARS == 120 and voice.HINT_MAX_SENTENCES == 2
+    # Whole-change review 2026-11-03 (F8, D5): a message names the slip, never the operation that turns the pupil's own
+    # number into the answer. These four lines did ("Halve it.", "Turn it upside down to get the answer.", "Divide by
+    # that number.", "Divide by the cost of one mile to find how many."); they have no digits, so the lint let them by.
+    operations = ('halve it.', 'turn it upside down', 'divide by that number', 'divide by the cost of one')
+    for key in ('pyth.diagonal_squared_not_halved', 'num.reciprocal_same', 'af.undefined_not_divided', 'lin.cost_not_divided'):
+        text = misconceptions.MESSAGES[key].lower()
+        assert not any(op in text for op in operations), f'{key} tells the pupil the operation to apply: {text!r}'
+    # the rules bite on this surface (a dash in other system copy is only a note)
+    def bad(text):
+        it = voice.Item('(test)', 1, 'system', 'system_hint', 'line', text)
+        return {v.rule for v in voice.lint([it]) if v.level in ('error', 'warn')}
+
+    assert not bad('Check the sign. Look again at each step.')
+    assert 'characters' in bad('Check the sign \u2014 look again.')
+    assert 'characters' in bad('Check the sign \U0001F600')
+    assert 'length' in bad('Check the sign. ' + 'x' * 110)
+    assert 'hint copy' in bad('Check the sign. Look again. Then try once more.')
+    assert 'hint copy' in bad('That is wrong. Check the sign.')
+    assert 'hint copy' in bad('It is a careless slip. Check the sign.')
+    assert 'hint copy' in bad('Just check the sign.')
+    assert 'banned phrase' in bad('This one is easy. Check the sign.')
+    assert 'US spelling' in bad('Check the color of the sign.')
+    assert 'long word' in bad('Check the representation of the sign.')
+    assert not bad('Take the square root of the hypotenuse squared.')
+    assert 'reading level' in bad('Photosynthesis demonstrates considerable evolutionary adaptations across environments today.')
+    assert 'system voice' in bad('I think the sign is out.')
+
+
 _REF_LINE = re.compile(r'(`[^`\s]+?):\d+`')
 
 
@@ -369,6 +418,7 @@ TESTS = (
     test_welcome_line_is_truthful,
     test_guide_js_fallbacks_match_catalog,
     test_lint_catches_each_rule,
+    test_hint_messages,
     test_inventory_doc_in_sync,
 )
 

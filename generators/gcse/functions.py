@@ -6,6 +6,7 @@ Inverse/multipart variants stay as 4-tuples; inverse linear and composite-rule a
 """
 import random
 from fractions import Fraction
+from generators.shared.answer_checkers import linear_format_hint
 from generators.shared.utils import make_problem, quadratic_roots_format_hint, quadratic_roots_ui_labels
 from generators.shared.verify_hook import verifies
 from generators.shared.variant_utils import (
@@ -180,7 +181,7 @@ def _fn_problem_from_output(out, difficulty):
                 extra = {
                     'correct_answer_raw': _fn_linear_raw(raw),
                     'answer_type': 'linear',
-                    'answer_format_hint': 'Enter the value (e.g. y = 9 or just 9)',
+                    'answer_format_hint': linear_format_hint(_fn_linear_raw(raw)),
                 }
             elif raw_type == 'algebraic':
                 text = str(raw.get('value') or '')
@@ -194,6 +195,10 @@ def _fn_problem_from_output(out, difficulty):
                 }
                 if raw.get('subject'):
                     extra['answer_subject'] = raw['subject']
+                if raw.get('form'):
+                    # the written form the question asks for ("expanded and simplified"); without it (x + 3)^2
+                    # typed back was marked right (batch B review, 2026-10-28; no older functions slot sets a form)
+                    extra['answer_form'] = raw['form']
                 if raw.get('wrong_hint'):
                     extra['answer_wrong_hint'] = raw['wrong_hint']
         elif isinstance(raw, (int, float)):
@@ -376,6 +381,8 @@ def _fn_i_composite_linear():
     b = random.randint(1, 5)
     c = random.randint(1, 4)
     d = random.randint(0, 6)
+    while (a, b) == (c, d):     # review C13: f and g must differ
+        d = random.randint(0, 6)
     x = random.randint(1, 5)
     gx = c * x + d
     ans = a * gx + b
@@ -787,7 +794,7 @@ def _fn_mcq_evaluate_quadratic():
     letters = "ABCD"
     correct_letter = letters[vals.index(correct)]
     opts = [f"{letters[i]}  {v}" for i, v in enumerate(vals)]
-    q = rf"If \(f(x) = {_quadratic_rule(b, c)}\), what is \(f({_sub_num(x)})\)?"
+    q = rf"If \(f(x) = {_quadratic_rule(b, c)}\), what is \(f({x})\)?"
     sol = rf"Substitute \(x = {x}\): <strong>{correct}</strong>. Answer: <strong>{correct_letter}</strong>"
     return q, sol, "Substitute the value, squaring first.", 2, opts, correct_letter
 
@@ -868,6 +875,18 @@ _FN_MCQ_POOL = [
     _fn_mcq_notation_meaning,
 ]
 
+# Phase 2 (2026-10-27): each band has its own list of the 8 generators (before, every band served the first four).
+# Meaning of f(3) and evaluating f(x) are Foundation; solving f(x) = k and a number through f then g (fg or gf) are the
+# middle; the expression for f(g(x)) and the inverse function are the top.
+_FN_MCQ_BANDS = {
+    "foundational": [_fn_mcq_evaluate, _fn_mcq_notation_meaning, _fn_mcq_evaluate_quadratic, _fn_mcq_solve_linear,
+                     _fn_mcq_composite],
+    "intermediate": [_fn_mcq_evaluate_quadratic, _fn_mcq_solve_linear, _fn_mcq_composite, _fn_mcq_gf_composite,
+                     _fn_mcq_fg_expression, _fn_mcq_inverse],
+    "difficult": [_fn_mcq_inverse, _fn_mcq_fg_expression, _fn_mcq_gf_composite, _fn_mcq_composite,
+                  _fn_mcq_solve_linear],
+}
+
 
 def _fn_mcq_dispatch():
     return random.choice(_FN_MCQ_POOL)()
@@ -913,17 +932,27 @@ _POOLS = {
 }
 
 
+def _batch_b_pools():
+    # Phase 3 batch B kinds (lazy: maths_variety_b must never be imported while this module loads).
+    from generators.gcse import maths_variety_b as vb
+    return {
+        "foundational": _FOUNDATIONAL + [vb.gcse_fn_f_negative_input, vb.gcse_fn_f_three_values_quadratic],
+        "intermediate": _INTERMEDIATE + [vb.gcse_fn_i_composite_both_orders, vb.gcse_fn_i_solve_square_equals, vb.gcse_fn_i_inverse_value, vb.gcse_fn_i_inverse_divide],
+        "difficult": _DIFFICULT + [vb.gcse_fn_d_composite_square_expression],
+    }
+
+
 def gcse_functions_variants(difficulty, mode="practice"):
     if mode == "mcq":
         return mcq_variants_from_pool(
-            _FN_MCQ_POOL, "functions", difficulty, count=4
+            _FN_MCQ_BANDS.get(difficulty, _FN_MCQ_POOL), "functions", difficulty
         )
 
-    pool = _POOLS.get(difficulty)
+    pools = _batch_b_pools()
+    pool = pools.get(difficulty)
     if not pool:
-        combined = _FOUNDATIONAL + _INTERMEDIATE + _DIFFICULT
-        return select_tier_variants(combined, 5)
-    return select_tier_variants(pool, 5)
+        return select_tier_variants(pools["foundational"] + pools["intermediate"] + pools["difficult"])
+    return select_tier_variants(pool)
 
 
 def gcse_functions(difficulty, mode, variant_name=None):

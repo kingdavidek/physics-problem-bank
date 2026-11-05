@@ -140,6 +140,9 @@ def _cts_problem_from_output(out, difficulty):
                     'answer_subject': raw.get('subject', ''),
                     'answer_format_hint': 'Use + or − for each term, then enter each number',
                 }
+            elif raw_type == 'linear':
+                from generators.gcse import maths_variety_b as vb
+                extra = vb.problem_extra(raw)
             elif raw_type == 'number_fields':
                 values = raw.get('values') or ()
                 labels = raw.get('labels') or ()
@@ -645,6 +648,18 @@ _CTSQ_MCQ_POOL = [
     _cts_mcq_expand_c,
 ]
 
+# Phase 2 (2026-10-27): each band has its own list of the 8 generators (before, every band served the first four).
+# Finding p and p^2 and expanding back are the first steps; reading the minimum and turning point from the completed
+# form is the middle; completing the square of a quadratic with no help (min_x) and solving by it are the top.
+_CTSQ_MCQ_BANDS = {
+    "foundational": [_cts_mcq_half_b, _cts_mcq_square_constant, _cts_mcq_expand_c, _cts_mcq_completed_form,
+                     _cts_mcq_minimum_y, _cts_mcq_turning_point],
+    "intermediate": [_cts_mcq_completed_form, _cts_mcq_minimum_y, _cts_mcq_turning_point, _cts_mcq_min_x,
+                     _cts_mcq_expand_c, _cts_mcq_solve_roots],
+    "difficult": [_cts_mcq_solve_roots, _cts_mcq_min_x, _cts_mcq_completed_form, _cts_mcq_turning_point,
+                  _cts_mcq_expand_c],
+}
+
 
 def _cts_mcq_dispatch():
     """Randomly pick one of eight MCQ types (values randomised inside)."""
@@ -686,17 +701,30 @@ _POOLS = {
 }
 
 
+def _batch_b_pools():
+    # Phase 3 batch B kinds (lazy: maths_variety_b must never be imported while this module loads).
+    from generators.gcse import maths_variety_b as vb
+    return {
+        "foundational": _FOUNDATIONAL + [vb.gcse_cts_f_negative_half, vb.gcse_cts_f_line_of_symmetry,
+                                         vb.gcse_cts_f_read_min_value, vb.gcse_cts_f_find_q_given_p],
+        "intermediate": _INTERMEDIATE + [vb.gcse_cts_i_hence_solve, vb.gcse_cts_i_a_minus_square,
+                                         vb.gcse_cts_i_turning_point_expression, vb.gcse_cts_i_count_roots],
+        "difficult": _DIFFICULT + [vb.gcse_cts_d_leading_coefficient_solve, vb.gcse_cts_d_min_non_monic,
+                                   vb.gcse_cts_d_fraction_form, vb.gcse_cts_d_vertex_to_coefficients],
+    }
+
+
 def gcse_completing_the_square_variants(difficulty, mode="practice"):
     if mode == "mcq":
         return mcq_variants_from_pool(
-            _CTSQ_MCQ_POOL, "completing_the_square", difficulty, count=4
+            _CTSQ_MCQ_BANDS.get(difficulty, _CTSQ_MCQ_POOL), "completing_the_square", difficulty
         )
 
-    pool = _POOLS.get(difficulty)
+    pools = _batch_b_pools()
+    pool = pools.get(difficulty)
     if not pool:
-        combined = _FOUNDATIONAL + _INTERMEDIATE + _DIFFICULT
-        return select_tier_variants(combined, 5)
-    return select_tier_variants(pool, 5)
+        return select_tier_variants(pools["foundational"] + pools["intermediate"] + pools["difficult"])
+    return select_tier_variants(pool)
 
 
 def gcse_completing_the_square(difficulty, mode, variant_name=None):

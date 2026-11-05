@@ -11,6 +11,9 @@ from generators.shared.answer_checkers import (
     problem_answer_form,
     problem_answer_prereqs,
 )
+from generators.shared.answer_units import problem_question_text
+from generators.shared.question_kind import quiz_kind
+from generators.shared.variant_utils import mcq_source, reset_mcq_source
 
 LESSON_QUIZ_MIX = (
     ("foundational", 3),
@@ -19,6 +22,19 @@ LESSON_QUIZ_MIX = (
 )
 
 _MAX_GENERATION_ATTEMPTS = 120
+# GCSE maths quizzes also reject a question whose kind (generators/shared/question_kind.py: the question text with
+# its numbers, names and letters replaced) is already in the quiz.  After this many attempts at one question the kind
+# check is dropped for that question, so a band with few kinds still fills its slot (docs/GCSE_MATHS_VARIETY.md, 6).
+_KIND_CHECK_ATTEMPTS = 60
+# For the first attempts a GCSE maths quiz also refuses a second question from one generator (variant_utils.mcq_source),
+# whose texts can differ in context words only ("pets" and "books"), unless every generator the band can draw from is
+# already in the quiz.  After this many attempts only the kind (the text template) is checked.
+_SOURCE_CHECK_ATTEMPTS = 30
+
+
+def uses_kind_check(level, subject):
+    """GCSE maths quizzes do not ask two questions of one kind (variety plan decision V7); no other subject does."""
+    return level == "gcse" and subject == "maths"
 
 
 def _question_key(problem):
@@ -101,14 +117,24 @@ def topic_supports_lesson_quiz(topic_config):
     return False
 
 
-def _generate_quiz_problem(generator, variants_func, difficulty, seen_keys, rng=None, mode="mcq"):
-    """Return one unique gradable quiz problem, or None if none found."""
+def _generate_quiz_problem(generator, variants_func, difficulty, seen_keys, rng=None, mode="mcq", seen_kinds=None):
+    """Return one unique gradable quiz problem, or None if none found.
+
+    ``seen_kinds`` (a set, GCSE maths only) also rejects a question of a kind already in the quiz until
+    ``_KIND_CHECK_ATTEMPTS`` attempts have failed; the kind of the accepted question is added to it."""
     rng = rng or random
-    for _ in range(_MAX_GENERATION_ATTEMPTS):
+    check_sources = None
+    for attempt in range(_MAX_GENERATION_ATTEMPTS):
         variant_name = None
+        if seen_kinds is not None:
+            reset_mcq_source()
         try:
             if variants_func:
                 variants = variants_func(difficulty, mode)
+                if variants and seen_kinds is not None and check_sources is None:
+                    # a band whose every generator is already in the quiz cannot avoid one: do not spend attempts on it
+                    possible = set().union(*(getattr(v, "_mcq_sources", None) or {None} for v in variants))
+                    check_sources = any(src is None or ("source", src) not in seen_kinds for src in possible)
                 if variants:
                     variant = rng.choice(variants)
                     variant_name = getattr(variant, "__name__", None)
@@ -126,6 +152,15 @@ def _generate_quiz_problem(generator, variants_func, difficulty, seen_keys, rng=
         key = _question_key(problem)
         if key and key in seen_keys:
             continue
+        kind = source = None
+        if seen_kinds is not None:
+            kind = quiz_kind(problem)
+            if kind in seen_kinds and attempt < _KIND_CHECK_ATTEMPTS:
+                continue
+            source = mcq_source()
+            if (source is not None and check_sources and ("source", source) in seen_kinds
+                    and attempt < _SOURCE_CHECK_ATTEMPTS):
+                continue
 
         out = dict(problem)
         out["difficulty"] = difficulty
@@ -133,6 +168,10 @@ def _generate_quiz_problem(generator, variants_func, difficulty, seen_keys, rng=
             out["variant_name"] = variant_name
         if key:
             seen_keys.add(key)
+        if kind is not None:
+            seen_kinds.add(kind)
+        if source is not None:
+            seen_kinds.add(("source", source))
         return out
     return None
 
@@ -148,7 +187,7 @@ def _generate_mcq_problem(generator, variants_func, difficulty, seen_keys, rng=N
 
 
 def _fill_quiz_slot(
-    generator, variants_func, difficulty, count, problems, seen_keys, rng=None, mode="mcq"
+    generator, variants_func, difficulty, count, problems, seen_keys, rng=None, mode="mcq", seen_kinds=None
 ):
     """Append up to `count` unique problems for one difficulty band."""
     rng = rng or random
@@ -164,7 +203,7 @@ def _fill_quiz_slot(
             added += 1
     while added < count:
         problem = _generate_quiz_problem(
-            generator, variants_func, difficulty, seen_keys, rng, mode=mode
+            generator, variants_func, difficulty, seen_keys, rng, mode=mode, seen_kinds=seen_kinds
         )
         if not problem:
             break
@@ -218,6 +257,18 @@ def build_single_mcq(level, subject, topic, topic_config, *, difficulty='difficu
     return problem
 
 
+_KIND_CHECK_BUILDS = 6
+# Generator calls one GCSE maths quiz may spend on redrawing (all builds together): a band that cannot avoid a repeated
+# kind must not cost six full builds of a slow generator.  Deterministic (a count, not a clock).
+_KIND_CHECK_BUDGET = 400
+
+
+def _repeats(problems):
+    """How many questions of one quiz repeat a kind already asked (``quiz_kind``)."""
+    kinds = [quiz_kind(p) for p in problems]
+    return len(kinds) - len(set(kinds))
+
+
 def build_lesson_quiz(level, subject, topic, topic_config, *, seed=None):
     """
     Build 10 shuffled quiz problems: 3 foundational, 4 intermediate, 3 difficult.
@@ -225,19 +276,45 @@ def build_lesson_quiz(level, subject, topic, topic_config, *, seed=None):
     Topics with ``lesson_bank`` draw from mixed lesson-mode generators
     ({options, correct_answer} or {correct_answer_raw, answer_type, ...}).
     Other topics keep the existing MCQ-only bank.
-    No two questions in the quiz share the same question text.
+    No two questions in the quiz share the same question text, and a GCSE maths
+    quiz does not ask two questions of one kind (see ``uses_kind_check``).
     Optional seed produces a reproducible quiz (for friend challenges).
     """
     rng = random.Random(seed) if seed is not None else random
+    if not uses_kind_check(level, subject):
+        return _build_lesson_quiz_once(level, subject, topic, topic_config, rng)
+    # The kind check is greedy, so a band can be left with only kinds the quiz already has; draw again (the same
+    # seeded stream, so a seed still gives one quiz) rather than hand out a repeat, and keep the best build.
+    calls = [0]
+    best = None
+    for _ in range(_KIND_CHECK_BUILDS):
+        problems = _build_lesson_quiz_once(level, subject, topic, topic_config, rng, calls)
+        score = (-len(problems), _repeats(problems))
+        if best is None or score < best[0]:
+            best = (score, problems)
+        if score[1] == 0 or calls[0] >= _KIND_CHECK_BUDGET:
+            break
+    return best[1]
+
+
+def _build_lesson_quiz_once(level, subject, topic, topic_config, rng, calls=None):
     generator = topic_config["func"]
+    if calls is not None:                      # count generator calls (the redraw budget above)
+        inner = generator
+
+        def generator(*args, **kwargs):
+            calls[0] += 1
+            return inner(*args, **kwargs)
     variants_func = topic_config.get("variants_func")
     mode = _quiz_generation_mode(topic_config)
     problems = []
     seen_keys = set()
+    seen_kinds = set() if uses_kind_check(level, subject) else None
 
     for difficulty, count in LESSON_QUIZ_MIX:
         _fill_quiz_slot(
-            generator, variants_func, difficulty, count, problems, seen_keys, rng, mode=mode
+            generator, variants_func, difficulty, count, problems, seen_keys, rng, mode=mode,
+            seen_kinds=seen_kinds,
         )
 
     if len(problems) < 10:
@@ -251,6 +328,7 @@ def build_lesson_quiz(level, subject, topic, topic_config, *, seed=None):
                 seen_keys,
                 rng,
                 mode=mode,
+                seen_kinds=seen_kinds,
             )
             if len(problems) >= 10:
                 break
@@ -335,6 +413,8 @@ def grade_lesson_quiz_problem(problem, user_answer):
             subject=problem.get("answer_subject"),
             labels=problem.get("answer_labels"),
             prereqs=problem_answer_prereqs(problem),
+            # The units the question asks for come from the saved session problem only, as on the practice page.
+            question=problem_question_text(problem),
         )
     except ValueError:
         return {

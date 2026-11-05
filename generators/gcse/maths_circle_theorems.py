@@ -1692,7 +1692,7 @@ def circle_theorems_mcq():
 def gcse_circle_theorems_variants(difficulty, mode='practice'):
     if mode == 'mcq':
         return mcq_variants_from_bank_with_procedural(
-            _CT_MCQ_BANK, procedural_mcq_for('circle_theorems'), 'circle_theorems', difficulty
+            _CT_MCQ_BANK, procedural_mcq_for('circle_theorems', difficulty), 'circle_theorems', difficulty
         )
 
     if difficulty == 'foundational':

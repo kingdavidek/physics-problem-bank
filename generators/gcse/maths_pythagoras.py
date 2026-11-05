@@ -11,6 +11,7 @@ from generators.shared.verify_hook import record
 import random
 import math
 from decimal import Decimal, ROUND_HALF_UP
+from fractions import Fraction
 from generators.shared.utils import make_problem
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
@@ -208,7 +209,7 @@ def _pyth_problem_from_output(out, difficulty):
                         str(radicand) if coeff == 1 else f'{coeff}|{radicand}'
                     ),
                     'answer_type': 'surd',
-                    'answer_format_hint': 'e.g. √113 — use the √ button if needed',
+                    'answer_format_hint': 'e.g. √113 (use the √ button if needed)',
                 }
         elif isinstance(raw, (int, float)):
             extra = {
@@ -238,10 +239,14 @@ def _pyth_diagram(bounds_x, bounds_y, inner, title='Pythagoras diagram'):
     ))
 
 
-def _pyth_tri_svg(leg_a, leg_b, hyp, find=None):
+def _pyth_tri_svg(leg_a, leg_b, hyp, find=None, unit='cm'):
     """
     Right triangle, right angle bottom-left.
     find: None | 'a' | 'b' | 'c' — label unknown as '?'
+    unit: the unit written after each label ('m' for a ladder question set in metres).
+    A label longer than two characters (an expression such as "x + 1") moves the frame out and the hypotenuse label
+    off the line, so nothing is cut; the frame for the short labels the older slots pass is unchanged (review
+    2026-10-28, Phase 3 batch C1).
     """
     ax, ay = 55, 155
     bx, by = 185, 155
@@ -249,8 +254,15 @@ def _pyth_tri_svg(leg_a, leg_b, hyp, find=None):
     la = "?" if find == "a" else f"{leg_a}"
     lb = "?" if find == "b" else f"{leg_b}"
     lc = "?" if find == "c" else f"{hyp}"
-    bounds_x = [ax, bx, cx, 38, 120, 128, 188]
-    bounds_y = [ay, by, cy, 88, 102, 172]
+    extra_b = 7 * max(0, len(lb) - 2)            # about 7 px per extra character at 13 px bold
+    extra_c = 4 * max(0, len(lc) - 2)
+    hx, hy = 128 + extra_c, 88 - (6 if extra_c else 0)
+    vx = 38 - extra_b // 2                        # the vertical side's label moves left of the side as it grows
+    # The frame reaches the left edge of the vertical label ("12 cm" is about 35 px wide, centred on vx), so its first
+    # characters are no longer cut (batch C2; the C1 review measured two to six pixels lost on the older slots).
+    half_b = 3.5 * len(f"{lb} {unit}")
+    bounds_x = [ax, bx, cx, vx - extra_b, vx - half_b, 120, hx, 188 + extra_c]
+    bounds_y = [ay, by, cy, hy, 102, 172]
     p = svg_kit.PALETTE
     inner = (
         f'<polygon points="55,155 185,155 55,45" fill="{p["brand_soft"]}" stroke="none"/>'
@@ -258,19 +270,21 @@ def _pyth_tri_svg(leg_a, leg_b, hyp, find=None):
         + f'<line x1="{ax}" y1="{ay}" x2="{cx}" y2="{cy}" stroke="{p["success"]}" stroke-width="2"/>'
         + f'<line x1="{cx}" y1="{cy}" x2="{bx}" y2="{by}" stroke="{p["measure"]}" stroke-width="2.5"/>'
         + f'<polyline points="64,155 64,146 55,146" fill="none" stroke="{p["ink"]}" stroke-width="1.5"/>'
-        + f'<text x="120" y="172" font-size="13" fill="{p["brand"]}" text-anchor="middle" font-weight="bold">{la} cm</text>'
-        + f'<text x="38" y="102" font-size="13" fill="{p["success"]}" text-anchor="middle" font-weight="bold">{lb} cm</text>'
-        + f'<text x="128" y="88" font-size="13" fill="{p["measure"]}" text-anchor="middle" font-weight="bold">{lc} cm</text>'
+        + f'<text x="120" y="172" font-size="13" fill="{p["brand"]}" text-anchor="middle" font-weight="bold">{la} {unit}</text>'
+        + f'<text x="{vx}" y="102" font-size="13" fill="{p["success"]}" text-anchor="middle" font-weight="bold">{lb} {unit}</text>'
+        + f'<text x="{hx}" y="{hy}" font-size="13" fill="{p["measure"]}" text-anchor="middle" font-weight="bold">{lc} {unit}</text>'
     )
     return _pyth_diagram(bounds_x, bounds_y, inner, title='Right triangle')
 
 
-def _rect_diag_svg(w_cm, h_cm, diag, find=None):
+def _rect_diag_svg(w_cm, h_cm, diag, find=None, pad_left=0):
+    """``pad_left`` widens the frame on the left so the height label is not cut (the older slots keep 0)."""
     rx, ry, rw, rh = 60, 50, 150, 100
     wl = "?" if find == "w" else f"{w_cm}"
     hl = "?" if find == "h" else f"{h_cm}"
     dl = "?" if find == "d" else f"{diag}"
-    bounds_x = [rx, rx + rw, rx - 18, rx + rw // 2 + 12]
+    # the frame reaches the left edge of the height label (centred on rx - 18), as for the triangle (batch C2)
+    bounds_x = [rx, rx + rw, rx - 18 - pad_left, rx - 18 - 3.5 * len(f"{hl} cm"), rx + rw // 2 + 12]
     bounds_y = [ry, ry + rh, ry + rh + 22, ry + rh // 2]
     p = svg_kit.PALETTE
     inner = (
@@ -445,12 +459,17 @@ def _py_f4_is_right_no():
     return q, s, "If a² + b² ≠ (longest side)², the triangle is not right-angled.", 2, _pyth_keyword_answer('no')
 
 
+def _py_f_is_right_angled():
+    """One slot for "is this triangle right-angled?", answer yes or no (merges _py_f3_is_right_yes and _py_f4_is_right_no)."""
+    return random.choice([_py_f3_is_right_yes, _py_f4_is_right_no])()
+
+
 def _py_f5_ladder_wall():
     combos = [(3, 4, 5), (6, 8, 10), (5, 12, 13), (8, 15, 17)]
     h, base, lad = random.choice(combos)
     k = random.choice([1, 2])
     h, base, lad = h * k, base * k, lad * k
-    svg = _pyth_tri_svg(base, h, lad, find="c")
+    svg = _pyth_tri_svg(base, h, lad, find="c", unit="m")     # batch C2: the ladder is in metres, so is the drawing
     q = (f"A ladder reaches {h} m up a wall. Its foot is {base} m from the wall. "
          f"How long is the ladder?<br>{svg}")
     s = (f"Ladder is the hypotenuse:<br>"
@@ -495,6 +514,70 @@ def _py_f8_square_diagonal():
            f"d = √{d2} = <strong>{_fmt(d)} cm</strong>{_dp_tag(exact)}")
     record('pyth_hyp', a=s, b=s)
     return q, sol, "In a square, the diagonal is the hypotenuse of a right triangle with two equal legs.", 2, d
+
+
+# Phase 3 batch C1 (2026-10-28, docs/GCSE_MATHS_VARIETY.md section 21): four more kinds so every tier has 9.
+
+def _rhombus_svg(d1, d2):
+    """A rhombus with its two diagonals drawn and labelled: the longer diagonal is the horizontal one (the drawing
+    is not to scale, but it never shows the longer diagonal as the shorter line)."""
+    cx, cy = 120, 95
+    hw, hh = 95, 60
+    d1, d2 = max(d1, d2), min(d1, d2)
+    p = svg_kit.PALETTE
+    inner = (
+        f'<polygon points="{cx - hw},{cy} {cx},{cy - hh} {cx + hw},{cy} {cx},{cy + hh}" fill="{p["brand_soft"]}" '
+        f'stroke="{p["brand"]}" stroke-width="2"/>'
+        + f'<line x1="{cx - hw}" y1="{cy}" x2="{cx + hw}" y2="{cy}" stroke="{p["measure"]}" stroke-width="2" stroke-dasharray="6,3"/>'
+        + f'<line x1="{cx}" y1="{cy - hh}" x2="{cx}" y2="{cy + hh}" stroke="{p["measure"]}" stroke-width="2" stroke-dasharray="6,3"/>'
+        + f'<polyline points="{cx + 9},{cy} {cx + 9},{cy - 9} {cx},{cy - 9}" fill="none" stroke="{p["ink"]}" stroke-width="1.5"/>'
+        + f'<text x="{cx + 40}" y="{cy - 6}" font-size="13" fill="{p["measure"]}" text-anchor="middle" font-weight="bold">{d1} cm</text>'
+        + f'<text x="{cx + 8}" y="{cy + hh - 16}" font-size="13" fill="{p["measure"]}" text-anchor="start" font-weight="bold">{d2} cm</text>'
+    )
+    return _pyth_diagram([cx - hw, cx + hw], [cy - hh - 6, cy + hh + 6], inner, title='Rhombus with its diagonals')
+
+
+def _py_f9_ladder_height():
+    """Foundational: a shorter side in context (how far up the wall a ladder reaches; how far a zip wire runs)."""
+    a, b, c = _pick_triple()
+    if random.choice([True, False]):
+        if c > 17:          # review C11: a ladder of 20 to 75 m is not a ladder (the zip wire below may be long)
+            a, b, c = random.choice([(3, 4, 5), (6, 8, 10), (5, 12, 13), (9, 12, 15), (8, 15, 17)])
+        base, h = (a, b) if random.choice([True, False]) else (b, a)
+        svg = _pyth_tri_svg(base, h, c, find="b", unit="m")
+        q = (f"A ladder {c} m long leans against a vertical wall. The foot of the ladder is {base} m from the wall. "
+             f"How far up the wall does the ladder reach?<br>{svg}")
+        s = (f"The ladder is the hypotenuse, so h² = {c}² − {base}² = {c * c} − {base * base} = {c * c - base * base}<br>"
+             f"h = √{c * c - base * base} = <strong>{h} m</strong>")
+        hint = "The ladder is the longest side. Subtract the squares to find a shorter side."
+        record('pyth_leg', c=c, a=base)
+        return q, s, hint, 3, h
+    h, base = (a, b) if random.choice([True, False]) else (b, a)
+    svg = _pyth_tri_svg(base, h, c, find="a", unit="m")
+    q = (f"A zip wire {c} m long runs in a straight line from the top of a {h} m tower to a point on level ground. "
+         f"How far is that point from the foot of the tower?<br>{svg}")
+    s = (f"The wire is the hypotenuse, so d² = {c}² − {h}² = {c * c} − {h * h} = {c * c - h * h}<br>"
+         f"d = √{c * c - h * h} = <strong>{base} m</strong>")
+    hint = "The wire is the longest side. Subtract the squares to find the distance along the ground."
+    record('pyth_leg', c=c, a=h)
+    return q, s, hint, 3, base
+
+
+def _py_f10_rhombus_side():
+    """Foundational: the side of a rhombus from its diagonals (half of each diagonal makes the right angle)."""
+    half1, half2, side = random.choice([(3, 4, 5), (4, 3, 5), (6, 8, 10), (8, 6, 10), (5, 12, 13), (12, 5, 13),
+                                        (9, 12, 15), (12, 9, 15), (8, 15, 17), (15, 8, 17), (12, 16, 20), (16, 12, 20)])
+    d1, d2 = 2 * half1, 2 * half2
+    svg = _rhombus_svg(d1, d2)
+    q = (f"The diagonals of a rhombus are {d1} cm and {d2} cm long. The diagonals cross at right angles and cut each "
+         f"other in half. Work out the length of one side of the rhombus.<br>{svg}")
+    s = (f"Half of each diagonal: {half1} cm and {half2} cm. These are the two shorter sides of a right-angled "
+         f"triangle whose hypotenuse is a side of the rhombus.<br>"
+         f"side² = {half1}² + {half2}² = {half1 * half1} + {half2 * half2} = {side * side}<br>"
+         f"side = √{side * side} = <strong>{side} cm</strong>")
+    hint = "Halve both diagonals first: the halves are the two shorter sides of a right-angled triangle."
+    record('pyth_rhombus', d1=d1, d2=d2)
+    return q, s, hint, 3, side
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -609,6 +692,20 @@ def _py_i8_cone_slant():
              f"Slant height = <strong>{s} cm</strong>")
     record('pyth_hyp', a=r, b=h)
     return q, s_txt, "Slant height is the hypotenuse of the triangle formed by radius and height.", 3, s
+
+
+def _py_i9_square_area_from_diagonal():
+    """Intermediate: the area of a square from its diagonal (two equal sides, so the diagonal squared is twice the area)."""
+    d = random.choice([4, 6, 8, 10, 12, 14, 16, 18, 20, 5, 7, 9, 11, 13, 15])
+    area = Fraction(d * d, 2)
+    svg = _rect_diag_svg('s', 's', d, pad_left=8)
+    q = f"The diagonal of a square is {d} cm long. Work out the area of the square.<br>{svg}"
+    s = (f"Let the side be s cm. The diagonal is the hypotenuse of a right-angled triangle with two sides of s:<br>"
+         f"s² + s² = {d}², so 2s² = {d * d} and s² = {d * d} ÷ 2 = {_fmt(float(area))}<br>"
+         f"The area of the square is s² = <strong>{_fmt(float(area))} cm²</strong>")
+    hint = "Both shorter sides of the triangle are the side of the square, so the diagonal squared is 2 × side². The area is side²."
+    record('pyth_square_area_diag', d=d)
+    return q, s, hint, 3, float(area)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -873,12 +970,36 @@ def _py_d8_ladder_slip_multi():
     )
 
 
+# Right-angled triangles with sides x, x + a and hypotenuse x + b (a < b): the whole-number x for each pair.
+_ALGEBRAIC_TRIPLES = [(1, 2, 3), (7, 8, 5), (7, 9, 8), (17, 18, 7), (2, 4, 6), (3, 6, 9), (4, 8, 12), (5, 10, 15),
+                      (14, 16, 10), (14, 18, 16), (6, 12, 18), (7, 14, 21), (1, 9, 20), (23, 25, 12), (31, 32, 9)]
+
+
+def _py_d9_algebraic_sides():
+    """Difficult: the sides are x, x + a and x + b (the hypotenuse); form a quadratic in x and solve it."""
+    a, b, x = random.choice(_ALGEBRAIC_TRIPLES)
+    svg = _pyth_tri_svg(f"x", f"x + {a}", f"x + {b}")
+    q = (f"The two shorter sides of a right-angled triangle are x cm and (x + {a}) cm. The hypotenuse is (x + {b}) cm. "
+         f"Form an equation and find the value of x.<br>{svg}")
+    lin = 2 * (a - b)
+    const = a * a - b * b
+    s = (f"Pythagoras: x² + (x + {a})² = (x + {b})²<br>"
+         f"x² + x² + {2 * a}x + {a * a} = x² + {2 * b}x + {b * b}<br>"
+         f"x² {'−' if lin < 0 else '+'} {abs(lin)}x − {abs(const)} = 0<br>"
+         f"(x − {x})(x + {x + lin}) = 0, so x = {x} or x = −{x + lin}. A length is positive, so <strong>x = {x}</strong>.<br>"
+         f"Check: {x}² + {x + a}² = {x * x} + {(x + a) ** 2} = {x * x + (x + a) ** 2} = {x + b}².")
+    hint = "Square each side in terms of x, use a² + b² = c², then collect the terms into a quadratic and factorise it."
+    record('pyth_algebraic', a=a, b=b)
+    return q, s, hint, 4, x
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # MCQ BANK (12 questions)
 # ══════════════════════════════════════════════════════════════════════════════
 
 _PY_MCQ_BANK = [
     {"difficulty": "foundational",
+     "concept": True,
      "q": "In a right-angled triangle, which side is the hypotenuse?",
      "opts": ["A  The side opposite the right angle",
               "B  The shortest side",
@@ -980,21 +1101,23 @@ def pythagoras_mcq():
 def gcse_pythagoras_variants(difficulty, mode="practice"):
     if mode == "mcq":
         return mcq_variants_from_bank_with_procedural(
-            _PY_MCQ_BANK, procedural_mcq_for('pythagoras'), 'pythagoras', difficulty
+            _PY_MCQ_BANK, procedural_mcq_for('pythagoras', difficulty), 'pythagoras', difficulty
         )
 
     pools = {
         "foundational": [
             _py_f1_find_hypotenuse, _py_f2_find_shorter_side,
-            _py_f3_is_right_yes, _py_f4_is_right_no,
+            _py_f_is_right_angled,
             _py_f5_ladder_wall, _py_f6_rectangle_diagonal,
             _py_f7_distance_on_grid, _py_f8_square_diagonal,
+            _py_f9_ladder_height, _py_f10_rhombus_side,           # Phase 3 batch C1
         ],
         "intermediate": [
             _py_i1_perimeter, _py_i2_area_then_side,
             _py_i3_isosceles_height, _py_i4_3d_space_diagonal,
             _py_i5_3d_two_step, _py_i6_coordinate_distance,
             _py_i7_ladder_slips, _py_i8_cone_slant,
+            _py_i9_square_area_from_diagonal,                     # Phase 3 batch C1
         ],
         "difficult": [
             _py_d1_composite_area, _py_d2_distance_formula,
@@ -1002,6 +1125,7 @@ def gcse_pythagoras_variants(difficulty, mode="practice"):
             _py_d5_two_triangles,
             _py_d6_roof_truss_multi, _py_d7_coordinate_journey_multi,
             _py_d8_ladder_slip_multi,
+            _py_d9_algebraic_sides,                               # Phase 3 batch C1
         ],
     }
     if difficulty not in pools:

@@ -48,7 +48,7 @@ def _sample_bank(bank, difficulty, count, seen_questions=None):
 
 def _mcq_dispatch(bank, topic, difficulty, variant_name=None):
     variants = mcq_variants_from_bank_with_procedural(
-        bank, procedural_mcq_for(topic), topic, difficulty
+        bank, procedural_mcq_for(topic, difficulty), topic, difficulty
     )
     q, s, hint, marks, opts, ans = run_mcq_variant(variants, variant_name)
     return make_problem(
@@ -59,6 +59,7 @@ def _mcq_dispatch(bank, topic, difficulty, variant_name=None):
 
 def _practice_pools(topic):
     from generators.gcse import maths as m
+    from generators.gcse import maths_variety_a as va
     return {
         "bidmas": {
             "foundational": [
@@ -66,54 +67,70 @@ def _practice_pools(topic):
                 m.gcse_bidmas_proc_subtract_multiply,
                 m.gcse_bidmas_proc_divide_add,
                 m.gcse_bidmas_proc_two_products,
+                # Phase 3 batch A (2026-10-27): two directed-number kinds that were written but never reachable, and one new
+                m.gcse_neg_add_subtract, m.gcse_neg_multiply_divide, va.gcse_bidmas_inverse_check,
             ],
             "intermediate": [
                 m.gcse_bidmas_mixed, m.gcse_neg_powers, m.gcse_bidmas_with_negatives,
                 m.gcse_bidmas_proc_nested_brackets,
                 m.gcse_bidmas_proc_power_then_multiply,
                 m.gcse_bidmas_proc_bracket_over_divisor,
+                va.gcse_bidmas_missing_number, va.gcse_bidmas_roots_indices, va.gcse_bidmas_fraction_bar,
             ],
             "difficult": [
-                m.gcse_bidmas_hard, m.gcse_bidmas_with_negatives, m.gcse_bidmas_brackets,
+                m.gcse_bidmas_hard,
                 m.gcse_bidmas_proc_square_bracket_divide,
                 m.gcse_bidmas_proc_nested_inner_bracket,
                 m.gcse_bidmas_proc_negative_coefficient,
+                # the two Foundation and Intermediate echoes (with_negatives, brackets) left this tier in Phase 3
+                va.gcse_bidmas_neg_indices_division, va.gcse_bidmas_insert_brackets,
+                va.gcse_bidmas_fraction_bar_negatives, va.gcse_bidmas_substitute_negatives,
+                va.gcse_bidmas_decimals,
             ],
         },
         "fdp": {
             "foundational": [
                 m.gcse_fdp_decimal_to_percentage, m.gcse_fdp_percentage_to_decimal,
                 m.gcse_fdp_decimal_to_fraction,
-            ],
-            "intermediate": [
                 m.gcse_fdp_fraction_to_decimal, m.gcse_fdp_percentage_to_fraction,
                 m.gcse_fdp_fraction_to_percentage,
+                va.gcse_fdp_add_subtract_fractions, va.gcse_fdp_fraction_of_another,
+                va.gcse_fdp_percentage_of_another,
+            ],
+            "intermediate": [
                 m.gcse_fdp_fraction_of_amount, m.gcse_fdp_percentage_increase,
                 m.gcse_fdp_percentage_decrease, m.gcse_fdp_percentage_change,
                 m.gcse_fdp_reverse_percentage, m.gcse_fdp_order_mixed_values,
+                va.gcse_fdp_multiply_divide_fractions, va.gcse_fdp_mixed_add_subtract,
+                va.gcse_fdp_mixed_multiply_divide, va.gcse_fdp_simple_interest,
             ],
             "difficult": [
                 m.gcse_fdp_multi_step, m.gcse_fdp_recurring,
                 m.gcse_fdp_compound_percentage, m.gcse_fdp_reverse_percentage_two_step,
                 m.gcse_fdp_share_in_ratio, m.gcse_fdp_profit_loss_percentage,
                 m.gcse_fdp_best_value_comparison, m.gcse_fdp_fraction_word_problem,
+                va.gcse_fdp_simple_vs_compound,
             ],
         },
         "multiples_factors": {
             "foundational": [
                 m.gcse_mf_find_multiple, m.gcse_mf_find_factor, m.gcse_mf_prime,
+                m.gcse_mf_factor_pairs, m.gcse_mf_hcf, m.gcse_mf_lcm,
+                va.gcse_mf_list_factors, va.gcse_mf_next_multiple, va.gcse_mf_count_factors,
             ],
             "intermediate": [
-                m.gcse_mf_factor_pairs, m.gcse_mf_hcf, m.gcse_mf_lcm,
                 m.gcse_mf_lcm_buses_word, m.gcse_mf_hcf_tiles_word,
                 m.gcse_mf_common_factors_count, m.gcse_mf_hcf_using_primes,
                 m.gcse_mf_divisibility_digit,
+                va.gcse_mf_prime_factor_exponents, va.gcse_mf_hcf_simplify_fraction,
+                va.gcse_mf_lcm_laps, va.gcse_mf_multiples_count,
             ],
             "difficult": [
                 m.gcse_mf_prime_factors,
                 m.gcse_mf_hcf_three_numbers, m.gcse_mf_lcm_three_numbers,
                 m.gcse_mf_hcf_lcm_product_rule, m.gcse_mf_number_from_hcf_lcm,
                 m.gcse_mf_lcm_from_prime_forms, m.gcse_mf_primes_in_range,
+                va.gcse_mf_square_multiplier, va.gcse_mf_factor_count_from_primes,
             ],
         },
         "decimals": {
@@ -122,58 +139,68 @@ def _practice_pools(topic):
                 m.gcse_dec_proc_three_add,
                 m.gcse_dec_proc_divide_power10,
                 m.gcse_dec_proc_difference,
+                m.gcse_dec_round, m.gcse_dec_practice_word_total, va.gcse_dec_subtract_from_whole,
             ],
             "intermediate": [
-                m.gcse_dec_practice_word_total, m.gcse_dec_practice_decimal_to_fraction,
+                m.gcse_dec_practice_decimal_to_fraction,
                 m.gcse_dec_practice_estimate_product, m.gcse_dec_practice_order_mixed,
                 m.gcse_dec_multiply, m.gcse_dec_divide, m.gcse_dec_fraction_to_decimal,
                 m.gcse_dec_proc_money_change,
                 m.gcse_dec_proc_mean,
                 m.gcse_dec_proc_map_scale,
+                va.gcse_dec_known_product,
             ],
             "difficult": [
                 m.gcse_dec_practice_mixed_ops, m.gcse_dec_practice_bounds,
                 m.gcse_dec_practice_word_unit_price, m.gcse_dec_recurring,
-                m.gcse_dec_divide, m.gcse_dec_round,
                 m.gcse_dec_proc_multi_step_shop,
                 m.gcse_dec_proc_bounds_dynamic,
                 m.gcse_dec_proc_density,
+                va.gcse_dec_known_division, va.gcse_dec_rounding_error,
             ],
         },
         "algebra": {
             "foundational": [
-                m.algebra_practice_linear_1, m.algebra_practice_linear_2,
-                m.algebra_practice_linear_3,
-            ],
-            "intermediate": [
-                m.algebra_practice_factorise_1, m.algebra_practice_factorise_2,
-                m.algebra_practice_factorise_3,
-                m.algebra_practice_expand_binomial, m.algebra_practice_linear_both_sides,
+                m.algebra_practice_linear,
                 m.algebra_practice_substitution, m.algebra_practice_factorise_hcf,
                 m.algebra_practice_change_subject,
+                va.algebra_practice_collect_terms, va.algebra_practice_index_laws_simplify,
+                va.algebra_practice_expand_single, va.algebra_practice_form_expression,
+                va.algebra_practice_form_equation_shape,
+            ],
+            "intermediate": [
+                m.algebra_practice_factorise,
+                m.algebra_practice_expand_binomial, m.algebra_practice_linear_both_sides,
+                va.algebra_practice_factorise_simple, va.algebra_practice_difference_two_squares,
+                va.algebra_practice_index_laws_coefficients, va.algebra_practice_solve_fraction_equation,
+                va.algebra_practice_form_equation_angles, va.algebra_practice_expand_two_brackets,
             ],
             "difficult": [
                 m.algebra_practice_quadratic_1, m.algebra_practice_word_linear,
                 m.algebra_practice_simultaneous, m.algebra_practice_expand_mixed,
                 m.algebra_practice_brackets_both_sides, m.algebra_practice_consecutive_integers,
-                m.algebra_practice_quadratic_2, m.algebra_practice_quadratic_3,
+                m.algebra_practice_factorise_quadratic,
+                va.algebra_practice_expand_three_binomials, va.algebra_practice_form_quadratic_area,
             ],
         },
         "surds": {
             "foundational": [
                 m.gcse_surds_simplify, m.gcse_surds_simplify_multiple, m.gcse_surds_add_subtract,
+                m.gcse_surds_multiply, m.gcse_surds_practice_divide, m.gcse_surds_practice_compare,
+                va.gcse_surds_identify_irrational, va.gcse_surds_square_of_surd, va.gcse_surds_add_like,
             ],
             "intermediate": [
-                m.gcse_surds_expand_simple, m.gcse_surds_rationalise_simple, m.gcse_surds_multiply,
-                m.gcse_surds_practice_divide, m.gcse_surds_practice_compare,
+                m.gcse_surds_expand_simple, m.gcse_surds_rationalise_simple,
                 m.gcse_surds_practice_mixed_simplify, m.gcse_surds_practice_double_bracket,
                 m.gcse_surds_square_bracket,
+                va.gcse_surds_expand_single_bracket, va.gcse_surds_multiply_coefficients,
+                va.gcse_surds_rationalise_coefficient, va.gcse_surds_match_simplified,
             ],
             "difficult": [
                 m.gcse_surds_rationalise_compound, m.gcse_surds_exact_area, m.gcse_surds_identity,
                 m.gcse_surds_practice_surd_equation, m.gcse_surds_practice_rationalise_binomial_diff,
                 m.gcse_surds_practice_between_which_integers, m.gcse_surds_practice_perimeter_exact,
-                m.gcse_surds_expand_diff_subtract,
+                m.gcse_surds_expand_diff_subtract, va.gcse_surds_pythagoras_exact,
             ],
         },
     }[topic]
@@ -182,7 +209,7 @@ def _practice_pools(topic):
 def _variants_for_basic_topic(bank, topic, difficulty, mode):
     if mode == "mcq":
         return mcq_variants_from_bank_with_procedural(
-            bank, procedural_mcq_for(topic), topic, difficulty
+            bank, procedural_mcq_for(topic, difficulty), topic, difficulty
         )
     pools = _practice_pools(topic)
     return select_tier_variants(pools.get(difficulty, []))
@@ -208,7 +235,7 @@ _BIDMAS_MCQ_BANK = [
      "ans": "B", "marks": 1, "difficulty": "foundational",
      "sol": "Brackets: 5×4=<strong>20</strong>. Answer: B",
      "hint": "Brackets first."},
-    {"q": "What does the 'I' in BIDMAS stand for?",
+    {"concept": True, "q": "What does the 'I' in BIDMAS stand for?",
      "opts": ["A  Integers", "B  Indices (powers)", "C  Inverse", "D  Integration"],
      "ans": "B", "marks": 1, "difficulty": "foundational",
      "sol": "<strong>Indices</strong> (powers). Answer: B",
@@ -245,12 +272,12 @@ _BIDMAS_MCQ_BANK = [
      "hint": r"The negative is inside the brackets."},
     {"q": r"What is \( -\left(2\right)^{2} \)?",
      "opts": ["A  4", "B  −4", "C  2", "D  −2"],
-     "ans": "B", "marks": 2, "difficulty": "intermediate",
+     "ans": "B", "marks": 2, "difficulty": "difficult",      # Phase 2: the classic -(2)^2 slip is the top of BIDMAS; the difficult band had two items
      "sol": r"\(-\left(2^{2}\right) = -(4) = -4\). Answer: <strong>B</strong>",
      "hint": r"Only 2 is squared; the minus stays outside."},
     {"q": "6 + 18 ÷ 3² =",
      "opts": ["A  8", "B  24", "C  4", "D  2"],
-     "ans": "A", "marks": 2, "difficulty": "intermediate",
+     "ans": "A", "marks": 2, "difficulty": "difficult",      # Phase 2: indices, division and addition in one line (see above)
      "sol": "3²=9, 18÷9=2, 6+2=<strong>8</strong>. Answer: A",
      "hint": "Indices, divide, add."},
     {"q": "Which is equal to 5 − (−3)?",
@@ -893,7 +920,7 @@ _SURD_MCQ_BANK = [
      "sol": "<strong>5</strong>. Answer: A",
      "hint": "Square cancels root."},
     {"q": "√20 − √5 equals:",
-     "opts": ["A  √15", "B  √5", "C  0", "D  3√5"],
+     "opts": ["A  √15", "B  √5", "C  2√5", "D  3√5"],
      "ans": "B", "marks": 2, "difficulty": "intermediate",
      "sol": "2√5−√5=<strong>√5</strong>. Answer: B",
      "hint": "Simplify √20."},

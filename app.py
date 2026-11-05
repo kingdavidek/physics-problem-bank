@@ -112,6 +112,9 @@ from generators.gcse.physics import (
     rad_found_atom_structure,
     rad_inter_alpha_equation,
 )
+from generators.shared import option_notes
+from generators.shared.answer_record import public_problems
+from generators.shared.misconceptions import LADDER_COPY, graded_message
 from generators.shared.utils import format_light_markdown
 from generators.shared.lesson_assist import (
     daily_limit_ip,
@@ -127,6 +130,7 @@ from generators.shared.variant_utils import (
     resolve_variant_callable,
     variant_is_randomizable,
 )
+from generators.shared.whole_pool import generate_from_pool, uses_whole_pool
 from models.user import (
     User,
     can_access_difficulty,
@@ -426,6 +430,7 @@ from models.class_progress import (
 from models.class_assignments import (
     MAX_ASSIGNMENT_QUESTIONS,
     MIN_ASSIGNMENT_QUESTIONS,
+    NOT_FROZEN_KEYS,
     SERVER_ONLY_KEYS,
     consume_preview,
     create_assignment,
@@ -545,6 +550,10 @@ app.config['REMEMBER_COOKIE_SECURE'] = _secure_cookies
 app.jinja_env.globals['svg_kit'] = svg_kit
 app.jinja_env.globals['zorp_kit'] = zorp_kit
 app.jinja_env.globals['zorp_rig'] = zorp_rig
+app.jinja_env.globals['option_note_qid'] = lambda problem: (
+    option_notes.fingerprint(problem) if isinstance(problem, dict) and problem.get('option_notes') else ''
+)
+app.jinja_env.globals['ladder_copy'] = LADDER_COPY   # the words around the hint ladder (docs/GCSE_MATHS_HINTS.md section 17)
 
 login_manager = LoginManager()
 
@@ -2148,6 +2157,14 @@ def _load_qt():
         return load_quicktest_session(conn, qt_id)
 
 
+def _without_answer_records(data):
+    """A copy of a quiz session's data with the problems' answer records removed (they are never stored)."""
+    if isinstance(data, dict) and isinstance(data.get('problems'), list):
+        data = dict(data)
+        data['problems'] = public_problems(data['problems'], keep_notes=True)
+    return data
+
+
 def _save_lq(data):
     lq_id = session.get('lq_id', str(uuid.uuid4()))
     session['lq_id'] = lq_id
@@ -2155,7 +2172,7 @@ def _save_lq(data):
     with get_db() as conn:
         conn.execute(
             "INSERT OR REPLACE INTO quicktest_sessions (session_id, data) VALUES (?, ?)",
-            (f"lq_{lq_id}", json.dumps(data)),
+            (f"lq_{lq_id}", json.dumps(_without_answer_records(data))),
         )
         conn.commit()
     return lq_id
@@ -2560,7 +2577,7 @@ def _freeze_problem_payload(problem):
     # with but the client payload never carries. Kept in the frozen copy so set work is graded the same way;
     # models.class_assignments.strip_problem_keys removes it again on every way out, answered or not.
     for key in SERVER_ONLY_KEYS:
-        if problem.get(key):
+        if key not in NOT_FROZEN_KEYS and problem.get(key):
             payload[key] = problem[key]
     if not payload.get('question'):
         payload['question'] = problem.get('question') or ''
@@ -2584,7 +2601,7 @@ def _live_catalogue_topics():
     return out
 
 
-def _freeze_class_work_problems(level, subject, topic, mode, difficulty, count):
+def _freeze_class_work_problems(level, subject, topic, mode, difficulty, count, rng=None):
     if not _generator_path_allowed(level, subject):
         raise ValueError('invalid_topic')
     try:
@@ -2605,6 +2622,15 @@ def _freeze_class_work_problems(level, subject, topic, mode, difficulty, count):
         level, subject, topic, mode, difficulty=difficulty
     )
     generator = topic_config['func']
+    if uses_whole_pool(level, subject):
+        # GCSE maths: every slot of the tier pool once before any kind comes round again (decision V8); the frozen
+        # copy is stored whole, as before, so nothing about the draw is kept.
+        try:
+            drawn = generate_from_pool(generator, topic_config.get('variants_func'), difficulty, mode, count,
+                                       rng=rng, accept=_problem_is_gradable, kind_check=(mode == 'mcq'))
+        except ValueError:
+            raise ValueError('generate_failed')
+        return [_freeze_problem_payload(problem) for problem, _name in drawn], mode
     queue = _build_problem_queue(topic_config, level, subject, topic, mode, difficulty) or []
     problems = []
     for i in range(count):
@@ -3101,9 +3127,12 @@ def index():
                 conn, current_user.id, selected_diff=selected_diff,
             )
 
+    # the generators label a problem with its slug title-cased ("Bidmas"); the link shows the registry's name
+    revise_topic_name = _topic_label(selected_level, selected_subject, selected_topic) if problem else None
     return render_template(
         'index.html',
         problem=problem,
+        revise_topic_name=revise_topic_name,
         error=error,
         limit_hit=limit_hit,
         selected_level=selected_level,
@@ -3819,6 +3848,24 @@ def _serialize_mcq_attempt_summary(item, *, external_urls=False):
         payload['score_total'] = item.get('score_total')
         payload['total'] = item.get('total') or item.get('score_total')
     return payload
+
+
+def _checked_part_index(payload, problem, stored_type, part_raw):
+    """Which box of a multi-box answer is being checked: the part index the page sent if it names a box with this very
+    key, else the one box with this key; None when it cannot be told (the topic rules then stay silent)."""
+    if stored_type != 'number_fields':
+        return None
+    stored = str(problem.get('correct_answer_raw') or '')
+    parts = stored.split('\x1e' if '\x1e' in stored else '|')
+    raw_index = payload.get('part_index')
+    try:
+        index = int(raw_index) if raw_index is not None and not isinstance(raw_index, bool) else None
+    except (TypeError, ValueError):
+        index = None
+    if index is not None and 0 <= index < len(parts) and parts[index] == str(part_raw):
+        return index
+    matches = [k for k, v in enumerate(parts) if v == str(part_raw)]
+    return matches[0] if len(matches) == 1 else None
 
 
 def _api_error(message, status=400, code=None, **extra):
@@ -4730,12 +4777,14 @@ def _quicktest_answer_from_form(problem, form):
 
     if user_answer and (problem.get('answer_type') or '') == 'number_fields':
         from generators.shared.answer_checkers import check_number_fields
+        from generators.shared.answer_units import problem_question_text
 
         try:
             result = check_number_fields(
                 str(problem.get('correct_answer_raw')),
                 user_answer,
                 field_types=problem.get('answer_field_types'),
+                question=problem_question_text(problem),
             )
         except (TypeError, ValueError):
             result = None
@@ -4830,7 +4879,15 @@ _SESSION_PROBLEM_DROP_KEYS = frozenset({
 
 
 def _slim_problem_for_session(problem):
-    """Drop bulky SVG/HTML fields so cookie sessions stay under the size limit."""
+    """Drop bulky SVG/HTML fields so cookie sessions stay under the size limit.
+
+    A question cut here keeps its visible words for the unit rules (``answer_units.UNITS_TEXT_KEY``): a drawn question
+    puts 6 to 11 KB of SVG before the words that ask for the answer, so the cut copy alone lost "in centimetres" and
+    the checks on Quick Test, saved, shared, suggestion and lesson-quiz pages read a different question from practice
+    (whole-change review A2, 2026-10-29). The tag-free text is smaller than the markup it replaces in the cookie.
+    """
+    from generators.shared.answer_units import UNITS_TEXT_KEY, units_source_text
+
     if not isinstance(problem, dict):
         return problem
     slim = {}
@@ -4839,13 +4896,19 @@ def _slim_problem_for_session(problem):
             continue
         if key in ('solution', 'hint', 'question') and isinstance(value, str) and len(value) > 4000:
             slim[key] = value[:4000]
+            if key == 'question' and not problem.get(UNITS_TEXT_KEY):
+                slim[UNITS_TEXT_KEY] = units_source_text(value)
         else:
             slim[key] = value
     return slim
 
 
-def _sync_last_problem_payload(problem, *, level, subject, topic, mode, difficulty):
-    """Keep session check API aligned with the problem currently on screen."""
+def _sync_last_problem_payload(problem, *, level, subject, topic, mode, difficulty, source=None):
+    """Keep session check API aligned with the problem currently on screen.
+
+    ``source='quicktest'`` marks a Quick Test question: the check route gives it the one-line hint but never the
+    bigger-hint ladder (docs/GCSE_MATHS_HINTS.md D1c).
+    """
     session['last_problem_payload'] = {
         'level': level,
         'subject': subject,
@@ -4855,6 +4918,8 @@ def _sync_last_problem_payload(problem, *, level, subject, topic, mode, difficul
         'variant_name': problem.get('variant_name'),
         'problem': _slim_problem_for_session(problem),
     }
+    if source:
+        session['last_problem_payload']['source'] = source
     session.modified = True
 
 
@@ -7221,6 +7286,40 @@ def api_v1_unfollow_user(handle):
     })
 
 
+@app.post('/api/v1/problems/option-note')
+def api_v1_problems_option_note():
+    """The note for one wrong multiple-choice pick (docs/GCSE_MATHS_HINTS.md Phase 4).
+
+    Reads only the practice problem in the session (never the request) and answers ``{'ok': True, 'note': text}``;
+    the text is '' when the pick is the key or has no note. Works for guests. The page sends the letter it picked and
+    the ``qid`` it was served, so a stale tab cannot read the note of a newer question. A Quick Test or lesson quiz
+    question has no note until its results page.
+    """
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('JSON body required', 400, 'invalid_payload')
+    letter = str(payload.get('letter') or '').strip().upper()
+    if len(letter) != 1 or letter not in 'ABCD':
+        return _api_error('letter must be A, B, C or D', 400, 'invalid_letter')
+    stored = session.get('last_problem_payload') or {}
+    problem = stored.get('problem') or {}
+    if not isinstance(problem, dict) or not problem.get('options') or not problem.get('correct_answer'):
+        return _api_error('Generate a question first, then answer it', 400, 'session_required')
+    if stored.get('source') == 'quicktest' or stored.get('mode') == 'lesson':
+        return _api_error('Notes appear on the results page', 403, 'not_available')
+    if str(payload.get('qid') or '') != option_notes.fingerprint(problem):
+        return _api_error('Problem mismatch', 409, 'session_mismatch')
+    # A cap per question, counted in the signed session cookie: nothing about the pupil is written to the database
+    # (a daily count of wrong picks would be a per-child record). A new question starts a new count.
+    qid = str(payload.get('qid') or '')
+    seen = session.get('on_n')
+    count = seen[1] if isinstance(seen, list) and len(seen) == 2 and seen[0] == qid and isinstance(seen[1], int) else 0
+    if not _rate_limits_disabled() and count >= OPTION_NOTE_PER_QUESTION_LIMIT:
+        return _api_error('Hint limit reached for this question', 429, 'rate_limited', rate_limit_remaining=0)
+    session['on_n'] = [qid, count + 1]
+    return jsonify({'ok': True, 'note': option_notes.picked_note(problem, letter)})
+
+
 @app.post('/api/v1/problems/check')
 def api_v1_problems_check():
     from generators.shared.answer_checkers import (
@@ -7230,6 +7329,7 @@ def api_v1_problems_check():
         problem_answer_form,
         problem_answer_prereqs,
     )
+    from generators.shared.answer_units import problem_question_text
 
     payload = request.get_json(silent=True)
     if not isinstance(payload, dict):
@@ -7317,6 +7417,8 @@ def api_v1_problems_check():
                 'session_required',
             )
 
+    # The units the question asks for come from the stored problem only (never from the request).
+    question_text = problem_question_text(problem) if session_bound else None
     try:
         if not partial_field and answer_type == 'number_fields':
             from generators.shared.answer_checkers import check_number_fields
@@ -7325,6 +7427,7 @@ def api_v1_problems_check():
                 correct_answer_raw,
                 user_answer,
                 field_types=field_types,
+                question=question_text,
             )
         else:
             # The required written form and the subject letter come from the stored problem only.
@@ -7337,6 +7440,8 @@ def api_v1_problems_check():
                 labels=problem.get('answer_labels') if session_bound and not partial_field else None,
                 # Accepted orders for an ordered proof come from the stored problem only, never the request.
                 prereqs=problem_answer_prereqs(problem) if session_bound and not partial_field else None,
+                question=question_text,
+                multi_part=partial_field,
             )
     except ValueError as exc:
         message = str(exc)
@@ -7345,6 +7450,58 @@ def api_v1_problems_check():
         return _api_error(message, 400, 'invalid_correct_answer')
 
     response = {'ok': True, **result}
+    if session_bound and level == 'gcse' and subject == 'maths':
+        # A named slip instead of a bare "Not quite" (docs/GCSE_MATHS_HINTS.md, Phase 1). Session problem only,
+        # computed from the stored key now and kept nowhere: no row, event, stat or log holds it.
+        from generators.shared.misconceptions import diagnose
+
+        whole = not partial_field
+        diagnosis = diagnose(
+            problem,
+            user_answer,
+            result,
+            answer_type=answer_type,
+            correct_raw=correct_answer_raw,
+            accepts=lambda text: bool(check_answer(
+                answer_type,
+                correct_answer_raw,
+                text,
+                form=problem_answer_form(problem) if whole else None,
+                subject=problem.get('answer_subject') if whole else None,
+                labels=problem.get('answer_labels') if whole else None,
+                question=question_text,
+                multi_part=partial_field,
+            ).get('correct')),
+            level=level,
+            subject=subject,
+            topic=topic,
+            form=problem_answer_form(problem) if whole else None,
+            part=_checked_part_index(payload, problem, stored_type, correct_answer_raw) if partial_field else None,
+        )
+        if diagnosis is not None:
+            response['feedback'] = diagnosis.message
+            if diagnosis.kind == 'misconception':
+                response['hint'] = {'kind': 'misconception', 'id': diagnosis.rule_id}
+        # The hint ladder (Phase 3): only when the practice page asks for it, never in Quick Test or a lesson quiz
+        # (whose question is also the session problem: refused here even for a hand-made request), never after a right
+        # answer, and not for an answer the checker could not read. Built from the session problem for this response
+        # and kept nowhere. Pacing only: the page already carries the solution.
+        if (
+            payload.get('hint_ladder') is True
+            and stored.get('source') != 'quicktest'
+            and stored.get('mode') != 'lesson'
+            and not result.get('correct')
+            and not str(result.get('feedback') or '').startswith('Enter')
+        ):
+            from generators.shared.misconceptions import build_ladder
+
+            slip = diagnosis.rule_id if diagnosis is not None and diagnosis.kind == 'misconception' else None
+            try:
+                response['hint'] = build_ladder(
+                    problem, topic=topic, correct_raw=str(problem.get('correct_answer_raw') or ''), slip=slip,
+                )
+            except Exception:  # noqa: BLE001 - the ladder is a courtesy; the grade is already decided
+                pass
     if current_user.is_authenticated and level and subject and topic:
         try:
             TOPICS[level][subject][topic]
@@ -8834,6 +8991,7 @@ REPORT_DAILY_LIMIT = 20
 SHARE_DAILY_LIMIT = 50
 SUGGEST_DAILY_LIMIT = 50
 QUICKTEST_DAILY_LIMIT = 30
+OPTION_NOTE_PER_QUESTION_LIMIT = 40   # note requests per practice question, counted in the session cookie (docs/GCSE_MATHS_HINTS.md Phase 4)
 LESSON_QUIZ_DAILY_LIMIT = 20
 CHALLENGE_DAILY_LIMIT = 20
 DIFFICULTIES = ('foundational', 'intermediate', 'difficult')
@@ -9011,6 +9169,7 @@ def api_v1_quicktest_question(session_id):
         topic=data.get('topic', 'forces'),
         mode=data.get('mode', 'standard'),
         difficulty=data.get('difficulty', 'foundational'),
+        source='quicktest',
     )
     summary = _quicktest_session_summary(data, session_id)
     return jsonify({
@@ -9265,6 +9424,12 @@ def api_v1_lesson_quiz_results(session_id):
         entry['was_correct'] = graded['correct']
         entry['score'] = graded['score']
         entry['score_total'] = graded['score_total']
+        if not graded['correct']:
+            message = graded_message(
+                problem, user_answer, level=data.get('level'), subject=data.get('subject'), topic=data.get('topic') or '',
+            )
+            if message:
+                entry['hint_message'] = message
         enriched.append(entry)
 
     result = {
@@ -10718,13 +10883,23 @@ def quicktest_start():
     subject = request.form.get('subject', 'physics')
     topic = _resolve_topic_slug(level, subject, request.form.get('topic', 'forces'))
     difficulty = request.form.get('difficulty', 'foundational')
+    if difficulty not in DIFFICULTIES:
+        flash_for('index', 'Choose a difficulty from the list.', 'error')
+        return redirect(url_for('index'))
     mode = _normalize_generator_mode(
         level,
         subject,
         topic,
         request.form.get('mode', 'standard'),
-        difficulty=difficulty if difficulty in DIFFICULTIES else None,
+        difficulty=difficulty,
     )
+    if not can_access_difficulty(current_user, difficulty):
+        flash_for('index', 'Difficult questions require a free account. Sign up or log in to continue.', 'error')
+        return redirect(url_for('index'))
+    allowed, _remaining = _api_rate_limit('quicktest', QUICKTEST_DAILY_LIMIT)
+    if not allowed:
+        flash_for('index', 'Daily quick test limit reached. Please try again tomorrow.', 'error')
+        return redirect(url_for('index'))
 
     try:
         problems, topic_config = build_quicktest_problems(
@@ -10764,6 +10939,7 @@ def quicktest_question():
         topic=data.get('topic', 'forces'),
         mode=data.get('mode', 'standard'),
         difficulty=data.get('difficulty', 'foundational'),
+        source='quicktest',
     )
     return render_template(
         'quicktest_question.html',
@@ -11068,6 +11244,10 @@ def lesson_mcq_results(level, subject, topic):
         p['answered_correctly'] = graded['correct']
         p['score'] = graded['score']
         p['score_total'] = graded['score_total']
+        if not graded['correct']:
+            message = graded_message(problem, user_answer, level=level, subject=subject, topic=topic)
+            if message:
+                p['hint_message'] = message
         enriched.append(p)
 
     score = data.get('score')
@@ -11099,10 +11279,16 @@ def quicktest_results():
     summary = _quicktest_results_summary(problems, answers)
     wrong_count = _quicktest_wrong_count(problems, answers)
     attempt_id = _finalize_quicktest_session(data)
+    # the note on a wrong multiple-choice pick shows here, after the test (docs/GCSE_MATHS_HINTS.md Phase 4)
+    pick_notes = [
+        option_notes.picked_note(p, (answers[i] or {}).get('user_answer')) if i < len(answers) and not (answers[i] or {}).get('correct') else ''
+        for i, p in enumerate(problems)
+    ]
     return render_template(
         'quicktest_results.html',
         problems=problems,
         answers=answers,
+        pick_notes=pick_notes,
         topic_name=data['topic_name'],
         total_marks=total_marks,
         quiz_attempt_id=attempt_id,

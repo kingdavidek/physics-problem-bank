@@ -1045,7 +1045,7 @@ def compound_measures_mcq():
 def gcse_compound_measures_variants(difficulty, mode='practice'):
     if mode == 'mcq':
         return mcq_variants_from_bank_with_procedural(
-            _CM_MCQ_BANK, procedural_mcq_for('compound_measures'), 'compound_measures', difficulty
+            _CM_MCQ_BANK, procedural_mcq_for('compound_measures', difficulty), 'compound_measures', difficulty
         )
 
     if difficulty == 'foundational':

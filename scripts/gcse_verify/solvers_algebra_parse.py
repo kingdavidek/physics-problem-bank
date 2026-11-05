@@ -11,6 +11,7 @@ at most 40; anything the arithmetic still cannot handle becomes ``Cannot``.
 """
 from __future__ import annotations
 
+import functools
 import html
 import re
 from fractions import Fraction
@@ -399,11 +400,25 @@ def to_sympy(node, defs=None):
 
 def expr(text, funcs=(), defs=None):
     """Parse ``text`` straight to a sympy expression."""
+    if defs is None and isinstance(text, str) and isinstance(funcs, tuple):
+        return _expr_cached(text, funcs)
+    return _expr(text, funcs, defs)
+
+
+def _expr(text, funcs=(), defs=None):
     tree = parse(text, funcs)
     try:
         return to_sympy(tree, defs)
     except (ValueError, OverflowError, RecursionError, MemoryError) as e:
         raise Cannot(f'cannot evaluate {text!r}: {type(e).__name__}') from None
+
+
+@functools.lru_cache(maxsize=8192)
+def _expr_cached(text, funcs):
+    """The same text always parses to the same (immutable) sympy expression; the verification run parses a question's
+    segments again for its checks and for the negative control (runtime, batch B review 2026-10-28). An exception
+    (Cannot) is not cached and is raised again on the next call."""
+    return _expr(text, funcs)
 
 
 def expand_pm(text):

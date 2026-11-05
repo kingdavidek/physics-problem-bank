@@ -13,7 +13,9 @@ from generators.shared.utils import (
     problem_extra_from_graded_answer,
     proof_steps_answer,
     signed_term,
+    coef,
     bracket_neg,
+    ordinal_suffix,
 )
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
@@ -87,8 +89,8 @@ def _seq_number_list_answer(values, format_hint=None):
 
 def _seq_quadratic_nth_expr(a_coef, b_coef, c_coef):
     return (
-        f"{a_coef}n^2"
-        + (f" + {b_coef}n" if b_coef > 0 else (f" - {-b_coef}n" if b_coef < 0 else ""))
+        f"{coef(a_coef, 'n')}^2"
+        + (f" + {coef(b_coef, 'n')}" if b_coef > 0 else (f" - {coef(-b_coef, 'n')}" if b_coef < 0 else ""))
         + (f" + {c_coef}" if c_coef > 0 else (f" - {-c_coef}" if c_coef < 0 else ""))
     )
 
@@ -234,7 +236,7 @@ def _seq_found_nth_term_find_value():
     n_val = random.randint(10, 20)
     ans = d * n_val + b
     expr_str = f"{d}n" + (f" + {b}" if b > 0 else (f" - {-b}" if b < 0 else ""))
-    q = rf"The nth term of a sequence is \({expr_str}\). Find the {n_val}th term."
+    q = rf"The nth term of a sequence is \({expr_str}\). Find the {n_val}{ordinal_suffix(n_val)} term."
     s = (rf"Substitute \(n = {n_val}\):<br>"
          rf"\({d} \times {n_val} {'+' if b >= 0 else '-'} {abs(b)} = {d*n_val} {'+' if b>=0 else '-'} {abs(b)}\)<br>"
          rf"<strong>\(= {ans}\)</strong>")
@@ -255,7 +257,7 @@ def _seq_found_is_term_in_seq():
     s = (rf"Set \({expr_str} = {val}\):<br>"
          rf"\({d}n = {val - b}\)<br>"
          rf"\(n = {val - b} \div {d} = {k}\)<br>"
-         rf"Since \(n = {k}\) is a positive integer, <strong>{val} is the {k}th term</strong>.")
+         rf"Since \(n = {k}\) is a positive integer, <strong>{val} is the {k}{ordinal_suffix(k)} term</strong>.")
     hint = f"Set {expr_str} = {val} and solve for n. If n is a positive integer, the value is in the sequence."
     return q, s, hint, 3, _seq_keyword_answer('yes')
 
@@ -300,7 +302,7 @@ def _seq_found_geometric_next():
 def _seq_found_square_numbers():
     n_val = random.randint(8, 14)
     ans = n_val ** 2
-    q = rf"Write down the {n_val}th square number."
+    q = rf"Write down the {n_val}{ordinal_suffix(n_val)} square number."
     s = (rf"The \(n\)th square number is \(n^2\).<br>"
          rf"\({n_val}^2 = {n_val} \times {n_val}\)<br>"
          rf"<strong>\(= {ans}\)</strong>")
@@ -314,7 +316,7 @@ def _seq_found_triangle_numbers():
     ans = n_val * (n_val + 1) // 2
     tri = [k*(k+1)//2 for k in range(1, 6)]
     tri_str = ", ".join(str(t) for t in tri)
-    q = rf"The triangle numbers are {tri_str}, ...<br>Find the {n_val}th triangle number."
+    q = rf"The triangle numbers are {tri_str}, ...<br>Find the {n_val}{ordinal_suffix(n_val)} triangle number."
     s = (rf"The \(n\)th triangle number is \(\dfrac{{n(n+1)}}{{2}}\).<br>"
          rf"\(\dfrac{{{n_val} \times {n_val+1}}}{{2}} = \dfrac{{{n_val*(n_val+1)}}}{{2}}\)<br>"
          rf"<strong>\(= {ans}\)</strong>")
@@ -329,13 +331,13 @@ def _seq_found_odd_even_seq():
         terms = [2*k-1 for k in range(1, 6)]
         n_val = random.randint(10, 20)
         ans = 2*n_val - 1
-        q = rf"The sequence of odd numbers starts: {', '.join(str(t) for t in terms)}, ...<br>Find the {n_val}th odd number."
+        q = rf"The sequence of odd numbers starts: {', '.join(str(t) for t in terms)}, ...<br>Find the {n_val}{ordinal_suffix(n_val)} odd number."
         s = rf"The \(n\)th odd number is \(2n - 1\).<br>\(2 \times {n_val} - 1\)<br><strong>\(= {ans}\)</strong>"
     else:
         terms = [2*k for k in range(1, 6)]
         n_val = random.randint(10, 20)
         ans = 2*n_val
-        q = rf"The sequence of even numbers starts: {', '.join(str(t) for t in terms)}, ...<br>Find the {n_val}th even number."
+        q = rf"The sequence of even numbers starts: {', '.join(str(t) for t in terms)}, ...<br>Find the {n_val}{ordinal_suffix(n_val)} even number."
         s = rf"The \(n\)th even number is \(2n\).<br>\(2 \times {n_val}\)<br><strong>\(= {ans}\)</strong>"
     hint = "Use the formula for the nth term of the odd or even number sequence."
     return q, s, hint, 1, ans
@@ -443,6 +445,12 @@ def _seq_inter_nth_term_negative_d():
     return q, s, hint, 3, _seq_algebraic_answer(s_expr)
 
 
+def _seq_inter_find_nth_term_any():
+    """One slot for the nth term of an arithmetic sequence with a positive or a negative common difference (merges
+    _seq_inter_find_nth_term and _seq_inter_nth_term_negative_d; both stay defined, retired)."""
+    return random.choice([_seq_inter_find_nth_term, _seq_inter_nth_term_negative_d])()
+
+
 @verifies('alg', task='seq_which_term')
 def _seq_inter_which_term():
     d = random.randint(3, 7)
@@ -455,7 +463,7 @@ def _seq_inter_which_term():
     s = (rf"Set \({s_expr} = {val}\):<br>"
          rf"\({d}n = {val - b}\)<br>"
          rf"\(n = {val - b} \div {d} = {k}\)<br>"
-         rf"<strong>{val} is the {k}th term.</strong>")
+         rf"<strong>{val} is the {k}{ordinal_suffix(k)} term.</strong>")
     hint = f"Set the nth-term expression equal to {val} and solve for n."
     return q, s, hint, 3, k
 
@@ -493,7 +501,7 @@ def _seq_inter_first_term_over():
          rf"\({d}n > {target - b}\)<br>"
          rf"\(n > {fmt_dp((target - b)/d, 4)}...\)<br>"
          rf"The first integer value is \(n = {n_ans}\).<br>"
-         rf"<strong>First term greater than {target} is \({val}\) (the {n_ans}th term).</strong>")
+         rf"<strong>First term greater than {target} is \({val}\) (the {n_ans}{ordinal_suffix(n_ans)} term).</strong>")
     hint = f"Solve {s_expr} > {target} for n, then round up to the nearest whole number."
     return q, s, hint, 3, val
 
@@ -504,7 +512,7 @@ def _seq_inter_geometric_nth_term():
     r = random.choice([2, 3])
     n_val = random.randint(6, 10)
     ans = a * r**(n_val - 1)
-    q = rf"A geometric sequence has first term {a} and common ratio {r}.<br>Find the {n_val}th term."
+    q = rf"A geometric sequence has first term {a} and common ratio {r}.<br>Find the {n_val}{ordinal_suffix(n_val)} term."
     s = (rf"The nth term of a geometric sequence is \(ar^{{n-1}}\).<br>"
          rf"\({a} \times {r}^{{{n_val}-1}} = {a} \times {r}^{{{n_val-1}}}\)<br>"
          rf"\(= {a} \times {r**(n_val-1)}\)<br>"
@@ -529,7 +537,7 @@ def _seq_inter_two_sequences_same():
          rf"Find the value that appears in both sequences at the same position.")
     s = (rf"Set the two expressions equal:<br>"
          rf"\({e1} = {e2}\)<br>"
-         rf"\({'' if d1 - d2 == 1 else d1 - d2}n = {b2-b1}\)<br>"
+         rf"\({'' if d1 - d2 == 1 else '-' if d1 - d2 == -1 else d1 - d2}n = {b2-b1}\)<br>"
          rf"\(n = {n_val}\)<br>"
          rf"Both sequences give the value \({d1} \times {n_val}{'' if b1 == 0 else (' + ' if b1 > 0 else ' - ') + str(abs(b1))} = {ans}\).<br>"
          rf"<strong>The shared value is {ans} (at position n = {n_val}).</strong>")
@@ -592,7 +600,7 @@ def _seq_inter_sequences_nth_term_large():
     n_val = random.randint(50, 100)
     ans = d * n_val + b
     s_expr = _linear_nth(d, b)
-    q = rf"The nth term of a sequence is \({s_expr}\).<br>Find the {n_val}th term"
+    q = rf"The nth term of a sequence is \({s_expr}\).<br>Find the {n_val}{ordinal_suffix(n_val)} term"
     s = (rf"\(n = {n_val}\):<br>"
          rf"\({d} \times {n_val} {'+' if b >= 0 else '-'} {abs(b)} = {d*n_val} {'+' if b >= 0 else '-'} {abs(b)}\)<br>"
          rf"<strong>\(= {ans}\)</strong>")
@@ -633,7 +641,7 @@ def _seq_inter_common_terms():
     q = (rf"Sequence A: {a1}, {a1+d1}, {a1+2*d1}, ...<br>"
          rf"Sequence B: {a2}, {a2+d2}, {a2+2*d2}, ...<br>"
          rf"Find the first number that appears in both sequences.")
-    s = (rf"Sequence A has nth term \({d1}n {signed_term(a1-d1)}\); Sequence B has nth term \({d2}n {signed_term(a2-d2)}\).<br>"
+    s = (rf"Sequence A has nth term \({_lin_nth(d1, a1-d1)}\); Sequence B has nth term \({_lin_nth(d2, a2-d2)}\).<br>"
          rf"Common terms share a difference of \(\text{{lcm}}({d1},{d2}) = {lcm}\).<br>"
          rf"Checking terms of A: {', '.join(str(a1+k*d1) for k in range(15))}...<br>"
          rf"<strong>First common term is {first_common}.</strong>")
@@ -683,6 +691,18 @@ def _seq_inter_linear_quadratic_compare():
 # DIFFICULT (15 variants)
 # ══════════════════════════════════════════════════════════════════════════════
 
+def _st_nz(value):
+    """signed_term, but nothing for 0 (no '+ 0' in a worked line)."""
+    return '' if value == 0 else signed_term(value)
+
+
+def _lin_nth(b, c):
+    """bn + c as a pupil writes it: no '1n', no '0n', no '+ 0'."""
+    if b == 0:
+        return str(c)
+    return f"{coef(b, 'n')} {_st_nz(c)}".strip()
+
+
 @verifies('alg', task='seq_find_nth')
 def _seq_diff_quadratic_nth_term():
     """Find nth term of quadratic sequence: an²+bn+c."""
@@ -697,9 +717,9 @@ def _seq_diff_quadratic_nth_term():
     q = rf"Find the nth term of the sequence: {seq_str}, ..."
     s = (rf"First differences: {', '.join(str(x) for x in d1)}<br>"
          rf"Second differences: {', '.join(str(x) for x in d2)} (constant = {d2[0]})<br>"
-         rf"Leading coefficient: \(\dfrac{{{d2[0]}}}{{2}} = {a_coef}\), so \(n^2\) term is \({a_coef}n^2\).<br>"
-         rf"Subtract \({a_coef}n^2\) from each term: \({', '.join(str(terms[i]-a_coef*(i+1)**2) for i in range(4))}\) — a linear sequence.<br>"
-         rf"Linear part: \({b_coef}n {signed_term(c_coef)}\).<br>"
+         rf"Leading coefficient: \(\dfrac{{{d2[0]}}}{{2}} = {a_coef}\), so \(n^2\) term is \({coef(a_coef, 'n')}^2\).<br>"
+         rf"Subtract \({coef(a_coef, 'n')}^2\) from each term: \({', '.join(str(terms[i]-a_coef*(i+1)**2) for i in range(4))}\) — a linear sequence.<br>"
+         rf"Linear part: \({_lin_nth(b_coef, c_coef)}\).<br>"
          rf"<strong>nth term \(= {nth}\)</strong>")
     hint = "Find second differences ÷ 2 for the n² coefficient, then subtract and find the linear part."
     return q, s, hint, 5, _seq_algebraic_answer(nth)
@@ -718,7 +738,7 @@ def _seq_diff_quadratic_verify():
     ans = a_coef*n_val**2 + b_coef*n_val + c_coef
     q = (rf"A quadratic sequence starts {seq_str}.<br>"
          rf"(a) Show that the nth term is \({nth}\)<br>"
-         rf"(b) Find the {n_val}th term.<br>"
+         rf"(b) Find the {n_val}{ordinal_suffix(n_val)} term.<br>"
          rf"Enter your answer to part (b).")
     d1 = [terms[i+1]-terms[i] for i in range(4)]
     d2 = [d1[i+1]-d1[i] for i in range(3)]
@@ -767,7 +787,7 @@ def _seq_diff_quadratic_is_term():
          rf"\(= \dfrac{{-{b_coef} \pm \sqrt{{{b_coef**2 - 4*(c_coef-val)}}}}}{{2}} = \dfrac{{-{b_coef} \pm {math.isqrt(b_coef**2 - 4*(c_coef-val))}}}"
          rf"{{2}}\)<br>"
          rf"\(n = {k}\) or \(n = {-k - b_coef}\) (rejected, not positive).<br>"
-         rf"<strong>{val} is the {k}th term.</strong>")
+         rf"<strong>{val} is the {k}{ordinal_suffix(k)} term.</strong>")
     hint = f"Set {nth} = {val} and solve the quadratic for n."
     return q, s, hint, 5, _seq_keyword_answer('yes')
 
@@ -922,10 +942,10 @@ def _seq_diff_quadratic_seq_prove():
          rf"(a) Find \(u_{{{val_k}}}\)<br>"
          rf"(b) Show that the second difference is constant and state its value.<br>"
          rf"Enter your answer to part (a).")
-    s = (rf"(a) \(u_{{{val_k}}} = {a_coef}({val_k})^2 + {b_coef}({val_k}) {signed_term(c_coef)}"
-         rf" = {a_coef*val_k**2} + {b_coef*val_k} {signed_term(c_coef)}\)<br>"
+    s = (rf"(a) \(u_{{{val_k}}} = {a_coef}({val_k})^2 + {b_coef}({val_k}) {_st_nz(c_coef)}"
+         rf" = {a_coef*val_k**2} + {b_coef*val_k} {_st_nz(c_coef)}\)<br>"
          rf"<strong>\(u_{{{val_k}}} = {term_k}\)</strong><br>"
-         rf"(b) \(u_{{n+1}} - u_n = {a_coef}(n+1)^2 + {b_coef}(n+1) {signed_term(c_coef)} - ({nth})\)<br>"
+         rf"(b) \(u_{{n+1}} - u_n = {a_coef}(n+1)^2 + {b_coef}(n+1) {_st_nz(c_coef)} - ({nth})\)<br>"
          rf"\(= {a_coef}(2n+1) + {b_coef} = {2*a_coef}n + {a_coef + b_coef}\) (first difference)<br>"
          rf"Second difference: \(({2*a_coef}(n+1) + {a_coef+b_coef}) - ({2*a_coef}n + {a_coef+b_coef}) = {2*a_coef}\)<br>"
          rf"<strong>Constant second difference = {2*a_coef}.</strong>")
@@ -1049,7 +1069,7 @@ def _seq_diff_nth_term_with_fractions():
         ans_num, ans_den = n_val, n_val + 1
         q = (rf"A sequence starts: {terms_display}<br>"
              rf"(a) Write down the nth term.<br>"
-             rf"(b) Find the {n_val}th term.<br>"
+             rf"(b) Find the {n_val}{ordinal_suffix(n_val)} term.<br>"
              rf"Enter your answer to part (b).")
         s = (rf"(a) Numerators: 1, 2, 3, 4, ... \(= n\). Denominators: 2, 3, 4, 5, ... \(= n+1\).<br>"
              rf"<strong>nth term \(= \dfrac{{n}}{{n+1}}\)</strong><br>"
@@ -1064,7 +1084,7 @@ def _seq_diff_nth_term_with_fractions():
         ans_num, ans_den = 2*n_val - 1, 2*n_val + 1
         q = (rf"A sequence starts: {terms_display}, ...<br>"
              rf"(a) Write down the nth term.<br>"
-             rf"(b) Find the {n_val}th term.<br>"
+             rf"(b) Find the {n_val}{ordinal_suffix(n_val)} term.<br>"
              rf"Enter your answer to part (b).")
         s = (rf"(a) Numerators: 1, 3, 5, 7, ... \(= 2n-1\). Denominators: 3, 5, 7, 9, ... \(= 2n+1\).<br>"
              rf"<strong>nth term \(= \dfrac{{2n-1}}{{2n+1}}\)</strong><br>"
@@ -1298,7 +1318,7 @@ def sequences_mcq():
 def gcse_sequences_variants(difficulty, mode):
     if mode == 'mcq':
         return mcq_variants_from_bank_with_procedural(
-            _SEQ_MCQ_BANK, procedural_mcq_for('sequences'), 'sequences', difficulty
+            _SEQ_MCQ_BANK, procedural_mcq_for('sequences', difficulty), 'sequences', difficulty
         )
 
     if difficulty == 'foundational':
@@ -1321,8 +1341,7 @@ def gcse_sequences_variants(difficulty, mode):
         ]
     elif difficulty == 'intermediate':
         pool = [
-            _seq_inter_find_nth_term,
-            _seq_inter_nth_term_negative_d,
+            _seq_inter_find_nth_term_any,
             _seq_inter_which_term,
             _seq_inter_not_in_seq,
             _seq_inter_first_term_over,
@@ -1362,7 +1381,7 @@ def gcse_sequences_variants(difficulty, mode):
             _seq_found_square_numbers, _seq_found_triangle_numbers,
         ], 4)
         inter = random.sample([
-            _seq_inter_find_nth_term, _seq_inter_nth_term_negative_d,
+            _seq_inter_find_nth_term_any,
             _seq_inter_which_term, _seq_inter_sum_arithmetic,
             _seq_inter_geometric_nth_term, _seq_inter_arithmetic_word,
         ], 4)

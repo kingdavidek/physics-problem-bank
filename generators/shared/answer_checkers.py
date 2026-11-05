@@ -7,6 +7,7 @@ import re
 import math
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from fractions import Fraction
+from functools import lru_cache
 
 import sympy
 from sympy import Add, Integer, Mul, Pow, expand, factor_list, nsimplify, simplify, sqrt, pi
@@ -19,6 +20,8 @@ from sympy.parsing.sympy_parser import (
     standard_transformations,
 )
 
+from generators.shared import answer_units
+from generators.shared.answer_units import UNIT_ANSWER_TYPES
 from generators.shared.sql_checker import (
     compare_sql_queries,
     normalize_sql_query,
@@ -33,6 +36,7 @@ CHECKERS: dict[str, callable] = {}
 SYMPY_ANSWER_TYPES = frozenset({'algebraic', 'quadratic_roots', 'formula_fraction'})
 
 MAX_USER_ANSWER_LEN = 2000
+MAX_UNIT_ECHO_LEN = 80            # the typed text echoed back in a unit refusal
 MAX_SYMPY_EXPR_LEN = 200
 # Size caps applied to every parsed pupil expression (see _within_sympy_caps).
 MAX_SYMPY_NODES = 160
@@ -131,12 +135,25 @@ def _within_sympy_caps(expr) -> bool:
             nested *= max(1, abs(value))
             if nested > MAX_SYMPY_NESTED_EXPONENT:
                 return False
-            if base.free_symbols:
-                total_power += nested        # effective degree of this power once outer powers are applied
+            # Effective degree of this power once outer powers are applied. A power whose base is itself a power
+            # ((x^2)^3) adds nothing here: its exponent is already in the inner power's ``nested`` (6), so counting
+            # it again made (x^2)^3 total 9 and refused a right answer (review 2026-10-28).
+            # The same holds for a power of a product ((2x^2)^3, (x^2y)^2): each letter or power inside the product
+            # is counted once with the outer power applied (the Mul case below), not once more here. Review
+            # 2026-10-28: (2x^2)^3 totalled 9 and the right answer 8x^6 was refused as "Not quite".
+            if base.free_symbols and not isinstance(base, (Pow, Mul)):
+                total_power += nested
                 if total_power > MAX_SYMPY_TOTAL_POWER:
                     return False
             stack.append((base, nested))
             continue
+        if isinstance(node, Mul) and nested > 1:
+            # a product under an outer power: its plain letters and sums carry that power (powers count themselves)
+            for arg in node.args:
+                if not isinstance(arg, Pow) and arg.free_symbols:
+                    total_power += nested
+            if total_power > MAX_SYMPY_TOTAL_POWER:
+                return False
         for arg in node.args:
             stack.append((arg, nested))
     return _expanded_terms_bound(expr) <= MAX_SYMPY_EXPANDED_TERMS
@@ -189,9 +206,17 @@ def _safe_sympify(expr):
     return parsed
 
 
+# A comma is a thousands separator only in groups of exactly three digits (1,100 or -12,345.5). Review 2026-10-28:
+# every comma used to be deleted, so a decimal comma such as 3,5 typed in a box of a pair, vector or ratio was read
+# as 35. Any other comma now stays, the number does not parse and the pupil gets the type's "enter a number" line.
+_THOUSANDS_ONLY_RE = re.compile(r'[+\-\u2212]?\s*\d{1,3}(?:,\d{3})+(?:\.\d+)?')
+
+
 def _normalize_numeric_string(value) -> str:
     s = str(value or '').strip()
-    s = s.replace(',', '').replace('°', '')
+    if ',' in s and _THOUSANDS_ONLY_RE.fullmatch(s):
+        s = s.replace(',', '')
+    s = s.replace('°', '')
     s = s.replace('\u2212', '-').replace('−', '-')
     if s.startswith('+'):
         s = s[1:].strip()
@@ -386,6 +411,41 @@ def _terminates(fr: Fraction) -> bool:
 _RECURRING_FEEDBACK = 'Close. A decimal cannot show this exactly, so give it as a fraction.'
 
 
+def _is_key_as_decimal(user_text, actual, expected) -> bool:
+    """The typed decimal is the key rounded or cut off at the places typed (0.33 or 0.333 for 1/3).
+
+    Review 2026-10-26: "Close" used to be any decimal within 0.01 of the key, so for a small probability a wrong
+    answer was called close (0.071429, which is 1/14, for a key of 1/15). Never looser than that old rule.
+    """
+    m = re.fullmatch(r'-?\d*\.(\d{1,12})', _normalize_numeric_string(user_text))
+    if not m or abs(actual - expected) >= Fraction(1, 100):
+        return False
+    unit = Fraction(1, 10 ** len(m.group(1)))
+    size = abs(expected)
+    near = {math.floor(size / unit + Fraction(1, 2)) * unit, math.floor(size / unit) * unit}
+    return abs(actual) in near and (actual >= 0) == (expected >= 0)
+
+
+_TYPED_FRACTION_RE = re.compile(r'-?(?:(\d+)\s+)?(\d+)\s*/\s*(\d+)')
+
+
+def _fraction_form_slip(user_text, expected: Fraction) -> str | None:
+    """Why a value-equal typed fraction is not in its simplest form, or None when it is.
+
+    "Give your answer as a fraction in its simplest form" (whole-change review C2, fix pass 1a 2026-11-03: 48/88 was
+    right for 6/11, 0.8 for 4/5 and 6 26/60 for 6 13/30): a fraction or the fraction part of a mixed number whose top
+    and bottom share a factor is 'common_factor'; a decimal for a key that is not a whole number is
+    'decimal_not_fraction'. An improper fraction in lowest terms (193/30) is equal and simplest, so it passes."""
+    s = _normalize_numeric_string(user_text)
+    m = _TYPED_FRACTION_RE.fullmatch(s)
+    if m:
+        num, den = int(m.group(2)), int(m.group(3))
+        return 'common_factor' if math.gcd(num, den) > 1 else None
+    if expected.denominator != 1 and '/' not in s:
+        return 'decimal_not_fraction'
+    return None
+
+
 @register_checker('fraction')
 def check_fraction(correct_raw, user_answer, form=None):
     expected = _parse_fraction_raw(correct_raw)
@@ -421,9 +481,13 @@ def check_fraction(correct_raw, user_answer, form=None):
         }
 
     correct = actual == expected
-    feedback = 'Correct!' if correct else 'Not quite — check your fraction.'
+    if correct and form == FORM_SIMPLIFIED:
+        kind = _fraction_form_slip(user_s, expected)
+        if kind:
+            return _wrong_form_result(_format_fraction_user_display(user_answer, actual), normalized_correct, kind)
+    feedback = 'Correct!' if correct else 'Not quite. Check your fraction.'
     if (not correct and form == FORM_PROBABILITY and not as_percent and '/' not in str(user_answer)
-            and not _terminates(expected) and abs(actual - expected) < Fraction(1, 100)):
+            and not _terminates(expected) and _is_key_as_decimal(user_s, actual, expected)):
         feedback = _RECURRING_FEEDBACK
     return {
         'correct': correct,
@@ -509,8 +573,11 @@ def check_standard_form(correct_raw, user_answer):
         'correct': correct,
         'normalized_user': normalized_user,
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check your coefficient and power.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check your coefficient and power.',
     }
+
+
+BEARING_RANGE_FEEDBACK = 'Bearings are between 000\u00b0 and 360\u00b0. Check your angle.'
 
 
 @register_checker('bearing')
@@ -540,13 +607,25 @@ def check_bearing(correct_raw, user_answer):
             'feedback': 'Enter a valid bearing (e.g. 045 or 045°).',
         }
 
-    actual_deg = int(round(actual)) % 360
+    # Bearings are not accepted modulo 360 (decision 2026-10-26): only 000 to 360 are valid typed values.
+    # 360 is accepted only for a key of 000, since examiners commonly take 360 for north.
+    actual_deg = int(round(actual))
+    if actual_deg < 0 or actual_deg > 360:
+        return {
+            'correct': False,
+            'normalized_user': str(actual_deg),
+            'normalized_correct': normalized_correct,
+            'feedback': BEARING_RANGE_FEEDBACK,
+            'out_of_range': True,
+        }
+    if actual_deg == 360 and expected_deg == 0:
+        actual_deg = 0
     correct = actual_deg == expected_deg
     return {
         'correct': correct,
         'normalized_user': f'{actual_deg:03d}',
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check your bearing.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check your bearing.',
     }
 
 
@@ -583,7 +662,7 @@ def check_number(correct_raw, user_answer, form=None):
                 'correct': actual == expected,
                 'normalized_user': normalized_user,
                 'normalized_correct': normalized_correct,
-                'feedback': 'Correct!' if actual == expected else 'Not quite — check your working.',
+                'feedback': 'Correct!' if actual == expected else 'Not quite. Check your working.',
             }
     if actual is None:
         return {
@@ -603,7 +682,7 @@ def check_number(correct_raw, user_answer, form=None):
         'correct': correct,
         'normalized_user': normalized_user_out,
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check your working.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check your working.',
     }
 
 
@@ -677,7 +756,7 @@ def check_pi_multiple(correct_raw, user_answer):
             'correct': correct,
             'normalized_user': raw_user,
             'normalized_correct': normalized_correct,
-            'feedback': 'Correct!' if correct else 'Not quite — check your working.',
+            'feedback': 'Correct!' if correct else 'Not quite. Check your working.',
         }
 
     # A coefficient is short; the π-suffix pattern backtracks badly on long runs of spaces (2,000 characters
@@ -708,7 +787,7 @@ def check_pi_multiple(correct_raw, user_answer):
         'correct': correct,
         'normalized_user': normalized_user_out,
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check your working.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check your working.',
     }
 
 
@@ -870,14 +949,49 @@ def _normalize_algebraic_division(s: str) -> str:
     return _wrap_top_level_fraction(s)
 
 
+_SUPERSCRIPT_DIGITS = str.maketrans('⁰¹²³⁴⁵⁶⁷⁸⁹', '0123456789')
+_SUPERSCRIPT_RUN = re.compile('[⁰¹²³⁴⁵⁶⁷⁸⁹]+')
+
+
+def _superscripts_to_caret(s: str, caret: str = '^') -> str:
+    """x³ and x¹⁰ typed with superscript digits are x^3 and x^10 (Phase 3 batch A: only ² was read, so a pupil who
+    typed or pasted x³ for an answer of x^3 was marked wrong)."""
+    return _SUPERSCRIPT_RUN.sub(lambda m: caret + m.group(0).translate(_SUPERSCRIPT_DIGITS), s)
+
+
+# x*x is x squared, but only where nothing around it changes what the two letters multiply. Review 2026-10-28: the
+# rewrite ran on x*x^6 and gave x^2^6, which is x^(2^6) and not x^7 (and 2^x*x became 2^x^2, 1/x*x became 1/x^2). So
+# the first letter must not be an exponent (2^x*x) or sit under a division (1/x*x), and the second must not carry a
+# power of its own (x*x^6); both are left as written, and SymPy reads them with the usual precedence.
+_SAME_LETTER_PRODUCT_CARET_RE = re.compile(r'(?<![\^/])([a-z])\*\1(?![\^\d.])')
+_SAME_LETTER_PRODUCT_STAR_RE = re.compile(r'(?<![/^])(?<!\*\*)([a-z])\*\1(?![\^\d.]|\*\*)')
+
+# A power written straight on a power (x^2^3, 2^x^2) is not a GCSE expression and is read in opposite ways by
+# calculators and by hand (x^8 or x^6), so it is refused with a message that asks for brackets.
+_POWER_TOWER_RE = re.compile(
+    r'(?:\^|\*\*)\s*[+\-\u2212]?\s*(?:\d+(?:\.\d+)?|[a-z]|\([^()]{1,20}\))\s*(?:\^|\*\*)')
+_SUPERSCRIPT_TOWER_RE = re.compile('[\u2070\u00b9\u00b2\u00b3\u2074-\u2079]+\\s*(?:\\^|\\*\\*)'
+                                   '|(?:\\^|\\*\\*)\\s*\\d+\\s*[\u2070\u00b9\u00b2\u00b3\u2074-\u2079]')
+POWER_TOWER_FEEDBACK = 'Use brackets for a power of a power, such as (x^2)^3.'
+_POWER_TOWER_TYPES = frozenset({'algebraic', 'algebraic_fraction', 'formula_fraction', 'quadratic_roots'})
+
+
+def has_power_tower(text) -> bool:
+    """True when the typed text has a power straight on a power (x^2^3). Bounded: only short text is scanned."""
+    s = str(text or '')
+    if len(s) > MAX_SYMPY_EXPR_LEN * 2:
+        return False
+    return bool(_POWER_TOWER_RE.search(s) or _SUPERSCRIPT_TOWER_RE.search(s))
+
+
 def _normalize_algebraic_powers(s: str) -> str:
     """Unify t^2, t**2, t*t, and t²."""
     s = re.sub(r'\*\*', '^', s)
-    s = s.replace('²', '^2')
+    s = _superscripts_to_caret(s)
     changed = True
     while changed:
         changed = False
-        updated = re.sub(r'([a-z])\*\1', r'\1^2', s)
+        updated = _SAME_LETTER_PRODUCT_CARET_RE.sub(r'\1^2', s)
         if updated != s:
             s = updated
             changed = True
@@ -929,25 +1043,34 @@ def _algebraic_prepare_for_sympy(value, *, context_raw=None, split_letters=False
     """Convert a student/correct algebraic string into something SymPy can parse."""
     s = str(value or '').strip().lower()
     s = s.replace('\u221a', '√').replace('−', '-').replace('\u2212', '-')
+    s = s.replace('÷', '/').replace('×', '*')          # a ÷ b is a/b and a × b is a*b
     if '=' in s:
         s = s.split('=', 1)[1]
     s = re.sub(r'\s+', '', s)
     s = s.replace('π', 'pi')
+    # A half power typed as a decimal is the square root: x^0.5 is x^(1/2) (SymPy would keep the float 0.5 apart
+    # from sqrt). Only exactly 0.5 / .5, bare or in its own bracket; ^0.55 and ^0.5x are left alone. The exponent
+    # still goes through the caps. (Review 2026-10-27: an optional bracket on each side let "(x^(0.5+1)", which does
+    # not parse, become the valid "(x^(1/2)+1)" and be marked right for the key sqrt(x) + 1.)
+    s = re.sub(r'(?:\^|\*\*)(?:\(0?\.5\)|0?\.5)(?![\d.])', '^(1/2)', s)
     s = re.sub(r'(?<![a-z])pi(?![a-z])', 'pi', s)
-    s = s.replace('²', '**2')
+    s = _superscripts_to_caret(s, '**')
     s = re.sub(
         r'(?i)sqrt\(([^()]*(?:\([^()]*\)[^()]*)*)\)',
         r'sqrt(\1)',
         s,
     )
-    s = re.sub(r'√\(([^()]+)\)', r'sqrt(\1)', s)
+    # √( opens the same bracket as sqrt(, whatever is nested inside it: √((y-3)/5) is sqrt((y-3)/5). (Review
+    # 2026-10-26: only a bracket with nothing nested was converted, so √((y-3)/5) never reached SymPy and a right
+    # answer was refused unless its text happened to match the key's.)
+    s = s.replace('√(', 'sqrt(')
     s = re.sub(r'√([a-z0-9π]+)', r'sqrt(\1)', s)
     s = re.sub(r'\*\*', '**', s)
     s = re.sub(r'\^', '**', s)
     changed = True
     while changed:
         changed = False
-        updated = re.sub(r'([a-z])\*\1', r'\1**2', s)
+        updated = _SAME_LETTER_PRODUCT_STAR_RE.sub(r'\1**2', s)
         if updated != s:
             s = updated
             changed = True
@@ -1006,6 +1129,15 @@ def _algebraic_sympy_equivalent(correct_raw, user_raw) -> bool:
         return False
 
 
+def _keep_sum_bracket(part: str) -> str:
+    """A numerator or denominator written inside a root: bracketed again when it is a sum or difference.
+
+    Review 2026-10-26: √((y-3)/(5)) was written as √(y-3/5), which is a different expression, so the key was shown
+    wrongly and the wrong answer √(y-3/5) was marked right. A single term (2s, 5, π) needs no bracket.
+    """
+    return f'({part})' if re.search(r'[+\-]', part) else part
+
+
 def _normalize_algebraic_sqrt_quotient(s: str) -> str:
     """Collapse √a/√b (and parenthesised variants) to √(a/b)."""
     # Allow π in unparenthesised radicals (after pi → π normalisation).
@@ -1022,7 +1154,7 @@ def _normalize_algebraic_sqrt_quotient(s: str) -> str:
     while changed:
         changed = False
         for pattern in patterns:
-            updated = re.sub(pattern, r'√(\1/\2)', s)
+            updated = re.sub(pattern, lambda m: f'√({_keep_sum_bracket(m.group(1))}/{_keep_sum_bracket(m.group(2))})', s)
             if updated != s:
                 s = updated
                 changed = True
@@ -1032,6 +1164,8 @@ def _normalize_algebraic_sqrt_quotient(s: str) -> str:
 def _normalize_algebraic_string(value) -> str:
     s = str(value or '').strip().lower()
     s = s.replace('\u221a', '√').replace('−', '-').replace('\u2212', '-')
+    s = s.replace('÷', '/').replace('×', '*')
+    s = _canonical_plus_minus(s)
     s = re.sub(r'(?<![a-z])pi(?![a-z])', 'π', s)
     s = re.sub(
         r'(?i)sqrt\(([^()]*(?:\([^()]*\)[^()]*)*)\)',
@@ -1045,12 +1179,102 @@ def _normalize_algebraic_string(value) -> str:
         s = s[1:]
     s = _normalize_algebraic_sqrt_quotient(s)
     s = _normalize_algebraic_division(s)
-    s = re.sub(r'√\(\(([^()]+)\)/\(([^()]+)\)\)', r'√(\1/\2)', s)
+    s = re.sub(r'√\(\(([^()]+)\)/\(([^()]+)\)\)',
+               lambda m: f'√({_keep_sum_bracket(m.group(1))}/{_keep_sum_bracket(m.group(2))})', s)
     return s
 
 
 def _format_algebraic_text(value) -> str:
     return _normalize_algebraic_string(value)
+
+
+# A plus-or-minus sign, in the ways it gets typed. Only at the start of the right-hand side is it ever read as
+# one (x=±√(y/5)); anywhere else (±x=..., x=√(y/5)±, ∓) the answer is not accepted.
+_PLUS_MINUS_CHARS = '±∓'
+_PLUS_MINUS_TOKENS = ('±', '+/-', '+-')
+
+
+def _canonical_plus_minus(s: str) -> str:
+    """Write a leading +-, +/- or ± of the right-hand side as ± (display only; the value check is separate)."""
+    head, eq, rhs = s.partition('=')
+    if not eq:
+        head, rhs = '', s
+    rhs = re.sub(r'\s+', '', rhs)
+    for token in _PLUS_MINUS_TOKENS[1:]:
+        if rhs.startswith(token):
+            rhs = '±' + rhs[len(token):]
+            break
+    return (head + eq + rhs) if eq else rhs if rhs.startswith('±') else s
+
+
+def _plus_minus_split(value):
+    """(subject, rest) for a typed answer of the form ``x=±rest`` (or ``±rest``), else None.
+
+    The sign must open the right-hand side and occur once; the rest may not start with another sign or
+    operator, may not hold a second equals sign, and the whole text keeps the length cap.
+    """
+    s = str(value or '').strip().lower().replace('\u2212', '-').replace('−', '-')
+    if not s or len(s) > 4 * MAX_SYMPY_EXPR_LEN:
+        return None
+    s = re.sub(r'\s+', '', s)
+    subject, eq, rhs = s.partition('=')
+    if not eq:
+        subject, rhs = '', s
+    for token in _PLUS_MINUS_TOKENS:
+        if rhs.startswith(token):
+            rest = rhs[len(token):]
+            break
+    else:
+        return None
+    if not rest or rest[0] in '+-*/^' or '=' in rest or '+/-' in rest or any(c in rest for c in _PLUS_MINUS_CHARS):
+        return None
+    if any(c in subject for c in _PLUS_MINUS_CHARS) or '+-' in subject:
+        return None
+    return subject, rest
+
+
+def _key_is_square_root(correct_raw) -> bool:
+    """True when the mark scheme's right-hand side is a single square root (x = √(...)): the case where the
+    full answer is plus or minus that root."""
+    tree = _safe_sympify(_algebraic_prepare_for_sympy(correct_raw))
+    return tree is not None and isinstance(tree, Pow) and tree.args[1] == sympy.S.Half
+
+
+def _strip_plus_minus(value) -> str:
+    """The typed answer without its leading ± (for the written-form checks), or unchanged."""
+    parts = _plus_minus_split(value)
+    if parts is None:
+        return str(value or '')
+    subject, rest = parts
+    return f'{subject}={rest}' if subject else rest
+
+
+def _algebraic_plus_minus_equivalent(correct_raw, user_raw) -> bool:
+    """x=±√(...) for a key x=√(...): both roots of a square-root rearrangement, which is the full answer.
+
+    Accepted only when the key's right-hand side is one square root, the sign opens the right-hand side, the
+    typed subject (if any) is the key's, and the rest is the key's root. A pupil is not required to write ±
+    (the positive root alone is still the key); a context that makes the quantity positive still accepts it.
+    """
+    parts = _plus_minus_split(user_raw)
+    # Review 2026-10-27: only a rearrangement (a key with a subject, x = ...) has two roots to give; an expression key
+    # such as the index form of a root (x^(1/2) for the square root of x) does not take a plus-or-minus.
+    if parts is None or '=' not in str(correct_raw or '') or not _key_is_square_root(correct_raw):
+        return False
+    subject, rest = parts
+    key_subject = str(correct_raw or '').strip().lower().partition('=')[0].strip() if '=' in str(correct_raw) else ''
+    if subject and subject != re.sub(r'\s+', '', key_subject):
+        return False
+    return _algebraic_answers_equivalent(correct_raw, rest)
+
+
+def _algebraic_subject_matches(correct_raw, user_raw) -> bool:
+    """A typed left-hand side must be the key's (x=... for the key x=...); the value check ignores it."""
+    c, u = str(correct_raw or ''), str(user_raw or '')
+    if '=' not in c or '=' not in u:
+        return True
+    norm = lambda t: re.sub(r'\s+', '', t.partition('=')[0].lower().replace('\u2212', '-').replace('−', '-'))
+    return norm(c) == norm(u)
 
 
 def _algebraic_answers_equivalent(correct_raw, user_raw) -> bool:
@@ -1060,6 +1284,10 @@ def _algebraic_answers_equivalent(correct_raw, user_raw) -> bool:
         return False
     if normalized_user == normalized_correct:
         return True
+    if any(c in str(user_raw) for c in _PLUS_MINUS_CHARS) or _plus_minus_split(user_raw) is not None:
+        return _algebraic_plus_minus_equivalent(correct_raw, user_raw)
+    if not _algebraic_subject_matches(correct_raw, user_raw):
+        return False
     if '=' in normalized_correct:
         subject, rhs = normalized_correct.split('=', 1)
         if normalized_user == rhs:
@@ -1539,7 +1767,7 @@ def _check_algebraic_fraction_expanded_binomial(correct_raw, user_answer) -> dic
         'feedback': (
             'Correct!'
             if correct
-            else 'Not quite — check your simplified numerator and denominator.'
+            else 'Not quite. Check your simplified numerator and denominator.'
         ),
     }
 
@@ -1598,7 +1826,7 @@ def _check_algebraic_fraction_surd(correct_raw, user_answer, form=None) -> dict:
         'feedback': (
             'Correct!'
             if correct
-            else 'Not quite — check your surd numerator and simplified denominator.'
+            else 'Not quite. Check your surd numerator and simplified denominator.'
         ),
     }
 
@@ -1644,7 +1872,7 @@ def _check_algebraic_fraction_binomial(correct_raw, user_answer) -> dict:
         'feedback': (
             'Correct!'
             if correct
-            else 'Not quite — check your simplified numerator and denominator.'
+            else 'Not quite. Check your simplified numerator and denominator.'
         ),
     }
 
@@ -1687,7 +1915,7 @@ def _check_algebraic_fraction_two_surds(correct_raw, user_answer) -> dict:
         'feedback': (
             'Correct!'
             if correct
-            else 'Not quite — check your surd sum and denominator.'
+            else 'Not quite. Check your surd sum and denominator.'
         ),
     }
 
@@ -1703,11 +1931,43 @@ def check_algebraic_fraction(correct_raw, user_answer, form=None):
         return _check_algebraic_fraction_two_surds(correct_raw, user_answer)
     # General algebraic/numeric fraction: numerator|denominator (stacked UI).
     if len(s.split('|')) == 2:
-        return _check_general_algebraic_fraction(correct_raw, user_answer)
+        return _check_general_algebraic_fraction(correct_raw, user_answer, form=form)
     return _check_algebraic_fraction_surd(correct_raw, user_answer, form=form)
 
 
-def _check_general_algebraic_fraction(correct_raw, user_answer):
+def _fraction_in_lowest_terms(num_raw, den_raw, context_raw) -> bool | str | None:
+    """True when numerator and denominator (as typed) share no common factor; otherwise why not: 'bracket' (a common
+    factor with a letter, such as (x + 2)) or 'number' (a common whole number: 2x + 4 over 6, or 6 over 8).
+
+    None when the pair cannot be read as polynomials (the value check alone decides, as before). Phase 3 batch B:
+    a 'Simplify' fraction answer typed as the question's own fraction, (x^2-9)/(x^2-x-6), is equal but not simplified.
+    """
+    try:
+        n = _safe_sympify(_algebraic_prepare_for_sympy(num_raw, context_raw=context_raw))
+        d = _safe_sympify(_algebraic_prepare_for_sympy(den_raw, context_raw=context_raw))
+        if n is None or d is None:
+            return None
+        n, d = expand(n), expand(d)
+        syms = sorted(n.free_symbols | d.free_symbols, key=lambda v: v.name)
+        if not syms:
+            if n.is_Integer and d.is_Integer and d != 0:        # a numerical fraction: 6/8 is not in lowest terms
+                return True if n != 0 and math.gcd(abs(int(n)), abs(int(d))) == 1 else 'number'
+            return None                 # a decimal top or bottom (1.5 over 2): the value check alone decides
+        if n == 0:
+            return 'number'
+        g = sympy.gcd(sympy.Poly(n, *syms, domain='QQ').clear_denoms()[1], sympy.Poly(d, *syms, domain='QQ').clear_denoms()[1])
+        if g.total_degree() > 0:
+            return 'bracket'
+        # a common whole-number factor (2x+4 over 6): the content of numerator and denominator together
+        pn, pd = sympy.Poly(n, *syms, domain='QQ').clear_denoms()[1], sympy.Poly(d, *syms, domain='QQ').clear_denoms()[1]
+        content = math.gcd(*(abs(int(c)) for c in pn.coeffs() + pd.coeffs()))
+        return True if content == 1 else 'number'
+    except (TypeError, ValueError, SyntaxError, AttributeError, ZeroDivisionError, PolynomialError, RecursionError,
+            sympy.polys.polyerrors.CoercionFailed, sympy.polys.polyerrors.GeneratorsError):
+        return None
+
+
+def _check_general_algebraic_fraction(correct_raw, user_answer, form=None):
     """Check algebraic or numeric fractions entered as numerator|denominator."""
     parts = [part.strip() for part in str(correct_raw or '').split('|', 1)]
     if len(parts) != 2 or not parts[0] or not parts[1]:
@@ -1764,6 +2024,13 @@ def _check_general_algebraic_fraction(correct_raw, user_answer):
             _algebraic_answers_equivalent(exp_num, act_num)
             and _algebraic_answers_equivalent(exp_den, act_den)
         )
+    if correct and form == FORM_SIMPLIFIED:
+        lowest = _fraction_in_lowest_terms(act_num, act_den, exp_num)
+        if lowest == 'bracket':
+            return _wrong_form_result(normalized_user, normalized_correct, 'not_simplified')
+        if lowest == 'number':
+            # batch B review: the bracket message ("cancel the matching bracket") misled for 6/8 or (2x + 6)/(2x + 2)
+            return _wrong_form_result(normalized_user, normalized_correct, 'common_factor')
     return {
         'correct': correct,
         'normalized_user': normalized_user,
@@ -1771,7 +2038,7 @@ def _check_general_algebraic_fraction(correct_raw, user_answer):
         'feedback': (
             'Correct!'
             if correct
-            else 'Not quite — check the numerator and denominator.'
+            else 'Not quite. Check the numerator and denominator.'
         ),
     }
 
@@ -1781,7 +2048,8 @@ def _check_general_algebraic_fraction(correct_raw, user_answer):
 FORM_EXPANDED = 'expanded'
 FORM_FACTORISED = 'factorised'
 FORM_SIMPLEST_SURD = 'simplest_surd'
-FORM_SIMPLIFIED = 'simplified'     # "Simplify" an algebraic fraction whose answer has no letter left underneath
+FORM_SIMPLIFIED = 'simplified'     # "Simplify" an algebraic fraction whose answer has no letter left underneath; a
+#                                    fraction or ratio answer asked for in its simplest form (no common factor left)
 FORM_PROBABILITY = 'probability'   # "Find P(...)": a percentage is accepted as well as a fraction or decimal
 ANSWER_FORMS = frozenset({FORM_EXPANDED, FORM_FACTORISED, FORM_SIMPLEST_SURD, FORM_SIMPLIFIED, FORM_PROBABILITY})
 
@@ -1801,9 +2069,25 @@ _WRONG_FORM_FEEDBACK = {
         "That's equal, but it can be simpler. "
         "Factorise the top if needed, then cancel the matching bracket."
     ),
+    'common_factor': (
+        "That's equal, but it can be simpler. "
+        "Divide the top and the bottom by a number that goes into both."
+    ),
+    'powers_not_combined': (
+        "That's equal, but it can be simpler. "
+        "Use the index laws to write it as a single term."
+    ),
     'fraction_not_simplest': (
         "That's equal, but it can be simpler. "
         "Check the surd, then see if the fraction cancels."
+    ),
+    'decimal_not_fraction': (
+        "That's equal, but the question asks for a fraction, not a decimal. "
+        "Write it as a fraction."
+    ),
+    'ratio_not_simplest': (
+        "That's equal, but it can be simpler. "
+        "Divide every part by a number that goes into all of them."
     ),
 }
 
@@ -1900,10 +2184,46 @@ def _has_letter_denominator(node) -> bool:
     return False
 
 
+def _is_single_power_term(node, *, written) -> bool:
+    """True when ``node`` is one term: at most one number, each letter once, each power a letter to a whole power.
+
+    ``written=False`` reads a key (evaluated); ``written=True`` reads a pupil's unevaluated tree, where 2x^4*5x^2,
+    x^2*x^5, (x^2)^3, (2x^2)^3, 2^3x^6 and 30x^4/(6x^2) are all still more than one term's worth of writing.
+    """
+    numbers, letters = 0, []
+    for f in _as_product_factors(node):
+        if isinstance(f, sympy.Number):
+            if written and not f.is_Integer:
+                return False
+            if f not in (1, -1):
+                numbers += 1
+            continue
+        if isinstance(f, sympy.Symbol):
+            letters.append(f)
+            continue
+        if isinstance(f, Pow) and isinstance(f.args[0], sympy.Symbol):
+            value = _literal_exponent(f.args[1])
+            if value is None or value < 2 or value != int(value):
+                return False
+            letters.append(f.args[0])
+            continue
+        return False
+    return bool(letters) and numbers <= 1 and len(set(letters)) == len(letters)
+
+
 def _simplified_form_problem(tree, correct_raw):
-    """None unless the key has no letter underneath and the pupil's answer still has one ('not_simplified')."""
+    """The 'Simplify' form: None when the pupil's answer is as simple as the key.
+
+    A key with no letter underneath: the pupil's answer must not have one either ('not_simplified'). A key that is a
+    single term such as 10x^6 or m^8 (Phase 3 batch A review, the index-law slots): the pupil's answer must be one
+    term too ('powers_not_combined'), so the question's own 2x^4 × 5x^2 typed back is not marked right.
+    """
     key_tree = _safe_sympify(_algebraic_prepare_for_sympy(correct_raw))
-    if key_tree is None or _has_letter_denominator(key_tree):
+    if key_tree is None:
+        return None
+    if _is_single_power_term(key_tree.doit(), written=False):
+        return None if _is_single_power_term(tree, written=True) else 'powers_not_combined'
+    if _has_letter_denominator(key_tree):
         return None          # the expected answer is itself a fraction: nothing to insist on
     return 'not_simplified' if _has_letter_denominator(tree) else None
 
@@ -1965,7 +2285,7 @@ def check_algebraic(correct_raw, user_answer, form=None):
                 act_const, act_coef, act_rad, act_sign
             ),
             'normalized_correct': normalized_correct,
-            'feedback': 'Correct!' if correct else 'Not quite — check your integer and surd terms.',
+            'feedback': 'Correct!' if correct else 'Not quite. Check your integer and surd terms.',
         }
 
     normalized_correct = _format_algebraic_text(correct_raw)
@@ -1984,14 +2304,14 @@ def check_algebraic(correct_raw, user_answer, form=None):
     normalized_user = _format_algebraic_text(raw_user)
     correct = _algebraic_answers_equivalent(correct_raw, raw_user)
     if correct and form in (FORM_EXPANDED, FORM_FACTORISED, FORM_SIMPLIFIED):
-        kind = _algebraic_form_problem(form, raw_user, correct_raw)
+        kind = _algebraic_form_problem(form, _strip_plus_minus(raw_user), correct_raw)
         if kind:
             return _wrong_form_result(normalized_user, normalized_correct, kind)
     return {
         'correct': correct,
         'normalized_user': normalized_user,
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check your simplified expression.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check your simplified expression.',
     }
 
 
@@ -2034,7 +2354,7 @@ def check_surd(correct_raw, user_answer, form=None):
         'correct': correct,
         'normalized_user': _format_surd(act_coeff, act_rad),
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check your surd form.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check your surd form.',
     }
 
 
@@ -2094,13 +2414,13 @@ def check_number_estimate(correct_raw, user_answer):
         'feedback': (
             'Correct!'
             if correct
-            else 'Not quite — check your estimate from the line of best fit.'
+            else 'Not quite. Check your estimate from the line of best fit.'
         ),
     }
 
 
 # Answer types whose checker enforces a written form (problem['answer_form']).
-FORM_AWARE_ANSWER_TYPES = frozenset({'algebraic', 'surd', 'algebraic_fraction', 'fraction', 'number'})
+FORM_AWARE_ANSWER_TYPES = frozenset({'algebraic', 'surd', 'algebraic_fraction', 'fraction', 'number', 'ratio'})
 
 
 # Answers that are code, words or a choice: a ½ typed there is text, never turned into 1/2.
@@ -2108,7 +2428,7 @@ _VERBATIM_ANSWER_TYPES = frozenset({'sql', 'python_run', 'text', 'keyword', 'mcq
 
 
 def check_answer(answer_type: str, correct_raw, user_answer, form=None, subject=None, labels=None,
-                 prereqs=None) -> dict:
+                 prereqs=None, question=None, multi_part=False) -> dict:
     """Run the checker for ``answer_type``.
 
     ``form`` is the stored problem's required written form (expanded, factorised or simplest surd), taken
@@ -2118,12 +2438,74 @@ def check_answer(answer_type: str, correct_raw, user_answer, form=None, subject=
     code, words and choices (``_VERBATIM_ANSWER_TYPES``) are checked exactly as typed.
     ``prereqs`` (the stored problem's answer_step_prereqs, from ``problem_answer_prereqs``) lets an ordered
     proof_steps answer come in any order that puts every step after the steps it needs; other types ignore it.
+    ``question`` (the stored problem's question text, from ``answer_units.problem_question_text``; never from the
+    request) tells the numeric types which unit the question asks for: a unit, %, degree sign or currency symbol
+    typed beside the number is dropped when it agrees with the question and refused with a message when it does
+    not (generators/shared/answer_units.py). Without it every whitelisted unit is dropped. ``multi_part`` is True when
+    ``user_answer`` is one field of a stored number_fields answer checked on its own: a unit asked for another part
+    of the question is then not forced on this one.
     """
     checker = CHECKERS.get(answer_type)
     if not checker:
         raise ValueError(f'unknown_answer_type:{answer_type}')
     if answer_type not in _VERBATIM_ANSWER_TYPES:
         user_answer = _expand_vulgar_fractions(user_answer)
+    refusal = None
+    typed = user_answer if isinstance(user_answer, str) else str(user_answer or '')
+    if answer_type == 'number' and question is not None and not multi_part:
+        user_answer, letter_slip = _strip_asked_letter(user_answer, question)
+        if letter_slip is not None:
+            return {'correct': False, 'normalized_user': typed.strip()[:MAX_UNIT_ECHO_LEN],
+                    'normalized_correct': str(correct_raw), 'feedback': letter_slip, 'wrong_letter': True}
+    if answer_type in UNIT_ANSWER_TYPES:
+        user_answer, refusal = answer_units.strip_units(answer_type, user_answer, question=question, form=form,
+                                                        multi=multi_part)
+    result = _dispatch_check(checker, answer_type, correct_raw, user_answer, form, subject, labels, prereqs, question)
+    if refusal:
+        result = {**result, 'correct': False, 'feedback': refusal, 'unit_mismatch': True,
+                  'normalized_user': typed.strip()[:MAX_UNIT_ECHO_LEN]}
+    elif answer_type in _POWER_TOWER_TYPES and has_power_tower(user_answer):
+        result = {**result, 'correct': False, 'feedback': POWER_TOWER_FEEDBACK, 'power_tower': True}
+    return result
+
+
+# "Find the value of x", "Work out the value of k.", "For what value of t is ...", "Find t.": the one letter a number
+# answer is the value of. Not "the value of x^2 + y^2", "the value of 3x", "the minimum value of y = (x + 6)^2 - 3" or
+# "for all values of x".
+_VALUE_OF_LETTER_RE = re.compile(
+    r'\bvalue\s+of\s+([a-z])(?![a-z0-9_^(\'′])(?!\s*(?:[\^(+\-−×*/÷]|=\s*[a-z0-9(\\]))'
+    r'|\b(?:find|work\s+out|calculate)\s+([a-z])\s*(?:[.?!]|$)')
+_TYPED_LETTER_RE = re.compile(r'\s*([A-Za-z])\s*=\s*(\S.*?)\s*')
+
+
+@lru_cache(maxsize=512)
+def _asked_letter(question) -> str | None:
+    """The one letter a question asks the value of, or None (no letter, or more than one)."""
+    letters = {a or b for a, b in _VALUE_OF_LETTER_RE.findall(answer_units.question_plain_text(question))}
+    return letters.pop() if len(letters) == 1 else None
+
+
+def _strip_asked_letter(user_answer, question):
+    """(answer, None) with a leading "x =" dropped where the question asks for the value of x; (answer, message) for
+    another letter. Whole-change review C12 (fix pass 1a, 2026-11-03): "find the value of x" is keyed as a number in
+    some slots and a linear answer in others, so "x = 20" was right in one and "Enter a valid number" in the next."""
+    if not isinstance(user_answer, str) or len(user_answer) > answer_units.MAX_UNIT_FIELD_LEN:
+        return user_answer, None
+    m = _TYPED_LETTER_RE.fullmatch(user_answer)
+    if not m:
+        return user_answer, None
+    asked = _asked_letter(str(question))
+    if asked is None:
+        return user_answer, None        # no letter asked for: the number checker's own message stands
+    if m.group(1).lower() != asked:
+        return user_answer, f'Check the letter. This question asks you to find {asked}.'
+    return m.group(2), None
+
+
+def _dispatch_check(checker, answer_type, correct_raw, user_answer, form, subject, labels, prereqs,
+                    question=None) -> dict:
+    if answer_type == 'number_fields':
+        return checker(correct_raw, user_answer, question=question)
     if answer_type == 'vector_combo':
         return checker(correct_raw, user_answer, labels=labels)
     if answer_type == 'proof_steps':
@@ -2305,7 +2687,7 @@ def check_coordinate_pairs(correct_raw, user_answer):
         'correct': correct,
         'normalized_user': _format_pairs(act_sorted),
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check both (x, y) pairs.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check both (x, y) pairs.',
     }
 
 
@@ -2356,12 +2738,16 @@ def _checker_name_for_number_field(field_type: str | None, expected_part: str) -
     return 'keyword'
 
 
-def _check_one_number_field(field_type, expected_part, user_part):
+def _check_one_number_field(field_type, expected_part, user_part, question=None, multi=False):
     ft = str(field_type or '').strip().lower()
     numeric_expected = _parse_number_field_part(expected_part)
     if numeric_expected is not None and (
         not ft or ft in _NUMERIC_NUMBER_FIELD_TYPES
     ):
+        refusal = None
+        if ':' not in str(user_part or '') and '|' not in str(user_part or ''):
+            user_part, refusal = answer_units.strip_value_units(user_part, question=question, kind='number',
+                                                                multi=multi)
         numeric_user = _parse_number_field_part(user_part)
         expected_fmt = _format_number_field_part(*numeric_expected)
         if numeric_user is None:
@@ -2369,21 +2755,23 @@ def _check_one_number_field(field_type, expected_part, user_part):
                 'correct': False,
                 'normalized_user': str(user_part or '').strip(),
                 'normalized_correct': expected_fmt,
-                'feedback': 'Enter a valid number, fraction, or ratio (a:b).',
+                'feedback': refusal or 'Enter a valid number, fraction, or ratio (a:b).',
+                **({'unit_mismatch': True} if refusal else {}),
             }
         ok = (
             numeric_expected[0] == numeric_user[0]
             and numeric_expected[1] == numeric_user[1]
-        )
+        ) and not refusal
         return {
             'correct': ok,
             'normalized_user': _format_number_field_part(*numeric_user),
             'normalized_correct': expected_fmt,
-            'feedback': 'Correct!' if ok else 'Not quite — check this field.',
+            'feedback': refusal or ('Correct!' if ok else 'Not quite. Check this field.'),
+            **({'unit_mismatch': True} if refusal else {}),
         }
     checker_name = _checker_name_for_number_field(ft, expected_part)
     try:
-        return check_answer(checker_name, expected_part, user_part)
+        return check_answer(checker_name, expected_part, user_part, question=question, multi_part=multi)
     except ValueError:
         return {
             'correct': False,
@@ -2393,8 +2781,27 @@ def _check_one_number_field(field_type, expected_part, user_part):
         }
 
 
+def _strip_number_field_units(user_s, question):
+    """(text with every numeric field's unit dropped, refusal per field) for the pipe- or RS-separated fields."""
+    sep = '\x1e' if '\x1e' in user_s else '|'
+    parts = user_s.split(sep)
+    if len(parts) > 40:
+        return user_s, [None] * len(parts)
+    multi = len(parts) > 1
+    cleaned, refusals = [], []
+    for part in parts:
+        if ':' in part:
+            cleaned.append(part)
+            refusals.append(None)
+            continue
+        text, refusal = answer_units.strip_value_units(part, question=question, kind='number', multi=multi)
+        cleaned.append(text)
+        refusals.append(refusal)
+    return sep.join(cleaned), refusals
+
+
 @register_checker('number_fields')
-def check_number_fields(correct_raw, user_answer, field_types=None):
+def check_number_fields(correct_raw, user_answer, field_types=None, question=None):
     user_answer = _expand_vulgar_fractions(user_answer)
     expected_parts, sep = _split_number_field_payload(correct_raw)
     if not expected_parts or any(not part for part in expected_parts):
@@ -2419,33 +2826,40 @@ def check_number_fields(correct_raw, user_answer, field_types=None):
                 'score_total': n_total,
             }
 
+        # a unit, %, currency symbol or thousands separator typed in a field is dropped field by field; a field whose
+        # unit disagrees with the question is wrong with the unit message (never read as another unit)
+        user_s, refusals = _strip_number_field_units(user_s, question)
         actual = _parse_number_fields(user_s)
         if actual is None or len(actual) != len(numeric_expected):
+            refusal = next((r for r in refusals if r), None)
             return {
                 'correct': False,
                 'normalized_user': user_s,
                 'normalized_correct': normalized_correct,
-                'feedback': (
+                'feedback': refusal or (
                     f'Enter a valid number, fraction, or ratio (a:b) in all {n_total} fields. '
                     'Use at most one slash per fraction.'
                 ),
                 'score': 0,
                 'score_total': n_total,
+                **({'unit_mismatch': True} if refusal else {}),
             }
 
         n_ok = sum(
             1
-            for (_, exp_val), (_, act_val) in zip(numeric_expected, actual)
-            if exp_val == act_val
+            for i, ((_, exp_val), (_, act_val)) in enumerate(zip(numeric_expected, actual))
+            if exp_val == act_val and not refusals[i]
         )
         correct = n_ok == n_total
+        refusal = next((r for r in refusals if r), None)
         return {
             'correct': correct,
             'normalized_user': _normalize_number_fields(user_s),
             'normalized_correct': normalized_correct,
-            'feedback': 'Correct!' if correct else 'Not quite — check each field.',
+            'feedback': 'Correct!' if correct else (refusal or 'Not quite. Check each field.'),
             'score': n_ok,
             'score_total': n_total,
+            **({'unit_mismatch': True} if refusal else {}),
         }
 
     n_total = len(expected_parts)
@@ -2481,11 +2895,12 @@ def check_number_fields(correct_raw, user_answer, field_types=None):
         }
 
     part_results = [
-        _check_one_number_field(types[i], expected_parts[i], user_parts[i])
+        _check_one_number_field(types[i], expected_parts[i], user_parts[i], question=question, multi=n_total > 1)
         for i in range(n_total)
     ]
     n_ok = sum(1 for item in part_results if item.get('correct'))
     all_ok = n_ok == n_total
+    refusal = next((item['feedback'] for item in part_results if item.get('unit_mismatch')), None)
     return {
         'correct': all_ok,
         'normalized_user': sep.join(
@@ -2495,10 +2910,11 @@ def check_number_fields(correct_raw, user_answer, field_types=None):
             str(item.get('normalized_correct') or expected_parts[i])
             for i, item in enumerate(part_results)
         ),
-        'feedback': 'Correct!' if all_ok else 'Not quite — check each field.',
+        'feedback': 'Correct!' if all_ok else (refusal or 'Not quite. Check each field.'),
         'score': n_ok,
         'score_total': n_total,
         'part_results': part_results,
+        **({'unit_mismatch': True} if refusal else {}),
     }
 
 
@@ -2541,12 +2957,15 @@ def _ratio_checker_result(correct: bool, user_parts: tuple[int, int], expected_p
         'correct': correct,
         'normalized_user': _format_ratio(*act_n),
         'normalized_correct': _format_ratio(*exp_n),
-        'feedback': 'Correct!' if correct else 'Not quite — check your ratio.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check your ratio.',
     }
 
 
 @register_checker('ratio')
-def check_ratio(correct_raw, user_answer):
+def check_ratio(correct_raw, user_answer, form=None):
+    """An equal ratio in any terms; with the 'simplified' form ("Simplify the ratio 45:55", "Give your answer in its
+    simplest form") only the simplest one: 45:55 and 18:22 are equal to 9:11 but refused (whole-change review C3, fix
+    pass 1a 2026-11-03)."""
     expected = _parse_ratio_parts(str(correct_raw or '').replace('|', ':'))
     if expected is None:
         raise ValueError('invalid_correct_answer')
@@ -2562,6 +2981,8 @@ def check_ratio(correct_raw, user_answer):
 
     exp_n = _normalize_ratio_parts(*expected)
     act_n = _normalize_ratio_parts(*user_parts)
+    if exp_n == act_n and form == FORM_SIMPLIFIED and math.gcd(*user_parts) > 1:
+        return _wrong_form_result(_format_ratio(*user_parts), _format_ratio(*exp_n), 'ratio_not_simplest')
     return _ratio_checker_result(exp_n == act_n, user_parts, expected)
 
 
@@ -2843,8 +3264,21 @@ def check_two_var_equation(correct_raw, user_answer):
         'correct': correct,
         'normalized_user': _format_two_var_equation(var1, var2, act_a, act_b, act_c),
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check the coefficients and total.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check the coefficients and total.',
     }
+
+
+def linear_format_hint(correct_raw):
+    """The answer-box example for a one-variable linear key.
+
+    The example names the letter the key asks for ("k = 3 or just 3" under k=12, "x = 3" for the plain key 12) and a
+    value other than the answer, so following it is never refused as the wrong letter and never hands over the key.
+    """
+    raw = str(correct_raw or '').strip()
+    m = re.match(r'([A-Za-z])\s*=\s*(.+)$', raw)
+    letter, value = (m.group(1), m.group(2).strip()) if m else ('x', raw)
+    example = '7' if value == '3' else '3'
+    return f'Enter the value (e.g. {letter} = {example} or just {example})'
 
 
 def _parse_linear_solution(value):
@@ -2988,7 +3422,7 @@ def check_linear_inequality(correct_raw, user_answer):
         'correct': correct,
         'normalized_user': _format_linear_inequality(act_var, act_sign, act_val),
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check the sign and value.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check the sign and value.',
     }
 
 
@@ -3071,7 +3505,7 @@ def check_compound_inequality(correct_raw, user_answer):
             act_var, act_ls, act_lv, act_rs, act_rv
         ),
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check both bounds and signs.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check both bounds and signs.',
     }
 
 
@@ -3179,7 +3613,7 @@ def check_formula_fraction(correct_raw, user_answer, subject=None):
         'feedback': (
             'Correct!'
             if correct
-            else 'Not quite — check the numerator and denominator.'
+            else 'Not quite. Check the numerator and denominator.'
         ),
     }
 
@@ -3198,7 +3632,7 @@ def check_number_line(correct_raw, user_answer):
             )
         else:
             result['feedback'] = (
-                'Not quite — check the endpoints and whether each circle '
+                'Not quite. Check the endpoints and whether each circle '
                 'is open or closed.'
             )
     return result
@@ -3244,7 +3678,7 @@ def check_linear(correct_raw, user_answer):
         'correct': correct,
         'normalized_user': normalized_user,
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check your value.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check your value.',
     }
 
 
@@ -3392,7 +3826,7 @@ def check_quadratic_roots(correct_raw, user_answer):
 
     if len(actual) != len(expected):
         if len(expected) == 4:
-            count_msg = 'Not quite — hint: this problem has four solutions!'
+            count_msg = 'Not quite. Hint: this problem has four solutions!'
         else:
             count_msg = f'Enter {len(expected)} roots.'
         return {
@@ -3411,11 +3845,11 @@ def check_quadratic_roots(correct_raw, user_answer):
     if correct:
         wrong_feedback = 'Correct!'
     elif len(expected) == 4:
-        wrong_feedback = 'Not quite — hint: this problem has four solutions!'
+        wrong_feedback = 'Not quite. Hint: this problem has four solutions!'
     elif len(expected) == 2:
-        wrong_feedback = 'Not quite — check both roots.'
+        wrong_feedback = 'Not quite. Check both roots.'
     else:
-        wrong_feedback = 'Not quite — check your roots.'
+        wrong_feedback = 'Not quite. Check your roots.'
     return {
         'correct': correct,
         'normalized_user': _format_quadratic_root_set(actual),
@@ -3647,7 +4081,7 @@ def check_vector_pair(correct_raw, user_answer):
         'correct': correct,
         'normalized_user': _format_two_vectors(act_x, act_y),
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check both vectors.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check both vectors.',
     }
 
 
@@ -3696,7 +4130,7 @@ def check_vector(correct_raw, user_answer):
         'correct': correct,
         'normalized_user': _format_vector_pair(act_top, act_bottom),
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check both components.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check both components.',
     }
 
 
@@ -3728,7 +4162,7 @@ def check_linear_equation(correct_raw, user_answer):
         'correct': correct,
         'normalized_user': _format_linear_equation(act_m, act_c),
         'normalized_correct': _format_linear_equation(exp_m, exp_c),
-        'feedback': 'Correct!' if correct else 'Not quite — check your gradient and y-intercept.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check your gradient and y-intercept.',
     }
 
 
@@ -4155,7 +4589,7 @@ def check_mcq(correct_raw, user_answer):
         'correct': ok,
         'normalized_user': user,
         'normalized_correct': correct,
-        'feedback': 'Correct!' if ok else 'Not quite — try another option.',
+        'feedback': 'Correct!' if ok else 'Not quite. Try another option.',
     }
 
 
@@ -4198,7 +4632,7 @@ def check_keyword(correct_raw, user_answer):
         'correct': ok,
         'normalized_user': user,
         'normalized_correct': correct_key,
-        'feedback': 'Correct!' if ok else 'Not quite — check your wording.',
+        'feedback': 'Correct!' if ok else 'Not quite. Check your wording.',
     }
 
 
@@ -4269,7 +4703,7 @@ def check_power(correct_raw, user_answer):
         'correct': correct,
         'normalized_user': _format_power_pair(act_base, act_power),
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check the base and index.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check the base and index.',
     }
 
 
@@ -4306,7 +4740,7 @@ def check_number_pair(correct_raw, user_answer):
         'correct': correct,
         'normalized_user': _format_number_pair(act_a, act_b),
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check both values.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check both values.',
     }
 
 
@@ -4446,7 +4880,7 @@ def check_vector_combo(correct_raw, user_answer, labels=None):
         'correct': correct,
         'normalized_user': _format_vector_combo(actual),
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check each coefficient.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check each coefficient.',
     }
 
 
@@ -4483,7 +4917,7 @@ def check_completed_square(correct_raw, user_answer):
         'correct': correct,
         'normalized_user': _format_completed_square(kind, act_numbers),
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check each blank.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check each blank.',
     }
 
 
@@ -4644,10 +5078,10 @@ def _proof_steps_wrong_feedback(mode, step_feedback):
     """Summary feedback when proof steps are partially or fully wrong."""
     if not step_feedback:
         if mode == 'ordered':
-            return 'Not quite — check which steps belong and their order.'
+            return 'Not quite. Check which steps belong and their order.'
         if mode == 'pick':
-            return 'Not quite — select the correct options and leave out the rest.'
-        return 'Not quite — select every correct statement and leave out the rest.'
+            return 'Not quite. Select the correct options and leave out the rest.'
+        return 'Not quite. Select every correct statement and leave out the rest.'
 
     correct_n = sum(1 for s in step_feedback if s['status'] == 'correct')
     wrong_n = sum(1 for s in step_feedback if s['status'] == 'wrong')
@@ -4665,7 +5099,7 @@ def _proof_steps_wrong_feedback(mode, step_feedback):
             parts.append(f'{wrong_n} do not belong')
         summary = ', '.join(parts) + '.' if parts else ''
         return (
-            f'Not quite — {summary} '
+            f'Not quite. {summary} '
             'Green = correct, amber = wrong order, red = not part of this proof.'
         ).strip()
 
@@ -4676,7 +5110,7 @@ def _proof_steps_wrong_feedback(mode, step_feedback):
         parts.append(f'{wrong_n} should not be selected')
     summary = ', '.join(parts) + '.' if parts else ''
     return (
-        f'Not quite — {summary} '
+        f'Not quite. {summary} '
         'Green = correct choice, red = should not be selected.'
     ).strip()
 
@@ -4745,7 +5179,7 @@ def check_proof_steps(correct_raw, user_answer, prereqs=None):
             feedback = 'Correct!'
         elif score == 0:
             feedback = (
-                f'Not quite — select exactly {pick_count} correct options '
+                f'Not quite. Select exactly {pick_count} correct options '
                 'and leave out the rest.'
             )
         else:
@@ -4817,7 +5251,7 @@ def check_number_list(correct_raw, user_answer):
         'correct': correct,
         'normalized_user': _format_number_list(actual),
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check the order and values.',
+        'feedback': 'Correct!' if correct else 'Not quite. Check the order and values.',
     }
 
 

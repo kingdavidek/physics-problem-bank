@@ -1,6 +1,7 @@
 """Turn generated question HTML / LaTeX into plain text and pull numbers out of it."""
 from __future__ import annotations
 
+import functools
 import html
 import re
 from fractions import Fraction
@@ -40,9 +41,23 @@ def latex_to_text(text: str) -> str:
     return s
 
 
+@functools.lru_cache(maxsize=4096)
 def plain(text: str) -> str:
-    """Pupil-visible text of a question or solution: tags removed, LaTeX flattened, spaces collapsed."""
-    s = latex_to_text(strip_html(text))
+    """Pupil-visible text of a question or solution: tags removed, LaTeX flattened, spaces collapsed.
+
+    Cached: the smoke reads each question's text a dozen times (presence guard, forms, options, variety), and the
+    drawn questions are long (batch C1, 2026-10-28: the cache saves about two seconds a run)."""
+    s = latex_to_text(strip_html(str(text)))
+    s = s.replace('\u2212', '-')
+    return re.sub(r'\s+', ' ', s).strip()
+
+
+@functools.lru_cache(maxsize=4096)
+def plain_outside_svg(text: str) -> str:
+    """``plain`` without the text inside <svg> blocks (axis ticks, labels): what the sentence itself says.
+
+    Whole-change review C8: the presence guard read SVG text, so any axis number counted as "in the question"."""
+    s = latex_to_text(strip_html(str(text), keep_svg_text=False))
     s = s.replace('\u2212', '-')
     return re.sub(r'\s+', ' ', s).strip()
 

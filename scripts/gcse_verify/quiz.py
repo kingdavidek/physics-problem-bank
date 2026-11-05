@@ -20,10 +20,10 @@ import contextlib
 import io
 import random
 
-from generators.shared import lesson_quiz, verify_hook
+from generators.shared import lesson_quiz, variant_utils, verify_hook
 from topic_registry import TOPICS
 
-from . import mcq, register
+from . import mcq, register, variety
 from .engine import parse_options, verify_problem
 from .latex import plain
 
@@ -40,6 +40,9 @@ def _key(p):
     return (lesson_quiz._question_key(p), tuple(str(o) for o in p.get('options') or ()), str(p.get('correct_answer')))
 
 
+SOURCES = {}        # question key -> the generator it came from (variant_utils.mcq_source), filled by build()
+
+
 def build(slug, seed):
     """(quiz problems, {question key: records}) for one seeded quiz on a topic."""
     cfg = topics()[slug]
@@ -47,10 +50,12 @@ def build(slug, seed):
     original = lesson_quiz._call_generator
 
     def recording(*a, **k):
+        variant_utils.reset_mcq_source()
         with verify_hook.recording() as sink:
             p = original(*a, **k)
         if isinstance(p, dict):
             seen[_key(p)] = list(sink)
+            SOURCES[_key(p)] = variant_utils.mcq_source()
         return p
 
     lesson_quiz._call_generator = recording
@@ -63,17 +68,35 @@ def build(slug, seed):
     return problems, seen
 
 
+def repeat_counts(slug, problems):
+    """Counters for the variety report: does the quiz ask one kind twice (the builder's kind), and one generator twice.
+
+    A topic in ``register.QUIZ_THIN_TOPICS`` has fewer than ten kinds across its bands, so its quizzes must repeat
+    one: they are counted apart (``thin_*``) and kept out of the ``quiz_repeat_max`` ceiling."""
+    kinds = variety.quiz_kinds(problems)
+    sources = [SOURCES.get(_key(p)) for p in problems]
+    sources = [x for x in sources if x is not None]
+    rep = int(len(set(kinds)) < len(kinds))
+    out = {'distinct_kinds': len(set(kinds)), 'source_repeated': int(len(set(sources)) < len(sources))}
+    if slug in register.QUIZ_THIN_TOPICS:
+        out.update({'thin_quizzes': 1, f'thin_repeated:{slug}': rep, f'thin_quizzes:{slug}': 1})
+    else:
+        out.update({'quizzes': 1, 'repeated': rep})
+    return out
+
+
 def digest_of(p):
     return mcq.item_digest({'q': p['question'], 'opts': p['options'], 'ans': p['correct_answer']})
 
 
 def check_quiz(slug, seed, solvers_bank, wrong_keys=False):
     """Findings (strings) for one quiz, and counters {'questions', 'bank', 'bank_exempt', 'generated', 'graded'}."""
-    out, n = [], dict(questions=0, bank=0, bank_exempt=0, generated=0, graded=0)
+    out, n = [], dict(questions=0, bank=0, bank_exempt=0, generated=0, graded=0, quizzes=0, repeated=0, distinct_kinds=0)
     try:
         problems, records = build(slug, seed)
     except Exception as exc:
         return [f'building the quiz raised {exc!r}'], n
+    n.update(repeat_counts(slug, problems))
     floor, _ = register.QUIZ_SHAPE.get(slug, (10, ''))
     if len(problems) < floor or len(problems) > 10:
         out.append(f'the quiz has {len(problems)} questions, not {floor if floor == 10 else f"{floor} to 10"}')

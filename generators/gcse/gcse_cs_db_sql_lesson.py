@@ -5,6 +5,7 @@ Graded practice variants return (question, solution, hint, marks, raw).
 SQL-writing variants use text keyword grading (required SQL clauses/values).
 """
 import random
+import re
 from generators.shared.utils import (
     make_problem,
     graded_answer_number_fields,
@@ -1162,7 +1163,9 @@ _DB_MCQ_BANK = [
 def db_sql_mcq():
     item = random.choice(_DB_MCQ_BANK)
     opts, ans = _db_mcq_options(item["correct"], item["wrong"])
-    return item["q"], item["sol"], item["hint"], item["marks"], opts, ans
+    # The bank text is written with a fixed "Answer: B"; the options are shuffled here, so name the real letter.
+    sol = re.sub(r'(Answer:\s*)[A-D]\b', rf'\g<1>{ans}', item["sol"])
+    return item["q"], sol, item["hint"], item["marks"], opts, ans
 
 
 # ══════════════════════════════════════════════════════════════════════════════

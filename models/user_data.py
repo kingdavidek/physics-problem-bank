@@ -2,6 +2,7 @@ import json
 from datetime import date, timedelta
 
 from models.user import utc_now_iso
+from generators.shared.answer_record import public_problem, public_problems
 from models.lesson_steps import lesson_step_total
 
 MAX_SAVED_PROBLEMS = 200
@@ -29,7 +30,7 @@ def save_problem(conn, user_id, level, subject, topic, mode, difficulty, problem
             topic,
             mode,
             difficulty,
-            json.dumps(problem),
+            json.dumps(public_problem(problem)),
             now,
         ),
     )
@@ -79,7 +80,7 @@ def update_saved_problem(conn, user_id, saved_id, problem):
         SET problem_json = ?
         WHERE user_id = ? AND id = ?
         ''',
-        (json.dumps(problem), user_id, saved_id),
+        (json.dumps(public_problem(problem)), user_id, saved_id),
     )
     conn.commit()
     return cursor.rowcount > 0
@@ -216,7 +217,7 @@ def record_quiz_attempt(conn, user_id, level, subject, topic, score, total, answ
             score,
             total,
             json.dumps(answers),
-            json.dumps(problems),
+            json.dumps(public_problems(problems)),
             now,
         ),
     )

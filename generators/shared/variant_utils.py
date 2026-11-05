@@ -1,6 +1,7 @@
 """
 Helpers for topic variant queues: 7 practice variants and 7 MCQ variants per difficulty tier.
 """
+import contextvars
 import importlib
 import inspect
 import pkgutil
@@ -12,6 +13,21 @@ _RANDOM_VALUE_OPS = re.compile(
 )
 
 TIER_VARIANT_COUNT = 7
+
+# The generator an MCQ slot last drew from (docs/GCSE_MATHS_VARIETY.md section 6): a (topic, generator) tuple set by
+# the MCQ slot helpers below, or None for a static bank item or a slot built elsewhere.  The GCSE maths lesson quiz
+# reads it so that two questions from one generator do not both land in a quiz when their texts differ only in
+# context words ("pets" and "books", "a bus" and "a delivery").  Setting it draws no random number.
+_MCQ_SOURCE = contextvars.ContextVar("mcq_source", default=None)
+
+
+def reset_mcq_source():
+    _MCQ_SOURCE.set(None)
+
+
+def mcq_source():
+    """The generator behind the MCQ question generated last in this context, or None (see ``_MCQ_SOURCE``)."""
+    return _MCQ_SOURCE.get()
 
 STANDARD_MODE = "standard"
 MCQ_MODE = "mcq"
@@ -48,10 +64,59 @@ def normalize_mode(mode):
     return MODE_ALIASES.get(m, STANDARD_MODE)
 
 
+# Set while a Quick Test or set work asks a topic for its whole tier pool (docs/GCSE_MATHS_VARIETY.md, decision V8):
+# select_tier_variants then returns every slot of the pool, in pool order and without repeats, and draws no random
+# number. The practice queue, the lesson quiz and every other caller see the usual 7-slot sample.
+_WHOLE_POOL = contextvars.ContextVar("whole_pool", default=False)
+PRACTICE_TIERS = ("foundational", "intermediate", "difficult")
+
+
+class whole_pool:
+    """``with whole_pool():`` makes ``select_tier_variants`` return the whole pool (see ``tier_pool``)."""
+
+    def __enter__(self):
+        self._token = _WHOLE_POOL.set(True)
+        return self
+
+    def __exit__(self, *exc):
+        _WHOLE_POOL.reset(self._token)
+        return False
+
+
+def _distinct(pool):
+    seen = set()
+    out = []
+    for fn in pool:
+        name = getattr(fn, "__name__", None)
+        if name in seen:
+            continue
+        seen.add(name)
+        out.append(fn)
+    return out
+
+
+def tier_pool(variants_func, difficulty, mode):
+    """Every variant callable of one (difficulty, mode): the whole pool of a tier, each slot once in pool order.
+
+    For a difficulty outside the three tiers (mixed) it is the union of the three tiers' pools. Multiple-choice
+    queues are built as fixed positional slots, so for them the pool is those slots, as before.
+    """
+    mode = normalize_mode(mode)
+    with whole_pool():
+        if difficulty in PRACTICE_TIERS:
+            return _distinct(variants_func(difficulty, mode) or [])
+        out = []
+        for tier in PRACTICE_TIERS:
+            out.extend(variants_func(tier, mode) or [])
+        return _distinct(out)
+
+
 def select_tier_variants(pool, count=TIER_VARIANT_COUNT):
     """Return up to `count` distinct variant callables from a practice pool."""
     if not pool:
         return []
+    if _WHOLE_POOL.get():
+        return _distinct(pool)
     if len(pool) >= count:
         return random.sample(pool, count)
     shuffled = random.sample(pool, len(pool))
@@ -142,49 +207,80 @@ def mcq_variants_from_bank(bank, topic_slug, difficulty, count=TIER_VARIANT_COUN
     return make_mcq_variant_fns(normalize_mcq_bank(bank), topic_slug, difficulty, count)
 
 
+def _entry_output(entry):
+    """The 6-tuple of one dispatch entry: a procedural generator is called, a bank item is unpacked."""
+    if callable(entry):
+        return entry()
+    hint = entry.get("hint") or entry.get("sol", "")
+    return (
+        entry["q"],
+        entry["sol"],
+        hint,
+        entry.get("marks", 1),
+        entry["opts"],
+        entry["ans"],
+    )
+
+
 def mcq_variants_from_bank_with_procedural(
     bank, procedural_fns, topic_slug, difficulty, count=TIER_VARIANT_COUNT
 ):
-    """
-    Bank-backed MCQ variants. When difficulty is 'difficult', the random pool also
-    includes procedural generators (each returns a 6-tuple).
+    """Bank-backed MCQ variants with procedural generators (docs/GCSE_MATHS_VARIETY.md, 5.1 and 5.3).
+
+    ``procedural_fns`` are the generators that belong to ``difficulty`` (the caller passes
+    ``procedural_mcq_for(topic, difficulty)``).  Each queue slot draws at random from its own entries.
+
+    A band that holds definition or method items (bank items with ``"concept": True``: vocabulary, a choice of
+    rule, a described locus; nothing to compute, so the verification cannot re-solve them) confines them to the
+    last slot, the **concept slot**, which draws only from them; the other slots draw from the computed items
+    (bank items that are re-solved, and the procedural generators).  The definitions stay in the course at one
+    draw in ``count``, and every other slot can be verified in full.  A band without concept items, or with
+    nothing but concept items, keeps every slot on the whole pool.
     """
     normalized = normalize_mcq_bank(bank)
     pool = _bank_pool_for_difficulty(normalized, difficulty) or list(normalized)
-    proc = list(procedural_fns) if difficulty == "difficult" else []
-    entries = list(pool) + proc
+    proc = list(procedural_fns)
+    concept = [item for item in pool if item.get("concept")]
+    regular = [item for item in pool if not item.get("concept")] + proc
+    if not pool and not proc:
+        raise ValueError(f"No MCQ pool for {topic_slug} ({difficulty})")
+    split = bool(concept) and bool(regular)
 
-    def _dispatch():
-        if not entries:
-            raise ValueError(f"No MCQ pool for {topic_slug} ({difficulty})")
-        pick = random.choice(entries)
-        if callable(pick):
-            return pick()
-        hint = pick.get("hint") or pick.get("sol", "")
-        return (
-            pick["q"],
-            pick["sol"],
-            hint,
-            pick.get("marks", 1),
-            pick["opts"],
-            pick["ans"],
-        )
+    fns = []
+    for i in range(count):
+        if split:
+            entries = concept if i == count - 1 else regular
+        else:
+            entries = list(pool) + proc
 
-    if proc:
-        _dispatch._randomizable = True
-    else:
-        _dispatch._bank_only = True
+        def _variant(entries=entries):
+            pick = random.choice(entries)
+            _MCQ_SOURCE.set((topic_slug, pick.__name__) if callable(pick) else None)
+            return _entry_output(pick)
 
-    return mcq_variants_from_fn(_dispatch, topic_slug, difficulty, count)
+        _variant.__name__ = f"{topic_slug}_mcq_{difficulty}_{i + 1}"
+        _variant._mcq_entries = entries          # what this slot can serve (read by the verification and coverage)
+        _variant._mcq_concept = split and i == count - 1
+        _variant._mcq_sources = frozenset(
+            (topic_slug, e.__name__) if callable(e) else None for e in entries)   # None: a bank item (no source)
+        if any(callable(e) for e in entries):
+            _variant._randomizable = True
+        else:
+            _variant._bank_only = True
+        fns.append(_variant)
+    return fns
 
 
 def mcq_variants_from_fn(
-    mcq_fn, topic_slug, difficulty, count=TIER_VARIANT_COUNT, *, slot_param=None
+    mcq_fn, topic_slug, difficulty, count=TIER_VARIANT_COUNT, *, slot_param=None, slot_values=None
 ):
     """Named wrappers around a procedural MCQ generator (one per queue slot).
 
     When ``slot_param`` is set (e.g. ``"mcq_type"`` or ``"slot_index"``), each
     queue slot binds to a fixed value so rerolling keeps the same question stem.
+    ``slot_values`` is the band's own list of values (cycled if shorter than ``count``): slot ``i`` binds to
+    ``slot_values[i % len(slot_values)]`` instead of the slot number, so the three bands of a topic can serve
+    different generators (docs/GCSE_MATHS_VARIETY.md, 5.1).
     """
     fns = []
     sig = inspect.signature(mcq_fn)
@@ -192,17 +288,23 @@ def mcq_variants_from_fn(
 
     for i in range(count):
         if use_slot:
-            slot_value = i + 1 if slot_param == "mcq_type" else i
+            if slot_values:
+                slot_value = slot_values[i % len(slot_values)]
+            else:
+                slot_value = i + 1 if slot_param == "mcq_type" else i
 
             def _variant(sv=slot_value, fn=mcq_fn, param=slot_param):
+                _MCQ_SOURCE.set((topic_slug, f"{param}={sv}"))
                 return fn(**{param: sv})
 
             _variant.__name__ = f"{topic_slug}_mcq_{difficulty}_{i + 1}"
+            _variant._mcq_sources = frozenset({(topic_slug, f"{slot_param}={slot_value}")})
             bound = lambda sv=slot_value, fn=mcq_fn, param=slot_param: fn(**{param: sv})
             bound.__name__ = _variant.__name__
             _variant._randomizable = variant_is_randomizable(bound)
         else:
             def _variant(fn=mcq_fn):
+                _MCQ_SOURCE.set(None)
                 return fn()
 
             _variant.__name__ = f"{topic_slug}_mcq_{difficulty}_{i + 1}"
@@ -222,9 +324,11 @@ def mcq_variants_from_pool(generator_fns, topic_slug, difficulty, count=TIER_VAR
         gen = pool[i % len(pool)]
 
         def _variant(source=gen):
+            _MCQ_SOURCE.set((topic_slug, source.__name__))
             return source()
 
         _variant.__name__ = f"{topic_slug}_mcq_{difficulty}_{i + 1}"
+        _variant._mcq_sources = frozenset({(topic_slug, gen.__name__)})
         _variant._randomizable = variant_is_randomizable(gen)
         fns.append(_variant)
     return fns
@@ -336,6 +440,11 @@ def lookup_variant_by_name(variant_name):
     for _importer, modname, _ispkg in pkgutil.walk_packages(
         generators.__path__, generators.__name__ + "."
     ):
+        # generators.shared holds helpers, never a named practice variant; importing it module by module in
+        # alphabetical order can also start an import cycle (misconception_5b before misconception_topics), so an
+        # unknown name raised AttributeError instead of returning None (variety review, 2026-10-27).
+        if modname.startswith(generators.__name__ + ".shared"):
+            continue
         try:
             mod = importlib.import_module(modname)
         except ImportError:

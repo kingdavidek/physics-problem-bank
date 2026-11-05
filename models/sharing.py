@@ -9,6 +9,7 @@ from models.social import (
     is_following,
 )
 from models.user import utc_now_iso
+from generators.shared.answer_record import public_problem
 
 MAX_SHARED_QUESTIONS = 200
 MAX_SUGGESTIONS_INBOX = 100
@@ -75,7 +76,7 @@ def create_shared_question(
             topic,
             mode,
             difficulty,
-            json.dumps(problem),
+            json.dumps(public_problem(problem)),
             _normalize_visibility(visibility),
             _normalize_note(note),
             now,
@@ -157,7 +158,7 @@ def create_suggestion(
             topic,
             mode,
             difficulty,
-            json.dumps(problem),
+            json.dumps(public_problem(problem)),
             _normalize_note(note),
             SUGGESTION_PENDING,
             now,

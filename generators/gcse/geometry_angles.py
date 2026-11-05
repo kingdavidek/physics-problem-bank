@@ -1877,7 +1877,7 @@ def geometry_angles_mcq():
 def gcse_geometry_angles_variants(difficulty, mode):
     if mode == 'mcq':
         return mcq_variants_from_bank_with_procedural(
-            _GEOM_MCQ_BANK, procedural_mcq_for('geometry_angles'), 'geometry_angles', difficulty
+            _GEOM_MCQ_BANK, procedural_mcq_for('geometry_angles', difficulty), 'geometry_angles', difficulty
         )
 
     if difficulty == 'foundational':

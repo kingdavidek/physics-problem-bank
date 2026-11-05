@@ -240,7 +240,7 @@ def test_talk_loaded_under_runtime_guard_after_poses():
 def test_talk_precached():
     sw = _read(JS_DIR / 'sw.js')
     assert "'/static/js/zorp-talk.js'" in sw, 'unversioned, like the other runtime files (the offline fallback ignores ?v=)'
-    assert "CACHE_VERSION = 'pb-v105'" in sw
+    assert "CACHE_VERSION = 'pb-v109'" in sw
 
 
 def test_talk_mouths_not_in_presets():

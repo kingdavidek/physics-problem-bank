@@ -4,9 +4,9 @@ from __future__ import annotations
 import re
 from fractions import Fraction
 
-from . import core
-from .latex import numbers_in, plain
-from .registry import DIAGRAM_CHECKS, NEEDS_PROBLEM, SOLVERS, fr
+from . import core, options
+from .latex import numbers_in, plain, plain_outside_svg
+from .registry import ASKED_IN_SENTENCE, DIAGRAM_CHECKS, DISTINCT_INPUTS, NEEDS_PROBLEM, SOLVERS, fr
 
 _OPTION = re.compile(r'^\s*([A-H])\s*[.):]?\s+(.*)$', re.S)
 
@@ -96,6 +96,23 @@ def presence_guard(record, question_text):
     return msgs
 
 
+def sentence_guard(record, sentence):
+    """C8: the inputs a family records as 'what the question asks about' (registry.ASKED_IN_SENTENCE) must be in the
+    question text outside its drawing, as printed."""
+    msgs = []
+    present = numbers_in(sentence)
+    for name in ASKED_IN_SENTENCE.get(record['family'], ()):
+        value = record['inputs'].get(name)
+        if value is None:
+            continue
+        if isinstance(value, str):
+            if _compact(value).lower() not in _compact(sentence).lower():
+                msgs.append(f'recorded {name}={value!r} is not in the question text outside the drawing')
+        elif fr(value) not in present:
+            msgs.append(f'recorded {name}={value!r} is not in the question text outside the drawing')
+    return msgs
+
+
 def solve_record(record, problem=None, records=None):
     """Run the registered solver. Raises core.Cannot when it cannot read the inputs."""
     fam = record['family']
@@ -156,6 +173,16 @@ def key_fields_for(p):
     return fields, 'raw'
 
 
+def distinct_input_errors(rec):
+    """Messages for a proportion record whose given and asked quantities are equal (nothing to work out)."""
+    out = []
+    inputs = rec['inputs']
+    for given, asked, what in DISTINCT_INPUTS.get(rec['family'], ()):
+        if given in inputs and asked in inputs and fr(inputs[given]) == fr(inputs[asked]):
+            out.append(f'given and asked {what} are equal ({inputs[given]}): the question asks for what it states')
+    return out
+
+
 def verify_problem(p, records):
     """Re-solve ``p`` using the last record; return an Outcome."""
     if not records:
@@ -171,6 +198,10 @@ def verify_problem(p, records):
 
     for msg in presence_guard(rec, qtext):
         findings.append(('presence', msg))
+    for msg in sentence_guard(rec, plain_outside_svg(p['question'])):
+        findings.append(('presence', msg))
+    for msg in distinct_input_errors(rec):
+        findings.append(('degenerate', msg))
     check = DIAGRAM_CHECKS.get(rec['family'])
     if check is not None:
         try:
@@ -246,6 +277,11 @@ def _option_checks(p, expected, specs):
     out = []
     opts = parse_options(p)
     letter = str(p.get('correct_answer', '')).strip().upper()
+    keyed = [t for ltr, t in opts if ltr == letter]
+    if len(keyed) == 1:
+        qtext = plain(str(p.get('question', '')))
+        for m in options.same_value_errors(qtext, opts, keyed[0]) + options.filler_errors(qtext, opts, keyed[0]):
+            out.append(('mcq', m))
     if len(opts) < 2:
         return out
     atoms_set = expected if isinstance(expected, core.AnyOf) else [expected]

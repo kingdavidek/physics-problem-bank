@@ -680,7 +680,7 @@ add('vectors', {
     'db018bc947bc': direction_words,
     'a412248e9b27': column_answer(lambda cols, c: (cols[0][0] + cols[1][0], cols[0][1] + cols[1][1])),
     'c6b92481c9bd': column_answer(scale_by),
-    'cf34ab60b0f7': lambda c: [exactish(math.hypot(*[float(v) for v in columns(c.stem)[0]]))],
+    '3c8a6434ef8a': lambda c: [exactish(math.hypot(*[float(v) for v in columns(c.stem)[0]]))],
     '9c2be257122c': parallel_to_given,
     '49b5236d46d8': direction_words,
     'cfdc4a0e232d': column_answer(lambda cols, c: (cols[0][0] - cols[1][0], cols[0][1] - cols[1][1])),

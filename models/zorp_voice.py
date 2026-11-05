@@ -80,6 +80,7 @@ SURFACE_NAMES = {
     'system_banner': 'PWA banner',
     'system_badge': 'Tab badge label',
     'system_feedback': 'Answer feedback',
+    'system_hint': 'Hint message',
     'system_settings': 'Settings copy',
     'system_toast': 'Toast',
     'system_bot': 'Bot card',
@@ -169,6 +170,34 @@ FK_MAX_LINE = 8.0
 # The long-word check and the mean grade still cover every line.
 FK_MIN_WORDS_LINE = 8
 FK_MAX_MEAN = 5.0
+# Hint messages (docs/GCSE_MATHS_HINTS.md section 6): system voice shown to a pupil after a wrong answer. Stricter
+# than other system strings: house style (no dash, no emoji) is an error, and so are the length, reading level,
+# long words and the words that shame. They are not Zorp lines, so they do not count toward the Zorp means.
+HINT_MAX_CHARS = 120
+HINT_MAX_SENTENCES = 2
+HINT_BANNED = (
+    (r"\bwrong\b", 'wrong'),
+    (r"\bincorrect(?:ly)?\b", 'incorrect'),
+    (r"\bmistakes?\b", 'mistake'),
+    (r"\bcareless(?:ly)?\b", 'careless'),
+    (r"\bsilly\b", 'silly'),
+    (r"\bjust\b", 'just'),
+)
+# Maths words of four or more syllables a hint may use (on top of LONG_WORD_ALLOW).
+HINT_LONG_WORD_ALLOW = frozenset({
+    'hypotenuse', 'circumference', 'perpendicular', 'probability', 'denominator', 'numerator', 'multiplier',
+    'approximately', 'calculator', 'calculation', 'calculations',
+    # Phase 2 (misconception_topics): maths words a pupil of 13 meets every week
+    'perimeter', 'centimetres', 'original', 'pythagoras',
+    # Phase 2 review: the shape a triangle's sine formula is half of
+    'parallelogram',
+    # Phase 5 (misconception_cd): topic words for transformations and angles
+    'coordinates', 'enlargement', 'corresponding',
+    # Phase 5b (misconception_5b): circle and similarity words that are the names of the theorems themselves
+    'semicircle', 'quadrilateral', 'perimeters',
+    # Phase 5c (misconception_5b): words the question itself uses ("significant figures", "sum to infinity")
+    'significant', 'infinity',
+})
 EXCLAIM_MAX_SHARE = 0.25  # at most one Zorp line in four carries a "!"
 # Words of 4+ syllables are allowed only from this list (physics terms and placeholders).
 LONG_WORD_ALLOW = frozenset({
@@ -298,6 +327,30 @@ def exclamation_share(items):
 # Lint
 # ---------------------------------------------------------------------------------------------
 
+def _lint_hint(it, low):
+    """The stricter rules for a hint message (system voice, shown after a wrong answer)."""
+    out = []
+    for rx, what in ((EMOJI_RE, 'emoji'), (DASH_RE, 'em or en dash')):
+        if rx.search(it.text):
+            out.append(Violation(it, 'characters', what, 'error'))
+    if it.text.count('!') > 1:
+        out.append(Violation(it, 'exclamation', 'more than one "!" in a line', 'error'))
+    if len(it.text) > HINT_MAX_CHARS:
+        out.append(Violation(it, 'length', f'{len(it.text)} characters, limit {HINT_MAX_CHARS} for a hint message', 'error'))
+    if sentence_count(it.text) > HINT_MAX_SENTENCES:
+        out.append(Violation(it, 'hint copy', f'more than {HINT_MAX_SENTENCES} sentences', 'error'))
+    for pat, name in HINT_BANNED:
+        if re.search(pat, low):
+            out.append(Violation(it, 'hint copy', f'"{name}" is not used in a hint (kind, non-shaming wording)', 'error'))
+    grade = flesch_kincaid(it.text)
+    if grade > FK_MAX_LINE and len(words_of(it.text)) >= FK_MIN_WORDS_LINE:
+        out.append(Violation(it, 'reading level', f'grade {grade:.1f}, limit {FK_MAX_LINE:g}', 'error'))
+    for w in long_words(it.text):
+        if re.sub(r'[^a-z]', '', w.lower()) not in HINT_LONG_WORD_ALLOW:
+            out.append(Violation(it, 'long word', f'"{w}" has four or more syllables and is not on the allowlist', 'error'))
+    return out
+
+
 def lint(items):
     """Every rule violation. System-voice items get the first-person, banned-phrase, spelling and
     "practise" rules (3.3.2, 3.3.4); emoji and dashes in system strings are listed as `info` (house
@@ -326,6 +379,9 @@ def lint(items):
         if it.voice == 'system':
             if re.search(SYSTEM_FIRST_PERSON, low):
                 out.append(Violation(it, 'system voice', 'first person in the system voice', 'error'))
+            if it.surface == 'system_hint':
+                out.extend(_lint_hint(it, low))
+                continue
             for rx, what in ((EMOJI_RE, 'emoji or symbol'), (DASH_RE, 'em or en dash')):
                 if rx.search(it.text):
                     out.append(Violation(it, 'house style', f'{what} in a system string (listed, not a Zorp rule)', 'info'))
@@ -850,6 +906,73 @@ def extract_site_feedback(path='static/js/site.js'):
     return items, errors
 
 
+HINT_DICTS = (('MESSAGES', ''), ('NUDGES', 'nudge:'), ('LADDER_COPY', 'ladder:'))
+# Whole-change review 2026-11-03 (F10): single string constants that the page shows as hint copy (NUDGE_DEFAULT is rung 1
+# when no family, problem hint or topic line applies). Each is read as a plain string literal, like the dicts.
+HINT_CONSTANTS = (('NUDGE_DEFAULT', 'nudge:default'),)
+# Phase 4: the multiple-choice distractor notes (docs/GCSE_MATHS_HINTS.md section 19) are hint messages too.
+NOTE_DICTS = (('NOTES', 'note:'), ('BANK_NOTES', 'note:'))
+NOTES_PATH = 'generators/shared/mcq_notes.py'
+# Phase 5b: the messages of the circle theorem, similarity and later rules sit in their own module (a MESSAGES dict)
+MORE_MESSAGES_PATHS = ('generators/shared/misconception_5b.py',)
+
+
+def extract_hint_messages(path='generators/shared/misconceptions.py'):
+    items, errors = _extract_hint_dicts(path, HINT_DICTS)
+    got, got_errors = _extract_hint_constants(path, HINT_CONSTANTS)
+    items += got
+    errors += got_errors
+    more, more_errors = _extract_hint_dicts(NOTES_PATH, NOTE_DICTS, allow_empty=True)
+    for extra_path in MORE_MESSAGES_PATHS:
+        got, got_errors = _extract_hint_dicts(extra_path, (('MESSAGES', ''),))
+        more += got
+        more_errors += got_errors
+    return items + more, errors + more_errors
+
+
+def _extract_hint_constants(path, names):
+    """Top-level ``NAME = 'text'`` assignments of hint copy, read with ast (every one must be a plain string literal)."""
+    src = _read(path)
+    tree = ast.parse(src)
+    lines = src.split('\n')
+    items, errors = [], []
+    for name, where in names:
+        node = next((n for n in tree.body if isinstance(n, ast.Assign) and len(n.targets) == 1
+                     and isinstance(n.targets[0], ast.Name) and n.targets[0].id == name), None)
+        if node is None or not (isinstance(node.value, ast.Constant) and isinstance(node.value.value, str)):
+            errors.append(f'{path}: {name} is not a plain string literal')
+            continue
+        items.append(Item(path, node.value.lineno, 'system', 'system_hint', 'line', node.value.value, where=where,
+                          justified=_has_voice_ok(lines[node.value.lineno - 1])))
+    return items, errors
+
+
+def _extract_hint_dicts(path, dicts, allow_empty=False):
+    """The pupil-facing copy of the misconception module, read with ast: MESSAGES (a slip named after a wrong answer),
+    NUDGES (rung 1 when no slip is recognised) and LADDER_COPY (the words around the ladder). Every value must be a
+    string literal."""
+    src = _read(path)
+    tree = ast.parse(src)
+    items, errors = [], []
+    lines = src.split('\n')
+    for name, prefix in dicts:
+        node = next((n for n in tree.body if isinstance(n, ast.Assign) and len(n.targets) == 1
+                     and isinstance(n.targets[0], ast.Name) and n.targets[0].id == name), None)
+        if node is None or not isinstance(node.value, ast.Dict):
+            errors.append(f'{path}: {name} dictionary not found')
+            continue
+        for k, v in zip(node.value.keys, node.value.values):
+            if not (isinstance(k, ast.Constant) and isinstance(k.value, str)
+                    and isinstance(v, ast.Constant) and isinstance(v.value, str)):
+                errors.append(f'{path}:{v.lineno}: a {name} entry is not a plain string literal')
+                continue
+            items.append(Item(path, v.lineno, 'system', 'system_hint', 'line', v.value, where=prefix + k.value,
+                              justified=_has_voice_ok(lines[v.lineno - 1])))
+    if not items and not allow_empty:
+        errors.append(f'{path}: no hint messages extracted')
+    return items, errors
+
+
 EXTRACTORS = (
     extract_guide_catalog,
     extract_guide_js,
@@ -861,6 +984,7 @@ EXTRACTORS = (
     extract_notification_toasts,
     extract_feed_js,
     extract_site_feedback,
+    extract_hint_messages,
 )
 
 
@@ -940,7 +1064,7 @@ def render_inventory(items, errors=()):
     out.append('| Ref | Voice | Surface | Chars | FK | Text |')
     out.append('|---|---|---|---|---|---|')
     for it in items:
-        fk = f'{flesch_kincaid(it.text):.1f}' if it.kind == 'line' and it.voice == 'zorp' else ''
+        fk = f'{flesch_kincaid(it.text):.1f}' if it.kind == 'line' and (it.voice == 'zorp' or it.surface == 'system_hint') else ''
         shown = it.template or it.text
         out.append(f"| `{it.ref}` | {'Zorp' if it.voice == 'zorp' else 'System'} | {SURFACE_NAMES[it.surface]} | "
                    f"{len(it.text)} | {fk} | {_cell(shown)} |")

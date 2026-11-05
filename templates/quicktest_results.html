@@ -68,6 +68,7 @@
                 {% endif %}
             {% endif %}
         </div>
+        {% if pick_notes[loop.index0] %}<p class="list-row-meta">{{ pick_notes[loop.index0] }}</p>{% endif %}
         {% if not problem.options and answer.get('user_answer') %}
         <p class="list-row-meta">Your answer: {{ answer.user_answer | readable_multipart_answer(problem) }}</p>
         {% endif %}

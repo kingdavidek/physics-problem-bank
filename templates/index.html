@@ -152,6 +152,8 @@
         {% endif %}
     </div>
 
+    {# GCSE maths hint ladder (docs/GCSE_MATHS_HINTS.md, 2026-11-04 change): Show answer is greyed until the pupil's first try. Pacing only. #}
+    {% set hint_ladder = selected_level == 'gcse' and selected_subject == 'maths' and (problem.options or problem.correct_answer_raw) %}
     <div class="question">
         {% if problem.options %}
             <div class="question-content">{{ problem.question | safe }}</div>
@@ -161,12 +163,21 @@
                  data-subject="{{ selected_subject }}"
                  data-topic="{{ selected_topic }}"
                  data-mode="{{ selected_mode }}"
-                 data-difficulty="{{ selected_diff }}">
+                 data-difficulty="{{ selected_diff }}"{% if hint_ladder and option_note_qid(problem) %}
+                 data-note-qid="{{ option_note_qid(problem) }}"{% endif %}>
                 {% for opt in problem.options %}
                     <button type="button" class="btn mcq-btn" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
                 {% endfor %}
             </div>
             <p class="mcq-feedback" id="mcq-feedback"></p>
+            {% if hint_ladder %}
+            <div class="mcq-hint-slot" aria-live="polite">
+                <div class="hint-card" hidden>
+                    <p class="hint-card-title">{{ ladder_copy.hint }}</p>
+                    <div class="hint-card-text"></div>
+                </div>
+            </div>
+            {% endif %}
         {% else %}
             {% if not problem.answer_inline_sections %}
             <div class="question-content">{{ problem.question | format_question_html }}</div>
@@ -175,23 +186,21 @@
             {% set fr_subject = selected_subject %}
             {% set fr_topic = selected_topic %}
             {% set fr_difficulty = selected_diff %}
+            {% set fr_hint_ladder = hint_ladder and problem.correct_answer_raw %}
             {% include 'partials/free_response_inline.html' %}
         {% endif %}
     </div>
 
     <p class="topic-link">
-        📖 <a href="{{ problem.topic_url }}">Revise: {{ problem.topic_name }}</a>
+        📖 <a href="{{ problem.topic_url }}">Revise: {{ revise_topic_name or problem.topic_name }}</a>
     </p>
 
-    <details class="practice-hint-drawer" id="practice-hint">
-        <summary class="practice-hint-drawer-label">Hint</summary>
-        <div class="hint practice-hint-body">
-            {{ problem.hint | safe }}
-        </div>
-    </details>
-
-    <details class="answer-reveal">
-        <summary>Show answer</summary>
+    {# Hints appear only after an attempt (2026-11-04): no pre-attempt Hint drawer. Show answer is greyed until the first try. #}
+    {% if hint_ladder %}
+    <p class="answer-reveal-status" role="status" data-open="{{ ladder_copy.opened }}"></p>
+    {% endif %}
+    <details class="answer-reveal"{% if hint_ladder %} data-locked{% endif %}>
+        <summary{% if hint_ladder %} aria-disabled="true" tabindex="-1"{% endif %}>Show answer{% if hint_ladder %}<span class="answer-reveal-note"> {{ ladder_copy.locked }}</span>{% endif %}</summary>
         <div class="answer">
             {% if '<pre>' in problem.solution %}
                 {{ problem.solution | safe }}
@@ -200,9 +209,15 @@
             {% endif %}
         </div>
         {% include 'partials/answer_grading_hint.html' %}
+        {% if not hint_ladder and problem.hint %}
+        <details class="hint-reveal">
+            <summary>Hint</summary>
+            <div class="hint">{{ problem.hint | safe }}</div>
+        </details>
+        {% endif %}
         <div class="answer-reveal-footer">
             <p class="topic-link">
-                📖 <a href="{{ problem.topic_url }}">Read the full {{ problem.topic_name }} topic page →</a>
+                📖 <a href="{{ problem.topic_url }}">Read the full {{ revise_topic_name or problem.topic_name }} topic page →</a>
             </p>
         </div>
     </details>

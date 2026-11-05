@@ -4,9 +4,10 @@ GCSE Maths – Algebraic Fractions
 """
 from generators.shared.rounding import round_half_up as round, fmt_dp
 import random
+import re
 from math import gcd
-from generators.shared.answer_checkers import FORM_SIMPLIFIED
-from generators.shared.utils import make_problem
+from generators.shared.answer_checkers import FORM_SIMPLIFIED, linear_format_hint
+from generators.shared.utils import make_problem, coef
 from generators.shared.verify_hook import verifies
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -68,7 +69,7 @@ def _af_raw(value):
     return str(value)
 
 
-def _af_fraction_answer(num, den):
+def _af_fraction_answer(num, den, form=None):
     """Numeric fraction → stacked algebraic_fraction UI (or integer number)."""
     g = gcd(int(num), int(den))
     n, d = int(num) // g, int(den) // g
@@ -76,10 +77,10 @@ def _af_fraction_answer(num, den):
         n, d = -n, -d
     if d == 1:
         return n
-    return _af_alg_fraction_answer(n, d)
+    return _af_alg_fraction_answer(n, d, form=form)
 
 
-def _af_alg_fraction_answer(numerator, denominator, format_hint=None):
+def _af_alg_fraction_answer(numerator, denominator, format_hint=None, form=None):
     payload = {
         'type': 'algebraic_fraction',
         'numerator': str(numerator).strip(),
@@ -87,6 +88,8 @@ def _af_alg_fraction_answer(numerator, denominator, format_hint=None):
     }
     if format_hint:
         payload['format_hint'] = format_hint
+    if form:
+        payload['form'] = form       # 'simplified': the checker also wants lowest terms (batch C2, the "Simplify" slots)
     return payload
 
 
@@ -132,6 +135,8 @@ def _af_problem_from_output(out, difficulty):
                             'Enter the numerator and denominator',
                         ),
                     }
+                    if raw.get('form'):
+                        extra['answer_form'] = raw['form']     # 'simplified': the checker also needs lowest terms
             elif raw_type == 'algebraic':
                 text = str(raw.get('value') or '')
                 extra = {
@@ -152,8 +157,11 @@ def _af_problem_from_output(out, difficulty):
                         str(val) if var == 'x' else f'{var}={val}'
                     ),
                     'answer_type': 'linear',
-                    'answer_format_hint': 'Enter the value (e.g. x = 3 or just 3)',
+                    'answer_format_hint': linear_format_hint(str(val) if var == 'x' else f'{var}={val}'),
                 }
+            elif raw_type == 'quadratic_roots':
+                from generators.gcse import maths_variety_b as vb
+                extra = vb.problem_extra(raw)
             elif raw_type == 'fraction':
                 value = raw.get('value')
                 if value is not None and str(value).strip():
@@ -238,6 +246,10 @@ def _af_add_reciprocal_style_steps(n1, n2, c):
     sum_coeff = n1 + n2
     const = n1 * c
     num = f"{sum_coeff}x + {const}"
+    # review C10: a coefficient of 1 is not written (x, not 1x; (x + c), not 1(x + c))
+    b1 = f"{n1}(x + {c})" if n1 != 1 else f"(x + {c})"
+    t1 = f"{n1}x" if n1 != 1 else "x"
+    t2 = f"{n2}x" if n2 != 1 else "x"
     s = (
         _af_step(
             f"<strong>Step 1</strong> — find the lowest common denominator (LCD). "
@@ -247,22 +259,22 @@ def _af_add_reciprocal_style_steps(n1, n2, c):
             "<strong>Step 2</strong> — rewrite each fraction with denominator "
             f"{lcd}:"
             + _af_math_line(
-                rf"\(\dfrac{{{n1}}}{{x}} = \dfrac{{{n1}(x + {c})}}{{{lcd}}}\) "
+                rf"\(\dfrac{{{n1}}}{{x}} = \dfrac{{{b1}}}{{{lcd}}}\) "
                 rf"(multiply top and bottom by (x + {c}))"
             )
             + _af_math_line(
-                rf"\(\dfrac{{{n2}}}{{x + {c}}} = \dfrac{{{n2}x}}{{{lcd}}}\) "
+                rf"\(\dfrac{{{n2}}}{{x + {c}}} = \dfrac{{{t2}}}{{{lcd}}}\) "
                 rf"(multiply top and bottom by x)"
             )
         )
         + _af_step(
             "<strong>Step 3</strong> — add the numerators (keep the same denominator):"
-            + _af_math_line(rf"\(\dfrac{{{n1}(x + {c}) + {n2}x}}{{{lcd}}}\)")
+            + _af_math_line(rf"\(\dfrac{{{b1} + {t2}}}{{{lcd}}}\)")
         )
         + _af_step(
             "<strong>Step 4</strong> — expand the brackets and collect like terms:"
             + _af_math_line(
-                rf"\({n1}(x + {c}) + {n2}x = {n1}x + {n1 * c} + {n2}x = {sum_coeff}x + {const}\)"
+                rf"\({b1} + {t2} = {t1} + {n1 * c} + {t2} = {sum_coeff}x + {const}\)"
             )
         )
         + _af_answer(
@@ -307,7 +319,7 @@ def _af_f_cancel_numeric():
         rf"Cancel the common factor \(x\) (and \(\gcd({num},{den})={g}\)):<br>"
         rf"<strong>\({_frac(num // g, den // g)}\)</strong>"
     )
-    return q, s, "Cancel common factors in numerator and denominator only.", 2, _af_fraction_answer(num, den)
+    return q, s, "Cancel common factors in numerator and denominator only.", 2, _af_fraction_answer(num, den, form=FORM_SIMPLIFIED)
 
 
 @verifies('alg', task='simplify', form=None)
@@ -335,7 +347,7 @@ def _af_f_multiply():
         raw = 1
     else:
         s = rf"Multiply then cancel \(x\): <strong>\({_frac(b // g, a // g)}\)</strong>"
-        raw = _af_fraction_answer(b, a)
+        raw = _af_fraction_answer(b, a, form=FORM_SIMPLIFIED)
     return q, s, "Multiply tops and bottoms, then cancel common factors.", 2, raw
 
 
@@ -350,7 +362,7 @@ def _af_f_divide():
         rf"\dfrac{{x^2}}{{{m * n}}}\) — or cancel to <strong>\({_frac('x^2', str(m * n))}\)</strong>."
     )
     return q, s, "Divide by a fraction = multiply by its reciprocal.", 3, _af_alg_fraction_answer(
-        'x^2', m * n,
+        'x^2', m * n, form=FORM_SIMPLIFIED,
     )
 
 @verifies('alg', task='simplify', form=None)
@@ -439,7 +451,7 @@ def _af_i_multiply_two():
     )
     if p == q_val:
         return q, s, hint, 3, 1
-    return q, s, hint, 3, _af_alg_fraction_answer(f'x+{p}', f'x+{q_val}')
+    return q, s, hint, 3, _af_alg_fraction_answer(f'x+{p}', f'x+{q_val}', form=FORM_SIMPLIFIED)
 
 
 @verifies('alg', task='simplify', form=None)
@@ -482,14 +494,16 @@ def _af_d_solve_simple():
     s = (
         _af_step(
             "<strong>Step 1</strong> — multiply both sides by x to clear the denominator:"
-            + _af_math_line(rf"\({a} = \dfrac{{{rhs_num}x}}{{{rhs_den}}}\)")
+            + _af_math_line(rf"\({a} = \dfrac{{{coef(rhs_num, 'x')}}}{{{rhs_den}}}\)")
         )
         + _af_step(
             f"<strong>Step 2</strong> — multiply both sides by {rhs_den}:"
-            + _af_math_line(rf"\({a * rhs_den} = {rhs_num}x\)")
+            + _af_math_line(rf"\({a * rhs_den} = {coef(rhs_num, 'x')}\)")
         )
         + _af_answer(
-            f"<strong>Step 3</strong> — divide both sides by {rhs_num}: "
+            (f"<strong>Step 3</strong> — divide both sides by {rhs_num}: " if rhs_num != 1
+             else "<strong>Step 3</strong> — so ")
+            +
             rf"<strong>\(x = {x_ans}\)</strong>"
         )
     )
@@ -526,13 +540,27 @@ def _af_d_simplify_nested():
 def _af_d_subtract_fractions():
     p = random.randint(4, 14)
     q_val = random.randint(2, 10)
+    while q_val == p:                      # a top of 0 is no fraction to simplify (batch C2)
+        q_val = random.randint(2, 10)
     d = _af_random_denominator()
     tex = _frac(str(p), d) + " - " + _frac(str(q_val), d)
     q = rf"Simplify <strong>{_math(tex)}</strong>."
     ans = p - q_val
+    # a bottom of ax or ax + b may share a factor with the top: 6/(2x) is 3/x and 6/(2x + 6) is 3/(x + 3) (batch C2:
+    # the key is now in lowest terms, as "Simplify" asks, and the checker insists on it)
+    m = re.fullmatch(r'(\d+)x(?: \+ (\d+))?', d)
+    g = gcd(abs(ans), int(m.group(1)), int(m.group(2) or 0)) if m else 1
+    if g > 1:
+        top, coeff, const = ans // g, int(m.group(1)) // g, int(m.group(2) or 0) // g
+        d_low = ('x' if coeff == 1 else f'{coeff}x') + (f' + {const}' if const else '')
+        s = (rf"Subtract the tops: \({_frac(str(ans), d)}\).<br>"
+             rf"Top and bottom share the factor {g}, so cancel it: <strong>\({_frac(str(top), d_low)}\)</strong>")
+        return q, s, "Subtract numerators when denominators match, then cancel any common factor.", 3, _af_alg_fraction_answer(
+            top, d_low, form=FORM_SIMPLIFIED,
+        )
     s = rf"<strong>\({_frac(str(ans), d)}\)</strong>"
     return q, s, "Subtract numerators when denominators match.", 3, _af_alg_fraction_answer(
-        ans, d,
+        ans, d, form=FORM_SIMPLIFIED,
     )
 
 @verifies('alg', task='solve_linear')
@@ -554,10 +582,12 @@ def _af_d_equation_with_linear_den():
         )
         + _af_step(
             "<strong>Step 2</strong> — bring x terms to one side:"
-            + _af_math_line(rf"\({c} = {rhs}x - x = {rhs - 1}x\)")
+            + _af_math_line(rf"\({c} = {rhs}x - x = {coef(rhs - 1, 'x')}\)")
         )
         + _af_answer(
-            f"<strong>Step 3</strong> — divide by {rhs - 1}: "
+            (f"<strong>Step 3</strong> — divide by {rhs - 1}: " if rhs != 2
+             else "<strong>Step 3</strong> — so ")
+            +
             rf"<strong>\(x = {x_ans}\)</strong>"
         )
     )
@@ -623,7 +653,7 @@ def _af_mcq_add_same():
 def _af_mcq_diff_squares():
     r = random.randint(3, 6)
     correct = rf"\(x + {r}\)"
-    wrong = [rf"\(x - {r}\)", rf"\(x^2 + {r}\)", rf"\(x + {r^2}\)"]
+    wrong = [rf"\(x - {r}\)", rf"\(x^2 + {r}\)", rf"\(x + {r * r}\)"]
     forms = wrong + [correct]
     random.shuffle(forms)
     letters = "ABCD"
@@ -708,6 +738,8 @@ def _af_mcq_subtract_same():
     p = random.randint(5, 9)
     q_val = random.randint(2, 4)
     d = random.choice([r"x + 1", r"x - 2", r"2x"])
+    if d == "2x" and (p - q_val) % 2 == 0:
+        p += 1 if p < 9 else -1              # an even numerator over 2x is not in lowest terms (4/2x is 2/x) and p + q = 2(p - q) made two options equal
     correct = rf"\({_frac(str(p - q_val), d)}\)"
     wrong = [
         rf"\({_frac(str(p + q_val), d)}\)",
@@ -749,6 +781,72 @@ def _af_mcq_factor_cancel():
     return q, sol, "Factorise the quadratic, then cancel the common bracket.", 3, opts, correct_letter
 
 
+@verifies('alg', task='simplify', form=None)
+def _af_mcq_unlike_add():
+    a, b = random.choice([(2, 3), (2, 5), (3, 4), (3, 5), (4, 5), (2, 7), (3, 7), (5, 6)])     # coprime: the key is in lowest terms
+    if random.random() < 0.5:
+        a, b = b, a
+    correct = rf"\({_frac(f'{a + b}x', a * b)}\)"
+    wrong = [
+        rf"\({_frac('2x', a + b)}\)",
+        rf"\({_frac('x', a * b)}\)",
+        rf"\({_frac(f'{a * b}x', a + b)}\)",
+    ]
+    forms = wrong + [correct]
+    random.shuffle(forms)
+    letters = "ABCD"
+    correct_letter = letters[forms.index(correct)]
+    opts = [f"{letters[i]}  {forms[i]}" for i in range(4)]
+    tex = _frac("x", str(a)) + " + " + _frac("x", str(b))
+    q = rf"{_math(tex)} simplifies to:"
+    sol = (
+        rf"Use the common denominator {a * b}: \({_frac(f'{b}x', a * b)} + {_frac(f'{a}x', a * b)}\) = "
+        rf"<strong>{correct}</strong>. Answer: <strong>{correct_letter}</strong>"
+    )
+    return q, sol, "Write both fractions over a common denominator, then add the numerators.", 3, opts, correct_letter
+
+
+@verifies('alg', task='simplify', form=None)
+def _af_mcq_common_factor_cancel():
+    a = random.randint(2, 5)
+    b = random.randint(2, 6)
+    correct = rf"\(x + {b}\)"
+    wrong = [rf"\(x^2 + {b}\)", rf"\(x + {a * b}\)", rf"\({a}x + {b}\)"]
+    forms = wrong + [correct]
+    random.shuffle(forms)
+    letters = "ABCD"
+    correct_letter = letters[forms.index(correct)]
+    opts = [f"{letters[i]}  {forms[i]}" for i in range(4)]
+    q = rf"Simplify {_math(_frac(f'{a}x^2 + {a * b}x', f'{a}x'))}."
+    sol = (
+        rf"Factorise the top: \({a}x(x + {b})\), then cancel \({a}x\): "
+        rf"<strong>{correct}</strong>. Answer: <strong>{correct_letter}</strong>"
+    )
+    return q, sol, "Take out the common factor on the top, then cancel it with the bottom.", 3, opts, correct_letter
+
+
+@verifies('alg', task='solve_linear')
+def _af_mcq_solve_over_number():
+    for _ in range(50):
+        k, p, m = random.randint(2, 5), random.randint(1, 5), random.randint(2, 6)
+        vals = [k * m - p, k * m + p, k * (m - p), m - p]
+        if len(set(vals)) == 4 and vals[0] > 0:
+            break
+    correct = rf"\(x = {vals[0]}\)"
+    wrong = [rf"\(x = {v}\)" for v in vals[1:]]
+    forms = wrong + [correct]
+    random.shuffle(forms)
+    letters = "ABCD"
+    correct_letter = letters[forms.index(correct)]
+    opts = [f"{letters[i]}  {forms[i]}" for i in range(4)]
+    q = rf"Solve {_math(_frac(f'x + {p}', k) + f' = {m}')}."
+    sol = (
+        rf"Multiply both sides by {k}: x + {p} = {k * m}, so "
+        rf"<strong>{correct}</strong>. Answer: <strong>{correct_letter}</strong>"
+    )
+    return q, sol, "Multiply both sides by the denominator first, then subtract.", 2, opts, correct_letter
+
+
 _AF_MCQ_POOL = [
     _af_mcq_cancel,
     _af_mcq_add_same,
@@ -758,7 +856,23 @@ _AF_MCQ_POOL = [
     _af_mcq_divide,
     _af_mcq_subtract_same,
     _af_mcq_factor_cancel,
+    _af_mcq_unlike_add,
+    _af_mcq_common_factor_cancel,
+    _af_mcq_solve_over_number,
 ]
+
+# Phase 2 (2026-10-27): each band has its own list of the 11 generators (3 added to give a ten-question quiz enough kinds) (before, every band served the first four).
+# Adding and subtracting over one denominator and cancelling a number are the first steps; multiplying and dividing
+# fractions, and cancelling a bracket, are the middle; factorising first (x^2 + 5x + 6, x^2 - 16) and solving an
+# equation with an algebraic fraction are the top.
+_AF_MCQ_BANDS = {
+    "foundational": [_af_mcq_add_same, _af_mcq_subtract_same, _af_mcq_cancel, _af_mcq_common_factor_cancel,
+                     _af_mcq_multiply, _af_mcq_solve_over_number, _af_mcq_divide],
+    "intermediate": [_af_mcq_multiply, _af_mcq_divide, _af_mcq_unlike_add, _af_mcq_factor_cancel,
+                     _af_mcq_diff_squares, _af_mcq_subtract_same, _af_mcq_common_factor_cancel],
+    "difficult": [_af_mcq_factor_cancel, _af_mcq_diff_squares, _af_mcq_solve, _af_mcq_unlike_add,
+                  _af_mcq_divide, _af_mcq_cancel],
+}
 
 
 def _af_mcq_dispatch():
@@ -800,17 +914,27 @@ _POOLS = {
 }
 
 
+def _batch_b_pools():
+    # Phase 3 batch B kinds (lazy: maths_variety_b must never be imported while this module loads).
+    from generators.gcse import maths_variety_b as vb
+    return {
+        "foundational": _FOUNDATIONAL + [vb.gcse_af_f_numeric_common_factor, vb.gcse_af_f_add_expression_numerators, vb.gcse_af_f_evaluate_fraction, vb.gcse_af_f_undefined_value],
+        "intermediate": _INTERMEDIATE + [vb.gcse_af_i_simplify_two_quadratics, vb.gcse_af_i_divide_fractions, vb.gcse_af_i_add_numeric_denominators, vb.gcse_af_i_solve_cross_multiply],
+        "difficult": _DIFFICULT + [vb.gcse_af_d_subtract_linear_denominators, vb.gcse_af_d_solve_reciprocal_quadratic, vb.gcse_af_d_simplify_non_monic, vb.gcse_af_d_solve_two_fractions],
+    }
+
+
 def gcse_algebraic_fractions_variants(difficulty, mode="practice"):
     if mode == "mcq":
         return mcq_variants_from_pool(
-            _AF_MCQ_POOL, "algebraic_fractions", difficulty, count=4
+            _AF_MCQ_BANDS.get(difficulty, _AF_MCQ_POOL), "algebraic_fractions", difficulty
         )
 
-    pool = _POOLS.get(difficulty)
+    pools = _batch_b_pools()
+    pool = pools.get(difficulty)
     if not pool:
-        combined = _FOUNDATIONAL + _INTERMEDIATE + _DIFFICULT
-        return select_tier_variants(combined, 5)
-    return select_tier_variants(pool, 5)
+        return select_tier_variants(pools["foundational"] + pools["intermediate"] + pools["difficult"])
+    return select_tier_variants(pool)
 
 
 def gcse_algebraic_fractions(difficulty, mode, variant_name=None):

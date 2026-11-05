@@ -4,6 +4,8 @@ from __future__ import annotations
 import re
 from fractions import Fraction
 
+from generators.shared import answer_units
+
 from .core import parse_num
 
 SEP = '\x1e'
@@ -101,7 +103,7 @@ FORM_QUESTION_WORDS = {
     'expanded': re.compile(r'expand|simplif', re.I),
     'factorised': re.compile(r'factoris', re.I),
     'simplest_surd': re.compile(r'simplif|simplest|form k', re.I),
-    'simplified': re.compile(r'simplif', re.I),
+    'simplified': re.compile(r'simplif|simplest|lowest\s+terms', re.I),
     'probability': re.compile(r'\bP\((?!\s*-?\d+\s*,)|probability', re.I),
 }
 
@@ -140,9 +142,48 @@ def wrong_form_entries(at, raw, form, question):
             if p and p < n:
                 out.append((f'{p}({a * n // p}x + {b * n // p})', 'partly_factorised'))
     elif form == 'simplified' and at == 'algebraic':
+        # a key that is one term (10*x**6, m**8): the index-law slots, where the pupil must combine the powers
+        term = re.fullmatch(r'(?:(\d+)\*)?([a-z])\*\*(\d+)', raw.replace(' ', ''))
+        kind = 'powers_not_combined' if term else 'not_simplified'
         fraction = re.search(r'\(([^()]+)\)/\(([^()]+)\)', q)   # the question's own fraction, as printed
         if fraction:
-            out.append((re.sub(r'\s+', '', fraction.group(0)), 'not_simplified'))
+            out.append((re.sub(r'\s+', '', fraction.group(0)), kind))
+        if term and 3 <= int(term.group(3)) <= 8:      # within the checker's power caps, so equal with no form asked
+            c, v, n = term.group(1) or '', term.group(2), int(term.group(3))
+            out.append((f'{c}{v}^{n - 1}*{v}', 'powers_not_combined'))
+    elif form == 'simplified' and at == 'algebraic_fraction' and '|' in raw:
+        num, den = raw.split('|', 1)                # the same fraction with a common factor of 2 left in
+        out.append((f'2({num})|2({den})', 'common_factor'))
+        if re.search(r'[a-z]', raw):                # and with a common bracket left in (review 2026-10-28)
+            out.append((f'({num})(x+9)|({den})(x+9)', 'not_simplified'))
+    elif form == 'simplified' and at == 'fraction' and re.fullmatch(r'-?\d+/\d+', raw):
+        # "as a fraction (or mixed number) in its simplest form" (whole-change review C2, fix pass 1a): an equal
+        # fraction with a common factor, the mixed number with one, the question's own fraction or percentage over 100
+        # typed back, and the decimal are refused
+        a, b = (int(x) for x in raw.split('/'))
+        v = Fraction(a, b)
+        out.append((f'{2 * a}/{2 * b}', 'common_factor'))
+        whole, rest = divmod(abs(a), b)
+        if whole and rest:
+            out.append((f'{"-" if a < 0 else ""}{whole} {2 * rest}/{2 * b}', 'common_factor'))
+        for m in re.finditer(r'(?<![\d./])(\d+)\s*/\s*(\d+)(?![\d./])', q):
+            n, d = int(m.group(1)), int(m.group(2))
+            if d and Fraction(n, d) == v and (n, d) != (a, b):
+                out.append((f'{n}/{d}', 'common_factor'))
+        for m in re.finditer(r'(?<![\d.])(\d+)\s*%', q):
+            if Fraction(int(m.group(1)), 100) == v and (int(m.group(1)), 100) != (a, b):
+                out.append((f'{m.group(1)}/100', 'common_factor'))
+        if _terminating(v) and v.denominator != 1:
+            out.append((_fmt(v), 'decimal_not_fraction'))
+    elif form == 'simplified' and at == 'ratio' and re.fullmatch(r'\d+\|\d+', raw):
+        # "Simplify the ratio 45:55", "Give your answer in its simplest form" (whole-change review C3, fix pass 1a): an
+        # equal ratio with a common factor, and the question's own ratio typed back, are refused
+        a, b = (int(x) for x in raw.split('|'))
+        out.append((f'{2 * a}:{2 * b}', 'ratio_not_simplest'))
+        for m in re.finditer(r'(?<![\d.])(\d+)\s*:\s*(\d+)(?![\d.])', q):
+            n, d = int(m.group(1)), int(m.group(2))
+            if d and n * b == d * a and (n, d) != (a, b):
+                out.append((f'{n}:{d}', 'ratio_not_simplest'))
     elif form == 'simplest_surd':
         if at == 'surd':
             k, r = (int(x) for x in raw.split('|')) if '|' in raw else (1, int(raw))
@@ -219,15 +260,19 @@ def accepted_forms(at, raw, question=''):
             out.append(f'{a} / {b}')
             out.append(f' {raw} ')
             v = _num(raw)
-            if v is not None and 'simplest' not in q and 'simplify' not in q:
+            if v is not None and not re.search(r'simplest|simplify|lowest terms', q):
                 out.append(f'{2 * int(a)}/{2 * int(b)}')
-            if v is not None and _terminating(v) and 'fraction' not in q:
-                out.append(_fmt(v))
+            if v is not None and _terminating(v) and not re.search(r'fraction|mixed number|simplest|lowest terms', q):
+                out.append(_fmt(v))     # a decimal is refused where the simplest form is asked (review C2)
     elif at == 'bearing':
         v = int(raw)
         out.append(str(v))
         out.append(f'{v:03d}')
         out.append(f'{v:03d}°')
+        out.append(f'{v:04d}')
+        out.append(f'{v}.0')
+        if v % 360 == 0:
+            out.append('360')       # north: 360 is taken for a key of 000 (and only then)
     elif at == 'keyword':
         out.append(raw.upper())
         out.append(f' {raw} ')
@@ -340,6 +385,11 @@ def rejected_forms(at, raw):
         v = int(raw)
         out.append(f'{(v + 10) % 360:03d}')
         out.append(f'{(v + 180) % 360:03d}')
+        # not accepted modulo 360 (decision 2026-10-26): the same direction written outside 000 to 360
+        if v % 360 != 0:
+            out.append(str(v + 360))
+        out.append(str(v - 360))
+        out.append(str(v + 720))
     elif at == 'fraction' and '/' in raw:
         a, b = (int(x) for x in raw.split('/'))
         out.append(f'{a + 1}/{b}')
@@ -520,3 +570,186 @@ def tampered_keys(at, raw):
         if v is not None and tol is not None:
             out = [f'{_fmt(v + 2 * tol + 1)}~{_fmt(tol)}']
     return [o for o in dict.fromkeys(out) if o and o != raw]
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Units and symbols typed beside the number (generators/shared/answer_units.py; docs/GCSE_MATHS_VERIFICATION.md).
+# The question's own text decides which unit the answer may carry, so the variants are built from the same reading
+# of the question the checker uses. Added after review 2026-10-27 finding 13 (146%, £1100, 2√7 cm were refused).
+# ---------------------------------------------------------------------------------------------------------------
+
+UNIT_TYPES = ('number', 'surd', 'pi_multiple', 'bearing', 'fraction', 'number_fields')
+
+# A same-family unit that is not the one asked for: typed instead, the number is wrong in the asked unit.
+_OTHER_UNIT = {'mm': 'cm', 'cm': 'm', 'm': 'cm', 'km': 'm', 'mg': 'g', 'g': 'kg', 'kg': 'g', 't': 'kg', 'ml': 'l',
+               'cl': 'l', 'l': 'ml', 's': 'min', 'min': 'h', 'h': 'min', 'in': 'cm', 'ft': 'm', 'mi': 'km'}
+
+
+def _unit_text(unit, caret=True):
+    """ASCII text of a unit as a pupil types it: cm^2, km/h, m/s^2."""
+    def one(base, power):
+        return base + ('' if power == 1 else (f'^{power}' if caret else {2: '²', 3: '³'}.get(power, f'^{power}')))
+
+    pairs = sorted(unit, key=lambda bp: -bp[1])
+    top = '*'.join(one(b, p) for b, p in pairs if p > 0) or '1'
+    bottom = '*'.join(one(b, -p) for b, p in pairs if p < 0)
+    return top + ('/' + bottom if bottom else '')
+
+
+def _with_thousands(text):
+    m = re.fullmatch(r'(-?)(\d{4,})(\.\d+)?', text)
+    return f'{m.group(1)}{int(m.group(2)):,}{m.group(3) or ""}' if m else None
+
+
+def _numeric_parts(at, raw):
+    """(typed text of each numeric field of the key, field separator), or (None, None) when it is not wholly numeric."""
+    typed = canonical(at, raw)
+    if at == 'number_fields':
+        sep = SEP if SEP in typed else '|'
+        parts = typed.split(sep)
+        # parse_num reads a trailing unit, so an algebraic field such as -2p ("2 pence") or 4x passed as a number and
+        # the harness typed "-2p%" as a wrong unit; a field with a letter is an expression, not a number (the app
+        # checks it with the problem's 'algebraic' field type), so the key is not wholly numeric (deep run, seed 7000)
+        if any(re.search(r'[A-Za-z]', x) for x in parts):
+            return None, None
+        return (parts, sep) if all(_num(x) is not None for x in parts) else (None, None)
+    return [typed], '|'
+
+
+def _unit_context(at, raw, question):
+    """(question units, key fields, separator) or None when no unit variant applies to this key."""
+    if at not in UNIT_TYPES:
+        return None
+    qu = answer_units.question_units(question)
+    if not qu.known:
+        return None
+    if at == 'surd':
+        parts, sep = [canonical(at, raw)], '|'
+    else:
+        parts, sep = _numeric_parts(at, raw)
+        if parts is None or (at != 'number_fields' and '|' in str(raw)):
+            return None
+    return qu, parts, sep
+
+
+_TARGET_SHAPE = {'area': ('length', 2), 'volume': ('length', 3), 'length': ('length', 1), 'mass': ('mass', 1),
+                 'time': ('time', 1)}
+
+
+def _target_units(qu):
+    """The units the question uses, raised to the quantity it asks for (cm -> cm² for an area); [] for a compound."""
+    shape = _TARGET_SHAPE.get(qu.target)
+    if shape is None:
+        return []
+    dim, power = shape
+    return [frozenset({(b, power)}) for b in sorted(qu.used) if answer_units._DIM.get(b) == dim]
+
+
+def unit_variants(at, raw, question='', form=None):
+    """Typed spellings of the key with a unit or symbol the question states. Each must be marked correct.
+
+    ``question`` is the text the app hands the checker (answer_units.problem_question_text). Nothing is returned for a
+    question that states no unit, so a unit-free question is not asked to take one. With several units named (a
+    length and an angle) only the symbols that cannot be confused are tried, never one unit across every field.
+    """
+    ctx = _unit_context(at, raw, question)
+    if ctx is None:
+        return []
+    qu, parts, sep = ctx
+    out = []
+
+    def add_all(fn):
+        out.append(sep.join(fn(x) for x in parts))
+
+    kinds = qu.kinds()
+    # no unit asked for: the units the question writes as measurements, of a kind it measures or asks for (fix pass
+    # 1a, 2026-11-03: "hours studied" on an axis or "year 5" is not a time the answer can be in)
+    units = list(qu.asked) or sorted((u for u in qu.measured if any(p > 0 for _, p in u)
+                                      and answer_units._kind(u) in kinds), key=_unit_text)
+    if not qu.asked and len(parts) == 1:
+        # one answer and no unit named: the quantity asked for decides the unit (an area in cm², not cm), and a
+        # percentage or an amount of money asked for takes no unit at all (review 2026-10-28); with no quantity
+        # read, a question that measures several kinds takes no unit (fix pass 1a)
+        units = ([] if (qu.asks_percent or qu.asked_currency) else _target_units(qu) if qu.target
+                 else units if len(kinds) == 1 else [])
+    if len(units) == 1 and at != 'bearing':
+        for caret in (True, False):
+            text = _unit_text(units[0], caret)
+            add_all(lambda x, t=text: f'{x} {t}')
+            add_all(lambda x, t=text: f'{x}{t}')
+    only_angles = not qu.asked and not qu.target and len(parts) == 1 and kinds == {answer_units._ANGLE_KIND}
+    if (at == 'bearing' or any(b == 'deg' for u in units for b, _ in u) or (qu.target == 'angle' and not qu.asked)
+            or only_angles):
+        add_all(lambda x: f'{x}°')          # an angle asked for takes degrees (whole-change review A3)
+        add_all(lambda x: f'{x} degrees')
+    cur = qu.asked_currency or (qu.currencies if len(qu.currencies) == 1 else set())
+    if cur == {'£'}:
+        add_all(lambda x: f'£{x}')
+        add_all(lambda x: f'£ {x}')
+    elif cur == {'p'}:
+        add_all(lambda x: f'{x}p')
+        add_all(lambda x: f'{x} pence')
+    elif cur == {'€'}:
+        add_all(lambda x: f'€{x}')
+        add_all(lambda x: f'{x}€')
+    if qu.asks_percent and form != 'probability':
+        add_all(lambda x: f'{x}%')
+        add_all(lambda x: f'{x} %')
+    if len(parts) == 1 and _with_thousands(parts[0]):
+        grouped = _with_thousands(parts[0])
+        out += [grouped, grouped.replace(',', ' ')]
+        if cur == {'£'}:
+            out.append('£' + grouped)
+    return list(dict.fromkeys(f for f in out if f != canonical(at, raw)))
+
+
+def wrong_unit_variants(at, raw, question='', form=None):
+    """Typed spellings that name a unit the question does not ask for. Each must be refused with the unit message."""
+    ctx = _unit_context(at, raw, question)
+    if ctx is None:
+        return []
+    qu, parts, sep = ctx
+    out = []
+
+    def add_all(fn):
+        out.append(sep.join(fn(x) for x in parts))
+
+    if len(qu.asked) == 1 and at != 'bearing' and len(qu.asked[0]) == 1:
+        ((base, power),) = tuple(qu.asked[0])
+        other = _OTHER_UNIT.get(base)
+        if other and power > 0:
+            text = _unit_text(frozenset({(other, power)}))
+            add_all(lambda x: f'{x} {text}')
+    if qu.asked_currency == {'£'}:
+        add_all(lambda x: f'{x}p')
+    elif qu.asked_currency == {'p'}:
+        add_all(lambda x: f'£{x}')
+    if len(qu.asked_currency) == 1:
+        # a question that converts between two currencies and asks for one of them (the C2 conversion graph): the key
+        # typed with the other currency's symbol is a wrong answer (C2 review: "£42" passed for a key in euros)
+        for other in sorted(qu.currencies - qu.asked_currency):
+            if other in ('£', '€', '$'):
+                add_all(lambda x, o=other: f'{o}{x}')
+    if not qu.asked and len(parts) == 1 and qu.target in ('area', 'volume'):
+        # the length the question uses, typed for an area or a volume: refused (35 cm for an area)
+        lengths = [b for b in sorted(qu.used) if answer_units._DIM.get(b) == 'length']
+        if len(lengths) == 1:
+            add_all(lambda x: f'{x} {lengths[0]}')
+    if at == 'bearing' or (qu.target == 'angle' and not qu.asked and len(parts) == 1):
+        add_all(lambda x: f'{x} cm')        # an angle is in degrees (whole-change review A3: "61 cm" was right)
+    elif (qu.used or qu.currencies or qu.asked) and not qu.asks_percent and form != 'probability':
+        add_all(lambda x: f'{x}%')
+    if at != 'bearing' and len(parts) == 1 and not qu.asked and form != 'probability':
+        # a unit of a kind the question is not about, typed with the right number, is refused (whole-change review
+        # A3: "61 kg" for an angle and "£5" for a number of bits were right)
+        named_dims = {answer_units._DIM.get(b) for b in qu.named()}
+        if 'mass' not in named_dims and qu.target not in ('mass', 'density'):
+            add_all(lambda x: f'{x} kg')
+        if not qu.involves_money and not qu.asked_currency:
+            add_all(lambda x: f'£{x}')
+        if not qu.target and not qu.asks_percent and not qu.asked_currency and len(qu.kinds()) > 1:
+            # it measures several kinds and the quantity asked for cannot be read: no unit is taken (fix pass 1a)
+            measured = sorted((u for u in qu.measured if all(p > 0 for _, p in u)), key=_unit_text)
+            if measured:
+                add_all(lambda x, t=_unit_text(measured[0]): f'{x} {t}')
+    return list(dict.fromkeys(out))

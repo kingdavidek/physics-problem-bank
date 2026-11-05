@@ -279,7 +279,7 @@ add('surds', {
     '19b36b93e868': surd_after(r'Rationalise:', r'gives:', rationalised=True),
     '988e94464cbc': equals,                                                         # sqrt 3 x sqrt 12
     '7be46e194b20': equals,                                                         # (sqrt 5)^2
-    'ae311f812a99': equals,                                                         # sqrt 20 - sqrt 5
+    '4593215978a4': equals,                                                         # sqrt 20 - sqrt 5
     '982582d63c8d': irrational,
     '0a4fd9c74612': simplifies_to,                                                  # sqrt 48
     '6be565420193': surd_after(r'Expand', r'equals:'),

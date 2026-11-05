@@ -7,7 +7,8 @@ Graded practice variants return (question, solution, hint, marks, raw).
 Conceptual practice variants return MCQ 6-tuples (options + correct letter).
 """
 import random
-from generators.shared.utils import make_problem, quadratic_roots_format_hint, quadratic_roots_ui_labels
+from generators.shared.answer_checkers import linear_format_hint
+from generators.shared.utils import make_problem, quadratic_roots_format_hint, quadratic_roots_ui_labels, coef
 from generators.shared.verify_hook import verifies
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -152,8 +153,11 @@ def _qsim_problem_from_output(out, difficulty):
                 extra = {
                     'correct_answer_raw': _qsim_linear_raw(raw),
                     'answer_type': 'linear',
-                    'answer_format_hint': 'Enter the value (e.g. y = 9 or just 9)',
+                    'answer_format_hint': linear_format_hint(_qsim_linear_raw(raw)),
                 }
+            else:
+                from generators.gcse import maths_variety_b as vb
+                extra = vb.problem_extra(raw)
         elif isinstance(raw, (int, float)):
             extra = {
                 'correct_answer_raw': _qsim_raw(raw),
@@ -284,7 +288,7 @@ def _qsim_f_simple_integer():
     q = rf"Solve:<br>\(y = x^2\)<br>{_fmt_linear(a, b)}"
     f1, f2 = _factor_pair(r1, r2)
     s = (
-        rf"Substitute: \(x^2 = {a}x {_fmt_b(b)}\) → factorise {f1}{f2} = 0<br>"
+        rf"Substitute: \(x^2 = {coef(a, 'x')} {_fmt_b(b)}\) → factorise {f1}{f2} = 0<br>"
         rf"\(x = {r1}\) or \(x = {r2}\)<br>"
         rf"<strong>\(({r1}, {y1})\) and \(({r2}, {y2})\)</strong>"
     )
@@ -625,6 +629,16 @@ _QSIM_MCQ_POOL = [
     _qsim_mcq_find_x,
 ]
 
+# Phase 2 (2026-10-27): band lists over the 4 generators (all four were already reachable, the same in every band).
+# Forming the equation in x and counting the solutions are the first steps; finding x, and the point (x, y), are the
+# top.  Four generators cannot make three different bands: more kinds are Phase 4 work.
+_QSIM_MCQ_BANDS = {
+    "foundational": [_qsim_mcq_substitution_equation, _qsim_mcq_number_of_solutions, _qsim_mcq_find_x],
+    "intermediate": [_qsim_mcq_substitution_equation, _qsim_mcq_find_x, _qsim_mcq_correct_pair,
+                     _qsim_mcq_number_of_solutions],
+    "difficult": [_qsim_mcq_correct_pair, _qsim_mcq_find_x, _qsim_mcq_substitution_equation],
+}
+
 
 def _qsim_mcq_dispatch():
     return random.choice(_QSIM_MCQ_POOL)()
@@ -665,17 +679,27 @@ _POOLS = {
 }
 
 
+def _batch_b_pools():
+    # Phase 3 batch B kinds (lazy: maths_variety_b must never be imported while this module loads).
+    from generators.gcse import maths_variety_b as vb
+    return {
+        "foundational": _FOUNDATIONAL + [vb.gcse_qsim_f_expand_substitution, vb.gcse_qsim_f_y_from_x_values, vb.gcse_qsim_f_circle_line_y, vb.gcse_qsim_f_solve_substituted],
+        "intermediate": _INTERMEDIATE + [vb.gcse_qsim_i_shifted_parabola, vb.gcse_qsim_i_circle_line, vb.gcse_qsim_i_sum_and_product, vb.gcse_qsim_i_hyperbola_line],
+        "difficult": _DIFFICULT + [vb.gcse_qsim_d_tangent_k, vb.gcse_qsim_d_largest_k_miss, vb.gcse_qsim_d_midpoint_of_chord, vb.gcse_qsim_d_circle_show_that],
+    }
+
+
 def gcse_quadratic_simultaneous_equations_variants(difficulty, mode="practice"):
     if mode == "mcq":
         return mcq_variants_from_pool(
-            _QSIM_MCQ_POOL, "quadratic_simultaneous_equations", difficulty, count=4
+            _QSIM_MCQ_BANDS.get(difficulty, _QSIM_MCQ_POOL), "quadratic_simultaneous_equations", difficulty
         )
 
-    pool = _POOLS.get(difficulty)
+    pools = _batch_b_pools()
+    pool = pools.get(difficulty)
     if not pool:
-        combined = _FOUNDATIONAL + _INTERMEDIATE + _DIFFICULT
-        return select_tier_variants(combined, 5)
-    return select_tier_variants(pool, 5)
+        return select_tier_variants(pools["foundational"] + pools["intermediate"] + pools["difficult"])
+    return select_tier_variants(pool)
 
 
 def gcse_quadratic_simultaneous_equations(difficulty, mode, variant_name=None):

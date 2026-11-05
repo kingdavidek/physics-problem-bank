@@ -267,9 +267,29 @@ def proof_steps_answer(required_ids, bank, *, order_matters=True, format_hint=No
     return payload
 
 
+def ordinal_suffix(n):
+    """The English ordinal ending for a whole number: 1 -> 'st', 2 -> 'nd', 3 -> 'rd', 4 -> 'th', 11 to 13 -> 'th',
+    21 -> 'st', 101 -> 'st', 111 -> 'th'. Pure (no random draw)."""
+    n = abs(int(n))
+    if 10 <= n % 100 <= 20:
+        return 'th'
+    return {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
+
+
+def ordinal(n):
+    """A whole number with its ordinal ending: 1st, 2nd, 3rd, 4th, 11th, 12th, 13th, 21st, 22nd, 23rd, 101st, 111th."""
+    return f"{int(n)}{ordinal_suffix(n)}"
+
+
 def bracket_neg(value):
     """Wrap a negative number in brackets for substitution: 5 - (-3), not 5 - -3."""
     return f"({value})" if value < 0 else f"{value}"
+
+
+def money_num(value):
+    """An amount of pounds as a pupil writes it after the symbol: 45 -> '45', 12.5 -> '12.50' (never '12.5' or '45.0')."""
+    v = round(float(value), 2)
+    return str(int(v)) if v == int(v) else f'{v:.2f}'
 
 
 def signed_term(value):
@@ -444,7 +464,9 @@ def problem_extra_from_graded_answer(raw):
             extra = {
                 'correct_answer_raw': _graded_format_num(raw['value']),
                 'answer_type': 'number',
-                'answer_format_hint': 'Enter a number',
+                # a payload may name the unit it wants ("Enter the distance in metres"): the hint is shown to the
+                # pupil and read with the question by answer_units, so a typed km is then refused (review 2026-10-28)
+                'answer_format_hint': raw.get('format_hint') or 'Enter a number',
             }
             if raw.get('form'):
                 extra['answer_form'] = raw['form']

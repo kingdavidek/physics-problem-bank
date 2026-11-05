@@ -8,6 +8,7 @@ from generators.shared.rounding import round_half_up as round, fmt_dp
 import random
 import math
 from fractions import Fraction
+from generators.shared.answer_checkers import linear_format_hint
 from generators.shared.utils import make_problem, quadratic_roots_format_hint, quadratic_roots_ui_labels, signed_term, coef
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
@@ -251,7 +252,7 @@ def _eq_problem_from_output(out, difficulty):
                 extra = {
                     'correct_answer_raw': _eq_linear_raw(raw),
                     'answer_type': 'linear',
-                    'answer_format_hint': 'Enter the value (e.g. x = 3 or just 3)',
+                    'answer_format_hint': linear_format_hint(_eq_linear_raw(raw)),
                 }
             elif raw_type == 'quadratic_roots':
                 roots = raw.get('roots') or ()
@@ -591,8 +592,14 @@ def _eq_found_negative_answer():
     s = (rf"Subtract {b}: \({a}x = {c} - {b} = {c - b}\)<br>"
          rf"Divide by {a}: "
          rf"<strong>\(x = {ans}\)</strong>")
-    hint = "Don't be surprised if the answer is negative — just follow the steps."
+    hint = "Don't be surprised if the answer is negative. Just follow the steps."
     return q, s, hint, 2, _eq_linear_answer(ans)
+
+
+def _eq_found_two_step_any():
+    """One slot for the two-step equation ax + b = c with a positive or a negative answer (merges _eq_found_two_step and
+    _eq_found_negative_answer; both stay defined, retired, because a stored queue or saved problem may name them)."""
+    return random.choice([_eq_found_two_step, _eq_found_negative_answer])()
 
 
 @verifies('alg', task='integers_in_ineq')
@@ -732,7 +739,7 @@ def _eq_inter_expand_both_sides():
     s = (rf"Expand both sides:<br>"
          rf"\({a}x + {ab} = {c}x + {cd}\)<br>"
          rf"Collect \(x\)-terms: \({a}x - {c}x = {cd} - {ab}\)<br>"
-         rf"\({a-c}x = {cd - ab}\)<br>"
+         rf"\({coef(a - c, 'x')} = {cd - ab}\)<br>"
          rf"<strong>\(x = {ans}\)</strong>")
     hint = "Expand each bracket first, then collect like terms."
     return q, s, hint, 3, _eq_linear_answer(ans)
@@ -936,12 +943,12 @@ def _eq_inter_ratio_equation():
     record('ratio_pair_sum', a=a, b=b, total=total)
     q = (rf"Two numbers are in the ratio \({a}:{b}\). Their sum is {total}. "
          rf"Find both numbers.")
-    s = (rf"Let the two numbers be \({a}k\) and \({b}k\).<br>"
-         rf"\({a}k + {b}k = {total}\)<br>"
+    s = (rf"Let the two numbers be \({coef(a, 'k')}\) and \({coef(b, 'k')}\).<br>"
+         rf"\({coef(a, 'k')} + {coef(b, 'k')} = {total}\)<br>"
          rf"\({a+b}k = {total}\)<br>"
          rf"\(k = {k}\)<br>"
          rf"<strong>The numbers are \({a*k}\) and \({b*k}\).</strong>")
-    hint = f"Let the parts be {a}k and {b}k, then their sum = {total}."
+    hint = f"Let the parts be {coef(a, 'k')} and {coef(b, 'k')}, then their sum = {total}."
     return q, s, hint, 3, _eq_number_pair_answer(a * k, b * k, f"First number ({a} parts)", f"Second number ({b} parts)")
 
 
@@ -978,7 +985,7 @@ def _eq_inter_word_both_sides():
     s = (rf"Set the expressions equal:<br>"
          rf"\({a_coeff}x + {a_const} = {b_coeff}x - {b_const}\)<br>"
          rf"\({a_const} + {b_const} = {b_coeff}x - {a_coeff}x\)<br>"
-         rf"\({a_const + b_const} = {b_coeff - a_coeff}x\)<br>"
+         rf"\({a_const + b_const} = {'' if b_coeff - a_coeff == 1 else b_coeff - a_coeff}x\)<br>"
          rf"\(x = {ans}\)<br>"
          rf"Stickers each: \({a_coeff}\times{ans} + {a_const} = {n_stickers}\)<br>"
          rf"<strong>\(x = {ans}\); each person has {n_stickers} stickers.</strong>")
@@ -1026,11 +1033,13 @@ def _eq_inter_rearrange_two_step_numeric_var():
         inner = f's/{cn}'
     else:
         q = rf"Make \(t\) the subject of \(s = \dfrac{{{cn}}}{{{cd}}}t^2\)."
-        s = (rf"Multiply both sides by {cd}: \({cd}s = {cn}t^2\)<br>"
-             rf"Divide both sides by {cn}: "
-             rf"\(t^2 = \dfrac{{{cd}s}}{{{cn}}}\)<br>"
+        divide = (rf"Divide both sides by {cn}: \(t^2 = \dfrac{{{cd}s}}{{{cn}}}\)<br>" if cn != 1
+                  else "")
+        s = (rf"Multiply both sides by {cd}: \({cd}s = {coef(cn, 't')}^2\)<br>"
+             rf"{divide}"
              rf"Square root: "
-             rf"<strong>\(t = \sqrt{{\dfrac{{{cd}s}}{{{cn}}}}}\)</strong>")
+             + (rf"<strong>\(t = \sqrt{{\dfrac{{{cd}s}}{{{cn}}}}}\)</strong>" if cn != 1
+                else rf"<strong>\(t = \sqrt{{{cd}s}}\)</strong>"))
         hint = "Clear the fraction, isolate t², then square root."
         inner = f'{cd}s/{cn}'
     return q, s, hint, 3, _eq_algebraic_answer(
@@ -1250,7 +1259,7 @@ def _eq_diff_fractional_eq():
     # fallback clean version
     q = rf"Solve \(\dfrac{{x}}{{{a}}} + \dfrac{{x}}{{{b}}} = {ans}\)."
     s = (rf"Multiply every term by \({a*b}\) (the LCM of {a} and {b}):<br>"
-         rf"\({b}x + {a}x = {ans * a * b}\)<br>"
+         rf"\({'' if b == 1 else b}x + {'' if a == 1 else a}x = {ans * a * b}\)<br>"
          rf"\({a+b}x = {ans * a * b}\)<br>"
          rf"<strong>\(x = {ans * a * b // (a+b)}\)</strong>")
     hint = f"Multiply through by {a*b} to clear both fractions."
@@ -1567,7 +1576,7 @@ def _eq_diff_phone_plans_multipart():
         rf"Plan B: <strong>\(C_B = {fixed_b} + \dfrac{{{rate_b}m}}{{100}}\)</strong>.<br>"
         rf"<strong>b)</strong> Set \(C_A = C_B\):<br>"
         rf"\({fixed_a} + \dfrac{{{rate_a}m}}{{100}} = {fixed_b} + \dfrac{{{rate_b}m}}{{100}}\)<br>"
-        rf"\(\dfrac{{{rate_a - rate_b}m}}{{100}} = {fixed_b - fixed_a}\)<br>"
+        rf"\(\dfrac{{{coef(rate_a - rate_b, 'm')}}}{{100}} = {fixed_b - fixed_a}\)<br>"
         rf"<strong>\(m = {m_equal}\)</strong> minutes.<br>"
         rf"<strong>c)</strong> Plan A is cheaper when \(C_A \lt C_B\): "
         rf"<strong>\(m \lt {m_equal}\)</strong> (under {m_equal} minutes per month)."
@@ -1714,7 +1723,7 @@ def gcse_equations_inequalities_variants(difficulty, mode):
     if mode == 'mcq':
         return mcq_variants_from_bank_with_procedural(
             _EQ_INEQ_MCQ_BANK,
-            procedural_mcq_for('equations_inequalities'),
+            procedural_mcq_for('equations_inequalities', difficulty),
             'equations_inequalities',
             difficulty,
         )
@@ -1723,7 +1732,7 @@ def gcse_equations_inequalities_variants(difficulty, mode):
         pool = [
             _eq_found_one_step_add,
             _eq_found_one_step_multiply,
-            _eq_found_two_step,
+            _eq_found_two_step_any,
             _eq_found_substitute_formula,
             _eq_found_simple_inequality,
             _eq_found_double_inequality,
@@ -1733,7 +1742,6 @@ def gcse_equations_inequalities_variants(difficulty, mode):
             _eq_found_brackets_simple,
             _eq_found_rearrange_one_step,
             _eq_found_fraction_eq,
-            _eq_found_negative_answer,
             _eq_found_ineq_integer_list,
             _eq_found_write_ineq_from_words,
             _eq_found_rearrange_numeric_var,
@@ -1785,7 +1793,7 @@ def gcse_equations_inequalities_variants(difficulty, mode):
         ]
     else:  # mixed
         found = random.sample([
-            _eq_found_one_step_add, _eq_found_one_step_multiply, _eq_found_two_step,
+            _eq_found_one_step_add, _eq_found_one_step_multiply, _eq_found_two_step_any,
             _eq_found_simple_inequality, _eq_found_brackets_simple,
             _eq_found_form_and_solve_words, _eq_found_fraction_eq,
         ], 4)
@@ -1799,6 +1807,12 @@ def gcse_equations_inequalities_variants(difficulty, mode):
         ], 2)
         return found + inter + diff
 
+    # Phase 3 batch B: iteration and the change of sign (lazy import: maths_variety_b must not load with this module).
+    from generators.gcse import maths_variety_b as vb
+    pool = pool + {
+        'intermediate': [vb.gcse_eq_i_iteration_linear],
+        'difficult': [vb.gcse_eq_d_iteration_reciprocal, vb.gcse_eq_d_change_of_sign],
+    }.get(difficulty, [])
     return select_tier_variants(pool)
 
 

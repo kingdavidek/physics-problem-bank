@@ -1198,6 +1198,11 @@ def _cl_d1_locus_proof():
 _cl_d1_locus_proof._fixed_stem = True
 
 
+def _one(n):
+    """A coefficient as written before a letter: nothing for 1 (a/6, not 1a/6)."""
+    return '' if n == 1 else n
+
+
 def _cl_d2_ladder_ellipse():
     L = random.randint(4, 12)
     dist = random.randint(1, L - 1)
@@ -1211,8 +1216,8 @@ def _cl_d2_ladder_ellipse():
          f"where a² + b² = {L_sq}. Point P is {dist} m from the foot of the ladder along its length. "
          f"Show that the locus of P is an ellipse and state its equation.<br>{svg}")
     s = (f"The ladder goes from (a, 0) to (0, b). The unit vector along the ladder is (−a/{L}, b/{L}).<br>"
-         f"P is {dist} m from (a, 0): P = (a − {dist}a/{L}, {dist}b/{L}) = ({semi_x}a/{L}, {dist}b/{L}).<br>"
-         f"Let x = {semi_x}a/{L}, y = {dist}b/{L}, so a = {L}x/{semi_x} and b = {L}y/{dist}.<br>"
+         f"P is {dist} m from (a, 0): P = (a − {_one(dist)}a/{L}, {_one(dist)}b/{L}) = ({_one(semi_x)}a/{L}, {_one(dist)}b/{L}).<br>"
+         f"Let x = {_one(semi_x)}a/{L}, y = {_one(dist)}b/{L}, so a = {L}x/{semi_x} and b = {L}y/{dist}.<br>"
          f"Substituting into a² + b² = {L_sq}: ({L}x/{semi_x})² + ({L}y/{dist})² = {L_sq}<br>"
          f"<strong>x²/{semi_x**2} + y²/{dist**2} = 1</strong><br>"
          f"This is an ellipse with semi-axes {semi_x} m (horizontal) and {dist} m (vertical).")
@@ -1223,9 +1228,9 @@ def _cl_d2_ladder_ellipse():
             f"The ladder goes from (a, 0) to (0, b). The unit vector along the ladder is (−a/{L}, b/{L}).",
             (
                 f"P is {dist} m from the foot (a, 0): "
-                f"P = (a − {dist}a/{L}, {dist}b/{L}) = ({semi_x}a/{L}, {dist}b/{L})."
+                f"P = (a − {_one(dist)}a/{L}, {_one(dist)}b/{L}) = ({_one(semi_x)}a/{L}, {_one(dist)}b/{L})."
             ),
-            f"Let x = {semi_x}a/{L} and y = {dist}b/{L}, so a = {L}x/{semi_x} and b = {L}y/{dist}.",
+            f"Let x = {_one(semi_x)}a/{L} and y = {_one(dist)}b/{L}, so a = {L}x/{semi_x} and b = {L}y/{dist}.",
             f"Substitute into a² + b² = {L_sq}: ({L}x/{semi_x})² + ({L}y/{dist})² = {L_sq}.",
             (
                 f"Simplify to x²/{semi_x**2} + y²/{dist**2} = 1 — an ellipse with semi-axes "
@@ -1235,10 +1240,10 @@ def _cl_d2_ladder_ellipse():
         (
             (
                 f"P is {dist} m from the top (0, b) along the ladder: "
-                f"P = ({dist}a/{L}, b − {dist}b/{L})."
+                f"P = ({_one(dist)}a/{L}, b − {_one(dist)}b/{L})."
             ),
             f"The unit vector along the ladder is (a/{L}, −b/{L}).",
-            f"Let x = {semi_x}a/{L} and y = {dist}b/{L}, so a = {semi_x}x/{L} and b = {dist}y/{L}.",
+            f"Let x = {_one(semi_x)}a/{L} and y = {_one(dist)}b/{L}, so a = {semi_x}x/{L} and b = {dist}y/{L}.",
             f"Simplifying gives x²/{dist**2} + y²/{semi_x**2} = 1.",
             f"The locus is a circle x² + y² = {L_sq}.",
         ),
@@ -1552,6 +1557,11 @@ def _cl_d14_construct_30():
     )
 
 
+def _cl_d_construct_angle():
+    """One slot for constructing 45 or 30 degrees (merges _cl_d13_construct_45 and _cl_d14_construct_30; both stay defined)."""
+    return random.choice([_cl_d13_construct_45, _cl_d14_construct_30])()
+
+
 def _cl_d15_multi_locus_garden():
     length = random.randint(10, 16)
     width = random.randint(7, 12)
@@ -1725,7 +1735,7 @@ _CL_MCQ_BANK = [
      "sol": "The perpendicular bisector is always at <strong>90°</strong> to AB. Answer: A",
      "hint": "Perpendicular means 90°."},
 
-    {"q": "To construct a triangle with sides 5 cm, 7 cm, 9 cm, you need:",
+    {"concept": True, "q": "To construct a triangle with sides 5 cm, 7 cm, 9 cm, you need:",
      "opts": ["A  A ruler and compasses only",
               "B  A ruler, compasses and protractor",
               "C  A protractor only",
@@ -1734,7 +1744,7 @@ _CL_MCQ_BANK = [
      "sol": "SSS construction needs only a <strong>ruler and compasses</strong>. Protractor is not needed. Answer: A",
      "hint": "SSS = ruler + compasses only. No angles needed."},
 
-    {"q": "What is the locus of all points equidistant from two intersecting lines?",
+    {"concept": True, "q": "What is the locus of all points equidistant from two intersecting lines?",
      "opts": ["A  The angle bisectors of the angles formed",
               "B  The perpendicular bisector of the line joining the intersection point to a point on each line",
               "C  A circle centred at the intersection point",
@@ -1749,7 +1759,7 @@ _CL_MCQ_BANK = [
      "sol": "3.6 × 500 = 1800 cm = <strong>18 m</strong>. Answer: A",
      "hint": "Multiply map length by scale factor, then convert cm → m."},
 
-    {"q": "You want points closer to A AND within 6 cm of B. The region is:",
+    {"concept": True, "q": "You want points closer to A AND within 6 cm of B. The region is:",
      "opts": ["A  The part of the circle (radius 6, centre B) on A's side of the perpendicular bisector of AB",
               "B  The entire circle of radius 6 about B",
               "C  The perpendicular bisector of AB only",
@@ -1776,7 +1786,7 @@ _CL_MCQ_BANK = [
      "sol": "OM² + 4² = 5² → OM = 3. Locus is a <strong>circle of radius 3 cm</strong>. Answer: A",
      "hint": "Pythagoras: OM² + (half-chord)² = radius². OM is constant."},
 
-    {"q": "What shape is the locus of all points exactly d cm from a straight line segment?",
+    {"concept": True, "q": "What shape is the locus of all points exactly d cm from a straight line segment?",
      "opts": ["A  A stadium shape (rectangle with semicircles at the ends)",
               "B  A rectangle of width 2d",
               "C  Two parallel lines only",
@@ -1794,7 +1804,7 @@ _CL_MCQ_BANK = [
      "sol": "Midpoint traces x² + y² = 25 (a circle of radius 5 m). In context: a <strong>quarter-circle of radius 5 m</strong>. Answer: A",
      "hint": "Midpoint = (a/2, b/2); substitute into a²+b²=100 → x²+y²=25."},
 
-    {"q": "Construct 30° using only ruler and compasses. The method is:",
+    {"concept": True, "q": "Construct 30° using only ruler and compasses. The method is:",
      "opts": ["A  Construct 60° then bisect it",
               "B  Construct 90° then bisect it",
               "C  Construct 45° then subtract 15°",
@@ -1817,7 +1827,7 @@ def constructions_loci_mcq():
 def gcse_constructions_loci_variants(difficulty, mode='practice'):
     if mode == 'mcq':
         return mcq_variants_from_bank_with_procedural(
-            _CL_MCQ_BANK, procedural_mcq_for('constructions_loci'), 'constructions_loci', difficulty
+            _CL_MCQ_BANK, procedural_mcq_for('constructions_loci', difficulty), 'constructions_loci', difficulty
         )
 
     if difficulty == 'foundational':
@@ -1850,7 +1860,7 @@ def gcse_constructions_loci_variants(difficulty, mode='practice'):
             _cl_d7_three_loci, _cl_d8_circumcentre_coords,
             _cl_d9_regular_hexagon, _cl_d10_incircle_radius,
             _cl_d11_sector_area_sprinkler, _cl_d12_two_radio_towers,
-            _cl_d13_construct_45, _cl_d14_construct_30,
+            _cl_d_construct_angle,
             _cl_d15_multi_locus_garden,
             _cl_d16_garden_sprinkler_multi, _cl_d17_treasure_hunt_multi,
             _cl_d18_triangle_centres_multi,

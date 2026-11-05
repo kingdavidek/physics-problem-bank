@@ -567,6 +567,21 @@ def _brg_found_compass_SE():
     return q, s, "S[x]°E: bearing = 180° − x°", 1, _brg_answer(b)
 
 
+def _brg_found_compass_any():
+    """One slot for the four compass quadrants (merges _brg_found_compass_NE, _SW, _NW and _SE).
+
+    Merged 2026-10-27 (docs/GCSE_MATHS_VARIETY.md, Phase 1): it picks the quadrant at random and calls that variant, so
+    it asks every question the four could ask. The four stay defined (retired, register.RETIRED) because a stored
+    queue or a saved problem may still name them.
+    """
+    return random.choice([_brg_found_compass_NE, _brg_found_compass_SW, _brg_found_compass_NW, _brg_found_compass_SE])()
+
+
+def _brg_found_back_bearing():
+    """One slot for the back bearing, below or above 180 degrees (merges _brg_found_back_lt_180 and _gt_180; same rules)."""
+    return random.choice([_brg_found_back_lt_180, _brg_found_back_gt_180])()
+
+
 def _brg_found_quadrant():
     b = random.randint(1, 359)
     while b in (90, 180, 270):
@@ -1654,18 +1669,14 @@ def bearings_mcq():
 def gcse_bearings_variants(difficulty, mode='practice'):
     if mode == 'mcq':
         return mcq_variants_from_bank_with_procedural(
-            _BRG_MCQ_BANK, procedural_mcq_for('bearings'), 'bearings', difficulty
+            _BRG_MCQ_BANK, procedural_mcq_for('bearings', difficulty), 'bearings', difficulty
         )
 
     if difficulty == 'foundational':
         pool = [
             _brg_found_cardinal,
-            _brg_found_back_lt_180,
-            _brg_found_back_gt_180,
-            _brg_found_compass_NE,
-            _brg_found_compass_SW,
-            _brg_found_compass_NW,
-            _brg_found_compass_SE,
+            _brg_found_back_bearing,
+            _brg_found_compass_any,
             _brg_found_quadrant,
             _brg_found_angle_between,
             _brg_found_alternate_angles,
@@ -1719,8 +1730,8 @@ def gcse_bearings_variants(difficulty, mode='practice'):
         ]
     else:  # mixed
         found = random.sample([
-            _brg_found_cardinal, _brg_found_back_lt_180, _brg_found_back_gt_180,
-            _brg_found_compass_NE, _brg_found_quadrant, _brg_found_alternate_angles,
+            _brg_found_cardinal, _brg_found_back_bearing, _brg_found_compass_any,
+            _brg_found_quadrant, _brg_found_alternate_angles,
         ], 4)
         inter = random.sample([
             _brg_inter_east_component, _brg_inter_bearing_from_components,

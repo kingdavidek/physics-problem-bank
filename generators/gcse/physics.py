@@ -284,13 +284,14 @@ def rad_inter_half_life_time():
     half_life = random.choice([2, 3, 5, 10])
     n_halves = random.choice([2, 3, 4])
     total_time = half_life * n_halves
+    fraction = {4: "one quarter", 8: "one eighth", 16: "one sixteenth"}[2 ** n_halves]
     q = (
         rf"The half-life of an isotope is <strong>{half_life} hours</strong>."
         rf"<br><br>"
-        rf"How long would it take for the activity to fall to <strong>one-{2**n_halves}th</strong> of its original value?"
+        rf"How long would it take for the activity to fall to <strong>{fraction}</strong> of its original value?"
     )
     s = (
-        rf"To fall to one-{2**n_halves}th of the original value takes <strong>{n_halves}</strong> half-lives."
+        rf"To fall to {fraction} of the original value takes <strong>{n_halves}</strong> half-lives."
         rf"<br>"
         rf"Total time = {n_halves} &times; {half_life} = <strong>{total_time} hours</strong>"
     )

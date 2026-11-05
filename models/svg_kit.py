@@ -1126,8 +1126,12 @@ def prob_tree(
     fill_in=False,
     desc=None,
     max_width=None,
+    show_outcomes=True,
 ):
-    """Two-draw probability tree with optional branch probabilities and fill-in inputs."""
+    """Two-draw probability tree with optional branch probabilities and fill-in inputs.
+
+    ``show_outcomes`` False keeps the outcome labels but not their probabilities (whole-change review, pass 2: the
+    leaf "(red,red) = 4/9" was the answer to "Find P(two red)")."""
 
     def _fr(n, d):
         g = math.gcd(abs(int(n)), abs(int(d)))
@@ -1166,7 +1170,7 @@ def prob_tree(
         )
 
     def _outcome_row(x, y, lbl, prob):
-        if show_probs:
+        if show_probs and show_outcomes:
             return _text(x, y, f'→ {lbl} = {prob}', fill=p['ink_muted'], anchor='start')
         if not fill_in:
             return _text(x, y, f'→ {lbl}', fill=p['ink_muted'], anchor='start')
@@ -1212,7 +1216,7 @@ def prob_tree(
         + _text(
             w - 90,
             278,
-            'outcome' if not show_probs and not fill_in else 'outcome · P(outcome)',
+            'outcome' if (not show_probs or not show_outcomes) and not fill_in else 'outcome · P(outcome)',
             fill=p['ink_muted'],
             anchor='middle',
         )

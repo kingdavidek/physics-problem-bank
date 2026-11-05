@@ -1207,10 +1207,12 @@ def _sc_d12_similar_rectangle_algebra():
     expr1 = _sc_lin_expr(a, b)
     expr2 = _sc_lin_expr(c, d)
 
-    cross_left = f"{q}({a}x + {b})" if q > 1 else f"({a}x + {b})"
-    cross_right = f"{p}({c}x + {d})" if p > 1 else f"({c}x + {d})"
-    left_expand = f"{q * a}x + {q * b}"
-    right_expand = f"{p * c}x + {p * d}"
+    def _k(n):          # review C10: 1x is written x, -1x is -x
+        return '' if n == 1 else '-' if n == -1 else str(n)
+    cross_left = f"{q}({_k(a)}x + {b})" if q > 1 else f"({_k(a)}x + {b})"
+    cross_right = f"{p}({_k(c)}x + {d})" if p > 1 else f"({_k(c)}x + {d})"
+    left_expand = f"{_k(q * a)}x + {q * b}"
+    right_expand = f"{_k(p * c)}x + {p * d}"
     lhs_coeff = q * a - p * c
     rhs_const = p * d - q * b
 
@@ -1225,7 +1227,7 @@ def _sc_d12_similar_rectangle_algebra():
         f"Orientation: {expr1}/{expr2} = {w1}/{w2}{ratio_note}<br>"
         f"{cross_left} = {cross_right}<br>"
         f"{left_expand} = {right_expand}<br>"
-        f"{lhs_coeff}x = {rhs_const}<br>"
+        f"{_k(lhs_coeff)}x = {rhs_const}<br>"
         f"x = <strong>{x}</strong><br>"
         f"Rectangle 1: ({a}×{x}+{b}) by {w1} = <strong>{L1} cm × {w1} cm</strong><br>"
         f"Rectangle 2: ({c}×{x}+{d}) by {w2} = <strong>{L2} cm × {w2} cm</strong><br>"
@@ -1407,7 +1409,7 @@ def similarity_congruence_mcq():
 def gcse_similarity_congruence_variants(difficulty, mode='practice'):
     if mode == 'mcq':
         return mcq_variants_from_bank_with_procedural(
-            _SC_MCQ_BANK, procedural_mcq_for('similarity_congruence'), 'similarity_congruence', difficulty
+            _SC_MCQ_BANK, procedural_mcq_for('similarity_congruence', difficulty), 'similarity_congruence', difficulty
         )
 
     if difficulty == 'foundational':

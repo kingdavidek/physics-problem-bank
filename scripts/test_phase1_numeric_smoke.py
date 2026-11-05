@@ -326,7 +326,7 @@ def test_quicktest_api_includes_grading_fields():
                 'subject': 'maths',
                 'topic': 'bidmas',
                 'mode': 'practice',
-                'difficulty': 'foundational',
+                'difficulty': 'intermediate',   # bidmas F has a multiple-choice kind (Phase 3 batch A); I is all free response
             },
             headers={'Accept': 'application/json'},
         )
@@ -345,7 +345,7 @@ def test_generator_api_includes_grading_fields():
                 'subject': 'maths',
                 'topic': 'bidmas',
                 'mode': 'practice',
-                'difficulty': 'foundational',
+                'difficulty': 'intermediate',   # bidmas F has a multiple-choice kind (Phase 3 batch A); I is all free response
             },
             headers={'Accept': 'application/json'},
         )

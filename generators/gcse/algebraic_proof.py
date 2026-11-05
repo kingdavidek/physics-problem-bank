@@ -10,6 +10,7 @@ from generators.shared.utils import (
     graded_answer_number,
     problem_extra_from_graded_answer,
     proof_steps_answer,
+    coef,
 )
 from generators.shared.answer_checkers import FORM_EXPANDED
 from generators.shared.verify_hook import verifies
@@ -242,7 +243,7 @@ def _ap_f_expand_consecutive():
         rf"(two expressions in \({v}\) with constants {a} and {b})."
     )
     s = (
-        rf"\(({v} + {a})({v} + {b}) = {v}^2 + {b}{v} + {a}{v} + {a * b} = "
+        rf"\(({v} + {a})({v} + {b}) = {v}^2 + {b if b != 1 else ''}{v} + {a if a != 1 else ''}{v} + {a * b} =\) "
         rf"{_ap_math_strong(f'{v}^2 + {a + b}{v} + {a * b}')}"
     )
     expanded = _ap_expand_quadratic(v, a, b)
@@ -300,7 +301,7 @@ def _ap_i_square_difference():
     )
     s = (
         rf"Expand: \(({v}+{a})^2 = {v}^2 + {linear}{v} + {const}\)<br>"
-        rf"So \(({v}+{a})^2 - {v}^2 = {_ap_math_strong(f'{linear}{v} + {const}')} ✓"
+        rf"So \(({v}+{a})^2 - {v}^2 =\) {_ap_math_strong(f'{linear}{v} + {const}')} ✓"
     )
     return q, s, "Expand the square, subtract v², simplify.", 3, _ap_proof_steps_answer(
         (
@@ -421,7 +422,7 @@ def _ap_i_identity_expand():
     ab = a * b
     expanded = _ap_expand_quadratic(v, a, b)
     s = (
-        rf"\({v}^2 + {a}{v} + {b}{v} + {ab} = "
+        rf"\({v}^2 + {coef(a, v)} + {coef(b, v)} + {ab} =\) "
         rf"{_ap_math_strong(f'{v}^2 + {a + b}{v} + {ab}')}"
     )
     return q, s, "FOIL / grid method — collect n², n, and constant terms.", 3, _ap_algebraic_answer(
@@ -444,7 +445,7 @@ def _ap_d_n_squared_plus_n():
         rf"for any integer <strong>\({v}\)</strong>."
     )
     s = (
-        rf"Expand or factorise: <strong>\({v}({v} + {gap}) = {v}^2 + {gap}{v}\)</strong><br>"
+        rf"Expand or factorise: <strong>\({v}({v} + {gap}) = {v}^2 + {coef(gap, v)}\)</strong><br>"
         rf"\({v}\) and \({v}+{gap}\) differ by {gap} (odd), so one is even → product is even."
     )
     return q, s, "Factorise first, then use the consecutive-integer argument.", 4, _ap_proof_steps_answer(
@@ -456,7 +457,7 @@ def _ap_d_n_squared_plus_n():
             "In either case the product has factor 2, so it is always even.",
         ),
         (
-            rf"Expand to {v}² + {gap}{v}; squares are always even, so the product is even.",
+            rf"Expand to {v}² + {coef(gap, v)}; squares are always even, so the product is even.",
             rf"Both {v} and ({v} + {gap}) are odd, so the product is always odd.",
             rf"Because {gap} is even, both integers must be even.",
             rf"Factorise to {gap}({v} + 1), which is always a multiple of {gap} only.",
@@ -539,6 +540,8 @@ def _ap_d_disprove_always_prime():
         (r"n^2 - 1 \text{ is prime for } n > 1", lambda n: n * n - 1),
     ]
     stmt, expr_fn = random.choice(cases)
+    # review C13: the n > 1 case names its own range, so it is not also "for every positive integer n"
+    domain = '' if stmt.startswith(r"n^2 - 1") else r' for every positive integer <strong>\(n\)</strong>'
     # The answer box takes one number, so the question asks for the smallest counterexample (unique).
     n_val = 2 if stmt.startswith(r"n^2 - 1") else 1
     while True:
@@ -549,8 +552,7 @@ def _ap_d_disprove_always_prime():
     p_small = next(p for p in range(2, val + 1) if val % p == 0)
     factor_tex = rf"{p_small} \times {val // p_small}"
     q = (
-        rf"The statement “<strong>\({stmt}\)</strong> for every positive integer "
-        rf"<strong>\(n\)</strong>” is false. Give a <strong>counterexample</strong>: "
+        rf"The statement “<strong>\({stmt}\)</strong>{domain}” is false. Give a <strong>counterexample</strong>: "
         rf"enter the <strong>smallest</strong> value of <strong>\(n\)</strong> that disproves it."
     )
     s = (
@@ -1103,6 +1105,16 @@ _POOLS = {
 }
 
 
+def _batch_b_pools():
+    # Phase 3 batch B kinds (lazy: maths_variety_b must never be imported while this module loads).
+    from generators.gcse import maths_variety_b as vb
+    return {
+        "foundational": _FOUNDATIONAL + [vb.gcse_ap_f_simplify_to_constant, vb.gcse_ap_f_expand_even_product, vb.gcse_ap_f_common_factor_bracket, vb.gcse_ap_f_multiple_of_five_form],
+        "intermediate": _INTERMEDIATE + [vb.gcse_ap_i_sum_consecutive_odds, vb.gcse_ap_i_consecutive_squares_difference_odd, vb.gcse_ap_i_difference_of_squares_identity, vb.gcse_ap_i_factorise_to_show_multiple],
+        "difficult": _DIFFICULT + [vb.gcse_ap_d_sum_consecutive_squares_odd, vb.gcse_ap_d_difference_squares_multiple_of_eight, vb.gcse_ap_d_euler_prime_counterexample, vb.gcse_ap_d_odd_squares_difference_multiple_of_eight],
+    }
+
+
 def gcse_algebraic_proof_variants(difficulty, mode="practice"):
     if mode == "mcq":
         pool = _AP_MCQ_POOLS.get(difficulty) or _AP_MCQ_POOL
@@ -1110,11 +1122,11 @@ def gcse_algebraic_proof_variants(difficulty, mode="practice"):
             pool, "algebraic_proof", difficulty, count=len(pool)
         )
 
-    pool = _POOLS.get(difficulty)
+    pools = _batch_b_pools()
+    pool = pools.get(difficulty)
     if not pool:
-        combined = _FOUNDATIONAL + _INTERMEDIATE + _DIFFICULT
-        return select_tier_variants(combined, 5)
-    return select_tier_variants(pool, 5)
+        return select_tier_variants(pools["foundational"] + pools["intermediate"] + pools["difficult"])
+    return select_tier_variants(pool)
 
 
 def gcse_algebraic_proof(difficulty, mode, variant_name=None):

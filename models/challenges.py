@@ -3,6 +3,7 @@ import hashlib
 import json
 
 from models.user import utc_now_iso
+from generators.shared.answer_record import public_problems
 
 CHALLENGE_PENDING = 'pending'
 CHALLENGE_COMPLETE = 'complete'
@@ -83,7 +84,7 @@ def create_challenge(conn, creator_id, opponent_id, level, subject, topic, probl
             subject,
             topic,
             int(seed),
-            json.dumps(problems),
+            json.dumps(public_problems(problems)),
             CHALLENGE_PENDING,
             now,
         ),

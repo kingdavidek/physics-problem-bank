@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timedelta, timezone
 
+from generators.shared.answer_record import public_problems
 from models.classes import (
     MEMBER_ACTIVE,
     get_membership,
@@ -27,7 +28,14 @@ MAX_PREVIEWS_PER_TEACHER = 8
 SERVER_ONLY_KEYS = (
     'answer_form',          # the written form the checker insists on (expanded, factorised, simplified, ...)
     'answer_step_prereqs',  # which proof steps may swap places
+    'answer_record',        # the question's inputs for the misconception rules (session only; see NOT_FROZEN_KEYS)
+    'option_notes',         # notes on multiple-choice distractors, keyed by option text (shown only after grading)
 )
+
+# Server-only keys that are never copied into a frozen set-work problem, because they must not reach a database:
+# the answer record (generators/shared/answer_record.py) lives in the session problem only. It is still listed in
+# SERVER_ONLY_KEYS so that it is stripped from anything a pupil is sent.
+NOT_FROZEN_KEYS = ('answer_record',)
 
 _STRIP_KEYS = (
     'correct_answer',
@@ -108,6 +116,7 @@ def grade_frozen_answer(problem, user_answer):
         problem_answer_form,
         problem_answer_prereqs,
     )
+    from generators.shared.answer_units import problem_question_text
 
     if user_answer is None or str(user_answer).strip() == '':
         raise ValueError('missing_answer')
@@ -130,6 +139,7 @@ def grade_frozen_answer(problem, user_answer):
                     str(raw),
                     text,
                     field_types=problem.get('answer_field_types'),
+                    question=problem_question_text(problem),
                 )
             else:
                 result = check_answer(
@@ -140,6 +150,7 @@ def grade_frozen_answer(problem, user_answer):
                     subject=problem.get('answer_subject'),
                     labels=problem.get('answer_labels'),
                     prereqs=problem_answer_prereqs(problem),
+                    question=problem_question_text(problem),
                 )
         except (TypeError, ValueError):
             return text.strip(), False
@@ -250,7 +261,7 @@ def save_preview(conn, teacher_id, class_id, *, level, subject, topic, mode, dif
             topic,
             mode,
             difficulty,
-            _dump_json(problems),
+            _dump_json(public_problems(problems, keep_notes=True)),
             len(problems),
             now,
         ),
@@ -335,7 +346,7 @@ def create_assignment(
             topic,
             mode,
             difficulty,
-            _dump_json(problems),
+            _dump_json(public_problems(problems, keep_notes=True)),
             count,
             now,
         ),
@@ -647,6 +658,20 @@ def serialize_student_work(data):
         if answered:
             payload['user_answer'] = answers[i].get('user_answer')
             payload['correct'] = bool(answers[i].get('correct'))
+            if not payload['correct']:
+                # Hint Phase 3: the generic slip message, only for a question that has been graded. The answer record
+                # is never frozen with the problem, so only the key-only rules can run; nothing is stored.
+                from generators.shared.misconceptions import graded_message
+
+                message = graded_message(
+                    problem,
+                    payload['user_answer'],
+                    level=data.get('level'),
+                    subject=data.get('subject'),
+                    topic=data.get('topic') or '',
+                )
+                if message:
+                    payload['hint_message'] = message
         problems_out.append(payload)
     return {
         'assignment_id': data['id'],

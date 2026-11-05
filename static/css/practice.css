@@ -1039,6 +1039,19 @@
     min-height: 1.25em;
     white-space: pre-wrap;
 }
+/* Hint card (2026-11-04): bold heading, thin divider, text; the amber hint tokens give it its own colour. */
+.free-response-hint, .mcq-hint-slot { margin: 8px 0 0; }
+.hint-card { font-family:var(--font-body); margin: 0 0 8px; padding: 10px 14px; background: var(--hint-bg); border: 1px solid var(--hint-border); border-left: 4px solid var(--on-streak); border-radius: var(--radius-sm); color: var(--text); }
+.hint-card[hidden], .hint-card-more[hidden], .free-response-hint-more[hidden] { display: none; }
+.hint-card-title { max-width:none; margin: 0 0 6px; padding-bottom: 6px; border-bottom: 1px solid var(--hint-border); font-weight: 700; color: var(--on-streak); }
+.hint-card-more { margin-top: 12px; }
+.hint-card-text { font-size: var(--text-sm); line-height: 1.5; overflow-wrap: anywhere; }
+.free-response-hint-more[aria-disabled] { opacity: 0.6; cursor: default; }
+/* Show answer before the first try: greyed, not openable (the click is cancelled in site.js). */
+.answer-reveal[data-locked] > summary, .answer-reveal[data-locked] > summary:hover { background: var(--surface-sunken); color: var(--text-muted); cursor: not-allowed; }
+.answer-reveal[data-locked] > summary::before, .answer-reveal:not([data-locked]) .answer-reveal-note { display: none; }
+.answer-reveal-note { margin-left: 0.5em; font-size: 0.85em; font-weight: 400; }
+.answer-reveal-status { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .mcq-options {
     display: flex;
     flex-direction: column;

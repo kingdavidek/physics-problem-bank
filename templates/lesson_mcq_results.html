@@ -71,6 +71,9 @@
       {% elif user %}
       <p class="quiz-results-your-answer">Your answer: <strong>{{ user }}</strong></p>
       {% endif %}
+      {% if problem.hint_message and not is_correct %}
+      <p class="quiz-results-your-answer">{{ problem.hint_message }}</p>
+      {% endif %}
       {% if explanation and (not show_wrong_explanations_only or not is_correct) %}
         {% if show_wrong_explanations_only and not is_correct %}
         <div class="quiz-results-explanation">{{ explanation | safe }}</div>

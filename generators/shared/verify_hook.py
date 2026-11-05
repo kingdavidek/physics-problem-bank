@@ -14,6 +14,12 @@ Rules (see docs/GCSE_MATHS_VERIFICATION.md):
 * Every recorded numeric input has to appear in the question text, or be listed in
   ``derived=`` (the presence guard stops recorded values drifting from shown values).
 * ``ask=`` (or any other string input) names which quantity the question asks for.
+
+A second sink serves production (docs/GCSE_MATHS_HINTS.md, Phase 2): ``capture()`` collects the same records so
+``generators/shared/answer_record.py`` can keep a compact copy of the inputs on the session problem for the
+misconception rules. The two sinks are independent and can nest (a verification run inside a capture, or the
+other way round) without either one losing records. Both only append to lists: no random draw, no change to
+the problem.
 """
 from __future__ import annotations
 
@@ -22,14 +28,20 @@ import contextvars
 import functools
 
 _SINK: contextvars.ContextVar = contextvars.ContextVar('gcse_verify_sink', default=None)
+_CAPTURE: contextvars.ContextVar = contextvars.ContextVar('gcse_answer_capture', default=None)
 
 
 def record(family, derived=(), **inputs):
-    """Record one variant's inputs for the verification test (no-op unless a sink is active)."""
+    """Record one variant's inputs (no-op unless the verification test or a production capture is active)."""
     sink = _SINK.get()
-    if sink is None:
+    capture_sink = _CAPTURE.get()
+    if sink is None and capture_sink is None:
         return
-    sink.append({'family': family, 'inputs': inputs, 'derived': tuple(derived)})
+    entry = {'family': family, 'inputs': inputs, 'derived': tuple(derived)}
+    if sink is not None:
+        sink.append(entry)
+    if capture_sink is not None:
+        capture_sink.append(entry)
 
 
 def verifies(family, derived=(), **inputs):
@@ -58,6 +70,17 @@ def recording():
         yield sink
     finally:
         _SINK.reset(token)
+
+
+@contextlib.contextmanager
+def capture():
+    """Collect the records of one generator call for the answer record (production use; see answer_record.py)."""
+    sink = []
+    token = _CAPTURE.set(sink)
+    try:
+        yield sink
+    finally:
+        _CAPTURE.reset(token)
 
 
 def is_recording():

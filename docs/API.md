@@ -65,6 +65,21 @@ Storage caps (not daily): saved problems 200, shared questions 200, recipient su
 | GET | `/api/v1/topics/<level>/<subject>/<topic>/lesson` | Optional |
 | POST | `/api/v1/problems/generate` | Optional |
 
+### Note on a wrong multiple-choice pick (Phase 4)
+
+| Method | Path | Auth |
+|--------|------|------|
+| POST | `/api/v1/problems/option-note` | Optional |
+
+Returns the one-sentence note for a wrong option of the GCSE maths multiple-choice question in the session (see `docs/GCSE_MATHS_HINTS.md` section 19). Practice grades in the browser, so the page calls this after a wrong pick. It reads only the session problem, never the request, and works for guests.
+
+| Field | Required | Meaning |
+|-------|----------|---------|
+| `letter` | Yes | The picked option, `A` to `D` (any case) |
+| `qid` | Yes | The tag the page printed as `data-note-qid` on `#mcq-options`; it names the question and options, never the key |
+
+Success: `{"ok": true, "note": "..."}`. `note` is `""` when the picked option is the key, has no note, or the problem has none. Errors (`{"ok": false, "error": ..., "code": ...}`): 400 `invalid_payload`, 400 `invalid_letter`, 400 `session_required` (no question in the session, or it has no options), 403 `not_available` (a Quick Test or lesson-quiz question: those notes appear on the results page after grading, as `hint_message` or the Quick Test results line), 409 `session_mismatch` (stale `qid`), 429 `rate_limited` (300 a day per user or per IP hash). Nothing is stored or logged.
+
 ### Check typed answer (Phase 1)
 
 | Method | Path | Auth |
@@ -97,6 +112,7 @@ Marks a typed (free-response) answer correct or incorrect. Used by the generator
 | `answer_type` | No | Defaults to `number`. Must match the stored type when session-bound |
 | `level` / `subject` / `topic` / `difficulty` | No | When the caller is logged in, used to record practice history |
 | `attempt_group_id` / `part_index` / `part_total` | No | Multipart field attempts (e.g. `number_fields`) |
+| `hint_ladder` | No | `true` (a real boolean) asks for the hint ladder (GCSE maths practice page only, see below). Ignored for any other value, for a Quick Test question, for a lesson-quiz question (session `mode` `lesson`) and for any problem not bound to the session |
 
 #### Session binding
 
@@ -127,6 +143,11 @@ Without a graded problem in session, `correct_answer_raw` is required in the bod
 | `normalized_user` / `normalized_correct` | Canonical forms used for comparison |
 | `feedback` | Short human-readable message |
 | `practice_streak` | Present when logged in |
+| `hint` | `{"kind": "misconception", "id": "gen.sign"}`; with `hint_ladder` also `{"kind": "misconception" or "nudge", "rung": 1, "text": "..." (nudge only), "bigger": "..." or ""}`. Present only on a wrong GCSE maths answer bound to the session problem when one slip is recognised (see below); `feedback` then holds the message. Never stored, logged or counted. |
+
+**Named slip (GCSE maths, `docs/GCSE_MATHS_HINTS.md` Phase 1).** For a session-bound GCSE maths problem, a wrong typed answer that matches exactly one likely slip (sign, a factor of 10, 100 or 1000, a percentage written as a decimal or the reverse, wrong accuracy, a last-place near miss or rounding the wrong way, a reciprocal, a swapped pair, one root only, an angle fact) gets a short message in `feedback` in place of the bare "Not quite" line, and the `hint` field above. Messages name the slip and the step to fix, never the corrected value. A correct bearing typed without its leading zero (`45` for `045`) gets a one-line note in `feedback` (no `hint` field). Requests that carry their own `correct_answer_raw` with no session problem are never diagnosed. Phase 2 adds topic slips for single-value answers in mensuration, Pythagoras, trigonometry, percentages, fractions, decimals, number, order of operations, ratio and compound measures: they read a server-only `answer_record` held in the session problem (never sent to the client, never in a request or a database row), and a topic message wins over a generic one on the same value; two different topic messages on one value give no message. The response shape is unchanged. Nothing is added to attempts, activity events, cohort stats or logs.
+
+**Hint ladder (Phase 3).** When the request carries `"hint_ladder": true`, the problem is a GCSE maths problem bound to the session (not a Quick Test or lesson-quiz question), the answer is wrong and the checker could read it, `hint` is the ladder: `kind` is `misconception` (the message is already `feedback`; `id` is the rule) or `nudge` (`text` is rung 1: the topic or family line, else the problem's own hint when it is short and does not show the key, else a plain default), `rung` is always 1, and `bigger` is rung 2, a method step from the stored worked solution: the first step that does not repeat the question or show the key (also an algebraic key written in LaTeX, a root shown by a factor, the number of a list, assignment or graph-reading key), with any worked-out number at its end cut off (`240 × 12/100 = 28.8` becomes `240 × 12/100`); empty when that leaves no method, for an ordering proof, or when no step qualifies, so the page offers to open Show answer straight away. The page keeps the rung in memory only and unlocks its Show answer drawer after rung 2 or a correct answer. Pacing, not security: the page already carries the solution. Nothing is stored.
 
 When the checker accepts an equivalent form (e.g. `6/8` for `3/4`, `2√5` for surd answers, `6:10` for `3:5`), `normalized_user` differs from what the student typed. The free-response UI appends **“Equivalent forms accepted.”** to the success feedback in that case. Input placeholders come from each problem’s `answer_format_hint` when set.
 
@@ -187,7 +208,7 @@ Phase 2 adds dedicated `fraction` and SymPy-backed `surd` types; ungraded concep
 | POST | `/api/v1/lesson-quiz/<session_id>/answer` |
 | GET | `/api/v1/lesson-quiz/<session_id>/results` |
 
-Logged-in users get `attempt_id` and `attempt_url` when the quiz completes. Lesson metadata includes `lesson_quiz_api` when available.
+Each entry of `results.problems` for a wrong typed GCSE maths answer may carry `hint_message` (the generic slip line, built when the results are fetched; never in a question or answer response). Logged-in users get `attempt_id` and `attempt_url` when the quiz completes. Lesson metadata includes `lesson_quiz_api` when available.
 
 ## Lesson progress
 
@@ -389,7 +410,7 @@ Soft teacher flag, classes, join codes, roster, T0–T2 dashboards, frozen set-w
 | POST | `/api/v1/me/class-invites/<id>/decline` | Yes | Recipient only |
 | GET | `/api/v1/me/class-work` | Yes | Frozen sets assigned to the current user while they are an **active** member. `can_reroll` / `can_leave` always `false` |
 | GET | `/api/v1/me/class-work/<assignment_id>` | Yes | Frozen items. Strips `correct_answer` / `correct_answer_raw` / solution until that item is server-graded. Active member and recipient only |
-| POST | `/api/v1/me/class-work/<assignment_id>/answer` | Yes | `{ index, user_answer }`. Client `correct_answer` / `correct_answer_raw` are ignored. Grades from stored `problems_json` |
+| POST | `/api/v1/me/class-work/<assignment_id>/answer` | Yes | `{ index, user_answer }`. Client `correct_answer` / `correct_answer_raw` are ignored. Grades from stored `problems_json`. The returned `class_work.problems[i]` of a wrong typed GCSE maths answer may carry `hint_message` (generic slip line, only after grading, never stored) |
 
 Class JSON: `id`, `name`, `level`, `subject`, `org_id` (always `null`), `join_code` (teacher payloads only), `join_code_rotated_at`, `created_at`, `archived_at`, `active_member_cap` (`40`), `active_member_count`.
 

@@ -26,6 +26,9 @@
         <div class="quiz-runner-question">{{ (problem.question_html or problem.question or '') | safe }}</div>
         {% if problem.answered %}
         <p class="list-row-meta">Your answer: {{ problem.user_answer | readable_multipart_answer(problem) }} · {% if problem.correct %}Correct{% else %}Incorrect{% endif %}</p>
+        {% if problem.hint_message %}
+        <p class="list-row-meta">{{ problem.hint_message }}</p>
+        {% endif %}
         {% if problem.solution_html %}
         <div class="quiz-runner-question">{{ problem.solution_html | safe }}</div>
         {% endif %}

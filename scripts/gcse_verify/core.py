@@ -23,6 +23,8 @@ from fractions import Fraction
 
 from generators.shared.rounding import round_half_up
 
+from . import exact
+
 
 class Cannot(Exception):
     """A solver could not read the recorded inputs (fails loudly, never skipped)."""
@@ -222,17 +224,31 @@ def rounded_candidates(x, specs):
 _NUM_LOOSE = re.compile(r'^\s*(?:[£$€]\s*)?([-+]?\s*\d[\d,]*(?:\.\d+)?)(?:\s*/\s*(\d+))?\s*(.*)$', re.S)
 
 
+# While a key is compared with the expected answer (``match_answer``), the exact fallback in ``parse_num`` is off:
+# an unworked root such as sqrt 25 counts as a second right answer when it is a distractor, but it is never
+# accepted as the key itself (a key must be written as its value, as before the fallback existed).
+_KEY_READING = [0]
+
+
+def _fallback(s):
+    return None if _KEY_READING[0] else exact.rational_value(s)
+
+
 def parse_num(text):
-    """Parse a plain number, decimal or fraction (with optional currency sign, % or unit) to a Fraction, else None."""
+    """Parse a plain number, decimal or fraction (with optional currency sign, % or unit) to a Fraction, else None.
+
+    Outside key comparison, text the plain rule cannot read falls back to the exact reader, so an option written
+    as an unworked root or a bracketed fraction (sqrt 25, 2 sqrt 9, (1)/(2)) has its rational value.
+    """
     s = str(text).strip().replace('−', '-').replace('−', '-')
     if not s:
         return None
     m = _NUM_LOOSE.match(s)
     if not m:
-        return None
+        return _fallback(s)
     rest = m.group(3)
     if re.search(r'[\d×^√:=]', rest):
-        return None
+        return _fallback(s)
     if re.search(r'\d', rest):
         return None
     head = m.group(1).replace(' ', '').replace(',', '')
@@ -413,6 +429,14 @@ def match_atom(atom, key_text, specs):
 
 def match_answer(expected, key_fields, specs):
     """Compare a solver's expected atoms with the key fields. Returns (ok, [messages], kind)."""
+    _KEY_READING[0] += 1
+    try:
+        return _match_answer(expected, key_fields, specs)
+    finally:
+        _KEY_READING[0] -= 1
+
+
+def _match_answer(expected, key_fields, specs):
     candidates = expected if isinstance(expected, AnyOf) else [expected]
     best = None
     for atoms in candidates:

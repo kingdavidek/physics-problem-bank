@@ -10,6 +10,7 @@ from generators.shared.variant_utils import (
     STANDARD_MODE,
     normalize_mode,
 )
+from generators.shared.answer_record import with_answer_record
 from generators.gcse.physics_forces import (gcse_physics_forces,)
 from generators.gcse.physics import (edexcel_combined_physics_radioactivity,)
 from generators.myp.chemistry import (myp_chemistry_redox, myp_chemistry_energy_changes_and_rates,)
@@ -1053,6 +1054,14 @@ TOPICS = {
         },
     },
 }
+
+# GCSE maths hints (docs/GCSE_MATHS_HINTS.md, Phase 2): each GCSE maths topic generator is wrapped once, here, so
+# every call site (practice queue, reroll, Quick Test, set work, lesson quiz, question of the day) gets the same
+# server-only answer record. The wrapper draws no random numbers and changes nothing a pupil sees.
+for _maths_cfg in TOPICS["gcse"]["maths"].values():
+    if _maths_cfg.get("func"):
+        _maths_cfg["func"] = with_answer_record(_maths_cfg["func"])
+del _maths_cfg
 
 _VALID_YEARS = frozenset({"s1", "s2", "s3"})
 

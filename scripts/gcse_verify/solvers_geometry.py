@@ -529,7 +529,9 @@ def _mens_tank(r, h, rate):
 def _mens_garden(length, width, cost):
     l, w = _f(length), _f(width)
     area = l * w + math.pi * w * w / 8
-    return [_dp2(2 * l + w + math.pi * w / 2), _dp2(area), Approx(area * _f(cost), ('dp', 2))]
+    first = [_dp2(2 * l + w + math.pi * w / 2), _dp2(area)]
+    # (c) is worked from the rounded area of (b) (review C13); the unrounded area gives the same cost to the penny or a penny off
+    return AnyOf([first + [Approx(round(area, 2) * _f(cost), ('dp', 2))], first + [Approx(area * _f(cost), ('dp', 2))]])
 
 
 @solver('mens_cone_container')

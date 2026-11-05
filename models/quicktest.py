@@ -4,7 +4,9 @@ import random
 import uuid
 
 from generators.shared.variant_utils import normalize_mode
+from generators.shared.whole_pool import generate_from_pool, uses_whole_pool
 from models.user import utc_now_iso
+from generators.shared.answer_record import public_problems
 
 QUICKTEST_LENGTH = 10
 
@@ -16,16 +18,22 @@ def make_session_id(user_id=None):
     return f'qt_a_{token}'
 
 
-def build_quicktest_problems(level, subject, topic, mode, difficulty, topics_registry):
+def build_quicktest_problems(level, subject, topic, mode, difficulty, topics_registry, rng=None):
     """Return (problems, topic_config) or raise KeyError.
 
-    Always builds ``QUICKTEST_LENGTH`` questions (pad by regenerating if a
-    topic exposes fewer variants; sample if it exposes more).
+    Always builds ``QUICKTEST_LENGTH`` questions. GCSE maths draws them from the whole tier pool, no kind twice until
+    the pool is used up (generators/shared/whole_pool.py, decision V8); every other subject pads by regenerating if a
+    topic exposes fewer variants than that and samples if it exposes more. ``rng`` (tests only) seeds the draw.
     """
     topic_config = topics_registry[level][subject][topic]
     generator = topic_config['func']
     variants_func = topic_config.get('variants_func')
     mode = normalize_mode(mode)
+
+    if uses_whole_pool(level, subject):
+        drawn = generate_from_pool(generator, variants_func, difficulty, mode, QUICKTEST_LENGTH, rng=rng,
+                                   kind_check=(mode == 'mcq'))
+        return [problem for problem, _name in drawn], topic_config
 
     problems = []
     variant_list = []
@@ -66,6 +74,10 @@ def build_quicktest_problems(level, subject, topic, mode, difficulty, topics_reg
 def save_quicktest_session(conn, session_id, data):
     now = utc_now_iso()
     payload = dict(data)
+    if isinstance(payload.get('problems'), list):
+        # The answer record is never stored. The notes on multiple-choice options are (they are question content, shown only
+        # on the results page after grading).
+        payload['problems'] = public_problems(payload['problems'], keep_notes=True)
     payload['updated_at'] = now
     conn.execute(
         '''

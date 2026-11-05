@@ -583,6 +583,8 @@
     removeWrongAnswerReflection(block);
     delete block.dataset.reflectionOffered;
     removeCohortHint(block);
+    var noteCard = document.querySelector('.mcq-hint-slot .hint-card');
+    if (noteCard) noteCard.hidden = true;
     block.dispatchEvent(new CustomEvent('mcq-reset', { bubbles: true }));
   }
 
@@ -753,7 +755,7 @@
       textarea.hidden = true;
       actions.hidden = true;
       status.hidden = false;
-      status.textContent = 'Thanks \u2014 noted.';
+      status.textContent = 'Thanks, noted.';
       status.style.color = 'var(--on-correct)';
       window.setTimeout(dismissPanel, 1400);
     }
@@ -779,7 +781,7 @@
           btn.disabled = false;
         });
         if (typeof showAppToast === 'function') {
-          showAppToast('Could not save your note \u2014 try again.', 'error');
+          showAppToast('Could not save your note. Please try again.', 'error');
         }
       });
     }
@@ -836,13 +838,78 @@
     showWrongAnswerReflection(block, context, 'mcq', attemptId);
   }
 
-  function formatCohortHint(cohort) {
+  function formatCohortHint(cohort, hinted) {
     if (!cohort || cohort.wrong_pct == null || !cohort.sample_size) return '';
     var pct = Math.round(Number(cohort.wrong_pct));
     if (!isFinite(pct)) return '';
     var attempts = Number(cohort.sample_size);
+    if (hinted && pct < 20) return '';
     var attemptLabel = attempts === 1 ? 'attempt' : 'attempts';
-    return 'About ' + pct + '% of students got this wrong (' + attempts + ' ' + attemptLabel + ').';
+    return 'About ' + pct + (hinted ? '% of attempts needed another go (' : '% of students got this wrong (')
+      + attempts + ' ' + attemptLabel + ').';
+  }
+
+  // GCSE maths hint ladder (docs/GCSE_MATHS_HINTS.md 17, changed 2026-11-04): the rung lives in block.dataset.hintRung
+  // only (a reload starts again); pacing only. Show answer is greyed (data-locked) until the first try.
+  function unlockAnswer() {
+    var d = document.querySelector('details.answer-reveal[data-locked]');
+    if (!d) return;
+    d.removeAttribute('data-locked');
+    d.firstElementChild.removeAttribute('aria-disabled');
+    d.firstElementChild.removeAttribute('tabindex');
+    var n = document.querySelector('.answer-reveal-status');
+    if (n) n.textContent = n.getAttribute('data-open');
+  }
+
+  function typesetHint(el) {
+    if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]).catch(function () {});
+  }
+
+  function showHintLadder(block, data) {
+    unlockAnswer();
+    var box = block.querySelector('.free-response-hint');
+    if (!box) return;
+    var card = box.querySelector('.hint-card');
+    var line = box.querySelector('.free-response-hint-line');
+    var sec = box.querySelector('.hint-card-more');
+    var more = box.querySelector('.free-response-hint-more');
+    if (data.correct) {
+      card.hidden = sec.hidden = more.hidden = true;
+      line.textContent = '';
+      return;
+    }
+    var h = data.hint;
+    if (!h || h.rung !== 1) return;
+    var text = h.kind === 'misconception' ? (data.feedback || '') : (h.text || '');
+    line.textContent = text;
+    card.hidden = !text;
+    typesetHint(line);
+    var big = h.bigger && h.bigger !== text ? h.bigger : '';
+    if (block.dataset.hintRung === '2') {
+      sec.hidden = box.querySelector('.free-response-hint-bigger').textContent === text;
+      return;
+    }
+    block.dataset.hintRung = '1';
+    more.dataset.big = big;
+    more.hidden = !big;
+    more.removeAttribute('aria-disabled');
+  }
+
+  function onHintMore(event) {
+    var more = event.target.closest && event.target.closest('.free-response-hint-more');
+    if (!more || more.getAttribute('aria-disabled')) return;
+    var box = more.parentNode;
+    var big = box.querySelector('.free-response-hint-bigger');
+    big.textContent = more.dataset.big;
+    typesetHint(big);
+    box.querySelector('.hint-card').hidden = box.querySelector('.hint-card-more').hidden = false;
+    more.setAttribute('aria-disabled', 'true');
+    box.closest('.free-response-inline').dataset.hintRung = '2';
+  }
+
+  function onLockedAnswerClick(event) {
+    var s = event.target.closest && event.target.closest('details[data-locked] > summary');
+    if (s) event.preventDefault();
   }
 
   function removeCohortHint(host) {
@@ -853,7 +920,7 @@
 
   function showCohortHint(host, cohort) {
     if (!host) return;
-    var text = formatCohortHint(cohort);
+    var text = formatCohortHint(cohort, host.dataset && host.dataset.hintRung);
     removeCohortHint(host);
     if (!text) return;
     var el = document.createElement('p');
@@ -863,7 +930,7 @@
   }
 
   function persistMcqAnswer(block, userAnswer, correctAnswer, isCorrect) {
-    if (!block.dataset.level) return Promise.resolve({ attempt_id: null, cohort: null, correct: isCorrect });
+    if (!block.dataset.level || !isReflectionEligible()) return Promise.resolve({ attempt_id: null, cohort: null, correct: isCorrect });
     return fetch('/api/v1/generator/mcq-answer', {
       method: 'POST',
       headers: apiHeaders({
@@ -980,6 +1047,7 @@
         });
         var letter = (btn.dataset.letter || '').trim().charAt(0);
         block.dataset.userChoice = letter;
+        unlockAnswer();
         var isCorrect = letter === correctLetter;
         if (isCorrect) {
           btn.classList.add('is-correct');
@@ -1003,11 +1071,12 @@
           });
           celebrateResult(false, btn, correctBtn);
           if (feedback) {
-            feedback.textContent = '\u2717 Not quite \u2014 the correct answer is highlighted.';
+            feedback.textContent = '\u2717 Not quite. The correct answer is highlighted.';
             feedback.classList.remove('is-correct');
             feedback.classList.add('is-wrong');
             feedback.style.color = '';
           }
+          fetchOptionNote(block, btn, letter, feedback);
           showMcqRetry(block);
         }
         if (trackable && block.dataset.mcqPersisted !== '1') {
@@ -1030,6 +1099,26 @@
         });
       });
     });
+  }
+
+  function fetchOptionNote(block, btn, letter, feedback) {
+    var qid = block.getAttribute('data-note-qid');
+    if (!qid || !feedback) return;
+    fetch('/api/v1/problems/option-note', {
+      method: 'POST',
+      headers: apiHeaders({ 'Content-Type': 'application/json' }),
+      credentials: 'same-origin',
+      body: JSON.stringify({ letter: letter, qid: qid }),
+    })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        var slot = document.querySelector('.mcq-hint-slot .hint-card');
+        if (d && d.note && slot && btn.classList.contains('is-wrong')) {
+          slot.querySelector('.hint-card-text').textContent = d.note;
+          slot.hidden = false;
+        }
+      })
+      .catch(function () {});
   }
 
   function showMcqRetry(block) {
@@ -1163,9 +1252,13 @@
   }
 
   function freeResponseWrongFeedback(block, data) {
-    var base = (data && data.feedback) || 'Not quite \u2014 try again.';
+    var base = (data && data.feedback) || 'Not quite. Try again.';
     if (data && data.score_total != null && data.score > 0 && data.score < data.score_total) {
       base = data.feedback || (data.score + '/' + data.score_total + ' key ideas found.');
+    }
+    // The named slip goes in the hint card (showHintLadder), not in the red feedback line.
+    if (data && data.hint && data.hint.rung === 1 && data.hint.kind === 'misconception' && block.querySelector('.free-response-hint')) {
+      base = 'Not quite.';
     }
     var wrongHint = block.getAttribute('data-wrong-hint') || '';
     return wrongHint ? (base + ' ' + wrongHint) : base;
@@ -3115,8 +3208,10 @@
     }
 
     function maybePersistAllFields() {
+      unlockAnswer();
       emitNumberFieldsProgress();
       if (!allFieldsCorrect()) return;
+      showHintLadder(block, { correct: true });
       if (blockFeedback) {
         blockFeedback.textContent = '\u2713 All parts correct!';
         blockFeedback.style.color = 'var(--on-correct)';
@@ -3131,6 +3226,7 @@
         correct_answer_raw: fieldCorrect,
         answer_type: fieldType,
       };
+      if (block.querySelector('.free-response-hint')) body.hint_ladder = true;
       if (trackable) {
         body.level = block.dataset.level;
         body.subject = block.dataset.subject;
@@ -3165,6 +3261,7 @@
           if (typeof onDone === 'function') {
             onDone(data, userValue, fieldFeedback);
           }
+          if (!data.correct) showHintLadder(block, data);
           showCohortHint(block, data.cohort);
           return data;
         });
@@ -3296,6 +3393,7 @@
             }
             maybePersistAllFields();
           }).catch(function (err) {
+            unlockAnswer();
             checkBtn.disabled = false;
             if (fieldFeedback) {
               fieldFeedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
@@ -3432,6 +3530,7 @@
             }
             maybePersistAllFields();
           }).catch(function (err) {
+          unlockAnswer();
             checkBtn.disabled = false;
             if (fieldFeedback) {
               fieldFeedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
@@ -3482,12 +3581,13 @@
                 celebrateResult(false, btn, fieldCorrectBtn);
                 mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) { b.disabled = false; });
                 if (fieldFeedback) {
-                  fieldFeedback.textContent = '\u2717 Not quite \u2014 the correct answer is highlighted.';
+                  fieldFeedback.textContent = '\u2717 Not quite. The correct answer is highlighted.';
                   fieldFeedback.style.color = 'var(--on-wrong)';
                 }
               }
               maybePersistAllFields();
             }).catch(function (err) {
+          unlockAnswer();
               mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) { b.disabled = false; });
               if (fieldFeedback) {
                 fieldFeedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
@@ -3550,6 +3650,7 @@
           }
           maybePersistAllFields();
         }).catch(function (err) {
+          unlockAnswer();
           input.disabled = false;
           checkBtn.disabled = false;
           if (fieldFeedback) {
@@ -3937,6 +4038,7 @@
         correct_answer_raw: correctRaw,
         answer_type: 'proof_steps',
       };
+      if (block.querySelector('.free-response-hint')) body.hint_ladder = true;
       if (trackable) {
         body.level = block.dataset.level;
         body.subject = block.dataset.subject;
@@ -3979,9 +4081,11 @@
           if (trackable && block.dataset.freeResponsePersisted !== '1') {
             block.dataset.freeResponsePersisted = '1';
           }
+          showHintLadder(block, data);
           showCohortHint(block, data.cohort);
         })
         .catch(function (err) {
+          unlockAnswer();
           checkBtn.disabled = false;
           if (feedback) {
             feedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
@@ -4367,6 +4471,7 @@
         correct_answer_raw: correctRaw,
         answer_type: answerType,
       };
+      if (block.querySelector('.free-response-hint')) body.hint_ladder = true;
       if (trackable) {
         body.level = block.dataset.level;
         body.subject = block.dataset.subject;
@@ -4441,6 +4546,7 @@
             celebrateResult(false, checkBtn || block);
             offerWrongAnswerReflection(block, 'check', data, recordThisAttempt);
           }
+          showHintLadder(block, data);
           showCohortHint(block, data.cohort);
           celebratePayload(data);
           refetchBuddyFromBlock(block);
@@ -4450,6 +4556,7 @@
           dispatchQuicktestChecked(freeResponseCheckState(block));
         })
         .catch(function (err) {
+          unlockAnswer();
           if (answerType === 'number_line') {
             var nlErr = block.querySelector('.free-response-number-line');
             if (nlErr) nlErr.classList.remove('is-disabled');
@@ -4485,6 +4592,8 @@
   }
 
   function initFreeResponseInline() {
+    document.addEventListener('click', onHintMore);
+    document.addEventListener('click', onLockedAnswerClick);
     document.querySelectorAll('.free-response-inline').forEach(wireFreeResponseBlock);
   }
 
@@ -4952,7 +5061,7 @@
   }
 
   function initAnswerRevealMathJax() {
-    document.querySelectorAll('details.answer-reveal, details.practice-hint-drawer').forEach(function (details) {
+    document.querySelectorAll('details.answer-reveal').forEach(function (details) {
       details.addEventListener('toggle', function () {
         if (!details.open || !window.MathJax || !MathJax.typesetPromise) return;
         var targets = [details.querySelector('.answer'), details.querySelector('.hint')];

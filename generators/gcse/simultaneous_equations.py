@@ -5,6 +5,7 @@ Graded practice variants return (question, solution, hint, marks, raw)
 or an MCQ 6-tuple (question, solution, hint, marks, options, correct_letter).
 """
 import random
+from generators.shared.answer_checkers import linear_format_hint
 from generators.shared.utils import make_problem, signed_term, coef
 from generators.shared.verify_hook import record, verifies
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
@@ -111,8 +112,11 @@ def _sim_problem_from_output(out, difficulty):
                 extra = {
                     'correct_answer_raw': _sim_linear_raw(raw),
                     'answer_type': 'linear',
-                    'answer_format_hint': 'Enter the value (e.g. y = 3 or just 3)',
+                    'answer_format_hint': linear_format_hint(_sim_linear_raw(raw)),
                 }
+            else:
+                from generators.gcse import maths_variety_b as vb
+                extra = vb.problem_extra(raw)
         elif isinstance(raw, (int, float)):
             extra = {
                 'correct_answer_raw': _sim_raw(raw),
@@ -173,6 +177,11 @@ def _sim_f_add_to_eliminate():
     return q, sol, hint, 2, _sim_pair_answer(x_ans, y_ans)
 
 
+def _cx(n):
+    """A coefficient as it is written before a letter: nothing for 1 (x, not 1x)."""
+    return '' if n == 1 else str(n)
+
+
 @verifies('alg', task='solve_system')
 def _sim_f_elim_same_coefficient():
     """Subtract when one variable has the same coefficient."""
@@ -192,7 +201,7 @@ def _sim_f_elim_same_coefficient():
             rf"<strong>Step 1</strong> — both equations have \({b}y\), so subtract (1) from (2):"
             f'<div style="margin:8px 0 0 16px;">'
             rf"\({a2}x + {b}y = {c2}\)<br>\({a1}x + {b}y = {c1}\)<br>"
-            rf"\({a2 - a1}x = {c2 - c1}\) → <strong>\(x = {x_ans}\)</strong></div>"
+            rf"\({_cx(a2 - a1)}x = {c2 - c1}\) → <strong>\(x = {x_ans}\)</strong></div>"
         )
         + _sim_step(
             rf"<strong>Step 2</strong> — substitute \(x = {x_ans}\) into equation (1):"
@@ -267,7 +276,7 @@ def _sim_f_simple_pair():
         _sim_step(
             rf"<strong>Step 1</strong> — multiply equation (1) by 2 so the \(y\) terms match:"
             f'<div style="margin:8px 0 0 16px;">'
-            rf"\(2 \times ({a1}x + {b1}y = {c1})\) → \(4x + 2y = {2 * c1}\)</div>"
+            rf"\(2 \times ({a1}x + {_cx(b1)}y = {c1})\) → \(4x + 2y = {2 * c1}\)</div>"
         )
         + _sim_step(
             rf"<strong>Step 2</strong> — subtract equation (2) to eliminate \(y\):"
@@ -357,7 +366,7 @@ def _sim_i_elimination_multiply():
         + _sim_step(
             rf"<strong>Step 2</strong> — subtract the second line from the first to eliminate \(y\):"
             f'<div style="margin:8px 0 0 16px;">'
-            rf"\({elim_x_coeff}x = {elim_rhs}\) → <strong>\(x = {x_ans}\)</strong></div>"
+            rf"\({coef(elim_x_coeff, 'x')} = {elim_rhs}\) → <strong>\(x = {x_ans}\)</strong></div>"
         )
         + _sim_step(
             rf"<strong>Step 3</strong> — substitute \(x = {x_ans}\) into equation (1):"
@@ -404,7 +413,7 @@ def _sim_i_substitution_rearrange():
         + _sim_step(
             rf"<strong>Step 3</strong> — substitute \(x = {x_ans}\) back into \(y = {f} - {d}x\):"
             f'<div style="margin:8px 0 0 16px;">'
-            rf"\(y = {f} - {d}({x_ans}) = <strong>{y_ans}</strong></div>"
+            rf"\(y = {f} - {d}({x_ans}) =\) <strong>\({y_ans}\)</strong></div>"
         )
         + _sim_answer(x_ans, y_ans)
     )
@@ -531,7 +540,7 @@ def _sim_i_graph_interpret():
     opts = [f"{letters[i]}  {texts[i]}" for i in range(4)]
     sol = (
         rf"The intersection is the <strong>solution to the simultaneous equations</strong> "
-        rf"\(y = {m1}x + {c1}\) and \(y = {m2}x + {c2}\) — the only \((x, y)\) that satisfies both.<br>"
+        rf"\(y = {coef(m1, 'x')} + {c1}\) and \(y = {coef(m2, 'x')} + {c2}\): the only \((x, y)\) that satisfies both.<br>"
         rf"Answer: <strong>{correct_letter}</strong>"
     )
     hint = "Graphical solution = algebraic solution = point where lines cross."
@@ -661,7 +670,7 @@ def _sim_d_exam_multipart():
     sol = (
         rf"<strong>(a)</strong> {eq1} &nbsp;&nbsp;(1); {eq2} &nbsp;&nbsp;(2)<br>"
         rf"<strong>(b)</strong> Both equations have {n_y}y, so subtract (1) from (2):<br>"
-        rf"\({diff_x}x = {diff_rhs}\) → <strong>\(x = {x_ans}\)</strong><br>"
+        rf"\({_cx(diff_x)}x = {diff_rhs}\) → <strong>\(x = {x_ans}\)</strong><br>"
         rf"Substitute into (1): \({n_x1}({x_ans}) + {n_y}y = {total1}\) → "
         rf"<strong>\(y = {y_ans}\)</strong><br>"
         rf"<strong>\(x = {x_ans},\; y = {y_ans}\)</strong>"
@@ -721,7 +730,7 @@ _SIM_MCQ_BANK = [
         "hint": "Substitution works when one variable is isolated.",
     },
     {
-        "difficulty": "intermediate",
+        "difficulty": "foundational",      # Phase 2: basic knowledge (two lines cross once); the foundational band had four items
         "q": r"How many solutions do two non-parallel straight lines have in common?",
         "opts": ["A  0", "B  1", "C  2", "D  Infinitely many"],
         "ans": "B",
@@ -740,6 +749,7 @@ _SIM_MCQ_BANK = [
     },
     {
         "difficulty": "difficult",
+        "concept": True,
         "q": r"Which describes <strong>elimination</strong> for simultaneous equations?",
         "opts": [
             "A  Multiply one equation only",
@@ -869,21 +879,34 @@ _POOLS = {
 }
 
 
+def _batch_b_pools():
+    # Phase 3 batch B kinds (lazy: maths_variety_b must never be imported while this module loads).
+    from generators.gcse import maths_variety_b as vb
+    return {
+        "foundational": _FOUNDATIONAL + [vb.gcse_sim_substitute_solution, vb.gcse_sim_numbers_sum_difference,
+                                         vb.gcse_sim_rectangle_perimeter, vb.gcse_sim_equate_expressions],
+        "intermediate": _INTERMEDIATE + [vb.gcse_sim_decimal_coefficients, vb.gcse_sim_two_item_check,
+                                         vb.gcse_sim_value_of_expression, vb.gcse_sim_equal_sides],
+        "difficult": _DIFFICULT + [vb.gcse_sim_fractional_coefficients, vb.gcse_sim_ages,
+                                   vb.gcse_sim_no_solution_value, vb.gcse_sim_equal_cost],
+    }
+
+
 def gcse_simultaneous_equations_variants(difficulty, mode="practice"):
     if mode == "mcq":
         return mcq_variants_from_bank_with_procedural(
             _SIM_MCQ_BANK,
-            procedural_mcq_for("simultaneous_equations"),
+            procedural_mcq_for("simultaneous_equations", difficulty),
             "simultaneous_equations",
             difficulty,
-            count=6,
         )
 
-    pool = _POOLS.get(difficulty)
+    pools = _batch_b_pools()
+    pool = pools.get(difficulty)
     if not pool:
-        combined = _FOUNDATIONAL + _INTERMEDIATE + _DIFFICULT
-        return select_tier_variants(combined, 5)
-    return select_tier_variants(pool, 5)
+        combined = pools["foundational"] + pools["intermediate"] + pools["difficult"]
+        return select_tier_variants(combined)
+    return select_tier_variants(pool)
 
 
 def gcse_simultaneous_equations(difficulty, mode, variant_name=None):

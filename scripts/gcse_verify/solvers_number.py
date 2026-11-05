@@ -11,7 +11,7 @@ from fractions import Fraction
 
 from .core import (AnyOf, Approx, Cannot, Pick, PickSet, Pw, Ratio, SF, Surd, Verdict,  # noqa: F401
                    apply_spec, parse_sf, sqrt_atom)
-from .registry import fr, solver
+from .registry import distinct, fr, solver
 
 
 def sf_norm(value):
@@ -474,6 +474,17 @@ def _ratio_find_missing(a, b, known):
     return [fr(known) * fr(b) / fr(a)]
 
 
+distinct('ratio_unitary', 'n1', 'n2', 'item counts')
+distinct('prop_scale', 'n1', 'n2', 'numbers of people')
+distinct('prop_inverse', 'a', 'c', 'numbers of workers (or x values)')
+distinct('prop_direct', 'x1', 'x2', 'x values')
+distinct('prop_plumbers', 'w1', 'w2', 'numbers of plumbers')
+# HCF / LCM of two equal numbers is the number itself: nothing to work out
+distinct('num_hcf', 'a', 'b', 'numbers')
+distinct('num_lcm', 'a', 'b', 'numbers')
+distinct('num_hcf_lcm', 'a', 'b', 'numbers')
+
+
 @solver('ratio_unitary')
 def _ratio_unitary(n1, total, n2):
     return [fr(total) / fr(n1) * fr(n2)]
@@ -578,7 +589,7 @@ _SUPERSCRIPT = {'²': 2, '³': 3}
 
 
 def eval_expression(text):
-    """Evaluate +, -, ×, ÷, brackets and integer powers exactly (no eval): precedence and unary minus as in school."""
+    """Evaluate +, -, ×, ÷, brackets, integer powers and exact square roots (√49, √(4 + 5)) exactly (no eval): precedence and unary minus as in school."""
     toks = []
     for m in _TOKEN.finditer(text.replace('−', '-').replace('×', '*').replace('÷', '/')):
         if m.group(1):
@@ -653,6 +664,12 @@ def eval_expression(text):
             if take() != ('o', ')'):
                 raise Cannot('missing closing bracket')
             return v
+        if (kind, val) == ('o', '√'):
+            inner = atom()
+            num, den = math.isqrt(inner.numerator), math.isqrt(inner.denominator)
+            if inner < 0 or num * num != inner.numerator or den * den != inner.denominator:
+                raise Cannot(f'the square root of {inner} is not exact')
+            return Fraction(num, den)
         raise Cannot(f'unexpected token {val!r} in {text!r}')
 
     v = expr()
@@ -669,6 +686,65 @@ def _arith(expr):
 @solver('product')
 def _product(a, b):
     return [fr(a) * fr(b)]
+
+
+@solver('bidmas_inverse_check')
+def _bidmas_inverse_check(a, op, b, c):
+    """a op b = c: the check is the one calculation on c and b whose value is a (the number we started with)."""
+    def test(text):
+        m = re.fullmatch(r'\s*(\d+)\s*([+\-−×÷])\s*(\d+)\s*', text)
+        if not m:
+            return False
+        x, o, y = int(m.group(1)), m.group(2), int(m.group(3))
+        if sorted([x, y]) != sorted([int(c), int(b)]):
+            return False
+        if o == '+':
+            v = Fraction(x + y)
+        elif o in ('-', '−'):
+            v = Fraction(x - y)
+        elif o == '×':
+            v = Fraction(x * y)
+        else:
+            v = Fraction(x, y)
+        return v == int(a)
+    return [Pick(test, f'a calculation on {c} and {b} that gives {a}')]
+
+
+@solver('bidmas_missing')
+def _bidmas_missing(form, a, c, b=None):
+    a, c = fr(a), fr(c)
+    if form == 'add_mul':           # a + x * b = c
+        return [(c - a) / fr(b)]
+    if form == 'bracket_mul':       # a * (x + b) = c
+        return [c / a - fr(b)]
+    if form == 'mul_sub':           # a * x - b = c
+        return [(c + fr(b)) / a]
+    if form == 'sub_square':        # a - x^2 = c, x positive
+        return [sqrt_exact(a - c)]
+    raise Cannot(f'unknown form {form!r}')
+
+
+def sqrt_exact(v):
+    v = fr(v)
+    num, den = math.isqrt(v.numerator), math.isqrt(v.denominator)
+    if v < 0 or num * num != v.numerator or den * den != v.denominator:
+        raise Cannot(f'the square root of {v} is not exact')
+    return Fraction(num, den)
+
+
+@solver('bidmas_fraction_bar')
+def _bidmas_fraction_bar(a, b, c, d, e):
+    return [(fr(a) + fr(b) * fr(c)) / (fr(d) - fr(e))]
+
+
+@solver('bidmas_fraction_bar_neg')
+def _bidmas_fraction_bar_neg(a, n, p, b, e):
+    return [(fr(a) - (-fr(n)) ** int(p)) / (fr(b) - fr(e) ** 2)]
+
+
+@solver('bidmas_brackets')
+def _bidmas_brackets(a, b, c, d, target):
+    return [Pick(lambda t: eval_expression(t) == fr(target), f'a version of {a} + {b} x {c} - {d} that equals {target}')]
 
 
 @solver('num_estimate_product_whole')
@@ -835,3 +911,294 @@ def _read_label(text):
 def _order_values(labels):
     ordered = sorted((_read_label(x), str(x).strip()) for x in labels)
     return [text for _, text in ordered]
+
+
+# ── Phase 3 batch A: fraction arithmetic, one quantity as a fraction or percentage, interest ──
+
+def _apply_op(x, op, y):
+    if op == '+':
+        return x + y
+    if op == '-':
+        return x - y
+    if op == '*':
+        return x * y
+    if op == '/':
+        return x / y
+    raise Cannot(f'unknown operator {op!r}')
+
+
+@solver('frac_add_sub')
+def _frac_add_sub(n1, d1, op, n2, d2):
+    return [_apply_op(fr(n1) / fr(d1), op, fr(n2) / fr(d2))]
+
+
+@solver('frac_mul_div')
+def _frac_mul_div(n1, d1, op, n2, d2):
+    return [_apply_op(fr(n1) / fr(d1), op, fr(n2) / fr(d2))]
+
+
+@solver('frac_mixed_add_sub')
+def _frac_mixed_add_sub(w1, n1, d1, op, w2, n2, d2):
+    return [_apply_op(fr(w1) + fr(n1) / fr(d1), op, fr(w2) + fr(n2) / fr(d2))]
+
+
+@solver('frac_mixed_mul_div')
+def _frac_mixed_mul_div(w1, n1, d1, op, w2, n2, d2):
+    return [_apply_op(fr(w1) + fr(n1) / fr(d1), op, fr(w2) + fr(n2) / fr(d2))]
+
+
+@solver('fdp_fraction_of_other')
+def _fdp_fraction_of_other(part, whole, scale):
+    return [fr(part) / (fr(whole) * fr(scale))]
+
+
+@solver('fdp_pct_of_other')
+def _fdp_pct_of_other(part, whole):
+    return [fr(part) / fr(whole) * 100]
+
+
+@solver('fdp_simple_interest')
+def _fdp_simple_interest(principal, rate, years, ask):
+    interest = fr(principal) * fr(rate) / 100 * int(years)
+    if ask == 'interest':
+        return [_money(interest)]
+    if ask == 'total':
+        return [_money(fr(principal) + interest)]
+    raise Cannot(f'unknown ask {ask!r}')
+
+
+@solver('fdp_simple_vs_compound')
+def _fdp_simple_vs_compound(principal, rate, years):
+    p, r = fr(principal), fr(rate) / 100
+    return [_money(p * (1 + r) ** int(years) - p - p * r * int(years))]
+
+
+# ── Phase 3 batch A: multiples and factors ──
+
+def _divisors_of(n):
+    return [d for d in range(1, int(n) + 1) if int(n) % d == 0]
+
+
+@solver('mf_factors_list')
+def _mf_factors_list(n):
+    return _divisors_of(n)
+
+
+@solver('mf_next_multiple')
+def _mf_next_multiple(n, m):
+    k = int(m) + 1
+    while k % int(n):
+        k += 1
+    return [k]
+
+
+@solver('mf_factor_count')
+def _mf_factor_count(n):
+    return [len(_divisors_of(n))]
+
+
+@solver('mf_pf_exponents')
+def _mf_pf_exponents(n, p1, p2, p3):
+    out = []
+    for p in (p1, p2, p3):
+        if int(p) == 0:
+            continue
+        e, m = 0, int(n)
+        # count how often the prime divides n (primes are distinct, so this is the exponent in n)
+        while m % int(p) == 0:
+            m //= int(p)
+            e += 1
+        out.append(e)
+    # review: "n can be written as 2^a × 3^b" is only true when those primes are all of n
+    product = math.prod(int(p) ** e for p, e in zip([x for x in (p1, p2, p3) if int(x)], out))
+    if product != int(n) or any(e == 0 for e in out):
+        return [Verdict(False, f'{n} is not a product of powers of the primes given')]
+    return out
+
+
+@solver('mf_hcf_fraction')
+def _mf_hcf_fraction(a, b):
+    return [fr(a) / fr(b)]
+
+
+@solver('mf_laps')
+def _mf_laps(a, b):
+    lcm = math.lcm(int(a), int(b))
+    return [lcm // int(a), lcm // int(b)]
+
+
+@solver('mf_multiples_between')
+def _mf_multiples_between(n, lo, hi):
+    return [sum(1 for k in range(int(lo) + 1, int(hi)) if k % int(n) == 0)]
+
+
+@solver('mf_square_multiplier')
+def _mf_square_multiplier(n):
+    k = 1
+    while math.isqrt(int(n) * k) ** 2 != int(n) * k:
+        k += 1
+    return [k]
+
+
+@solver('mf_factor_count_primes')
+def _mf_factor_count_primes(p1, a1, p2, a2, p3, a3):
+    n = int(p1) ** int(a1) * int(p2) ** int(a2) * (int(p3) ** int(a3) if int(p3) else 1)
+    return [len(_divisors_of(n))]
+
+
+# ── Phase 3 batch A: surds ──
+
+def _is_square(n):
+    return int(n) >= 0 and math.isqrt(int(n)) ** 2 == int(n)
+
+
+@solver('surds_irrational')
+def _surds_irrational(r, sq, n, d):
+    def test(text):
+        m = re.fullmatch(r'\s*√\s*(\d+)\s*', text)
+        return bool(m) and not _is_square(int(m.group(1)))
+    return [Pick(test, 'the one square root that is not a whole number')]
+
+
+@solver('surds_square')
+def _surds_square(k, r):
+    return [fr(k) ** 2 * fr(r)]
+
+
+@solver('surds_add_like')
+def _surds_add_like(k1, op, k2, r):
+    return [Surd(int(k1) + (int(k2) if op == '+' else -int(k2)), int(r))]
+
+
+@solver('surds_expand_single', problem=True)
+def _surds_expand_single(_p=None, _records=None, k=None, r=None, a=None, sign=None):
+    """k sqrt(r) (sqrt(r) +/- a) = k r +/- k a sqrt(r), checked against the 'const|coef|rad|sign' key."""
+    want = (int(k) * int(r), int(k) * int(a), int(r), '+' if sign == '+' else '-')
+    parts = str(_p.get('correct_answer_raw')).split('|')
+    if len(parts) != 4:
+        raise Cannot(f'cannot read the surd binomial key {parts!r}')
+    got = (int(parts[0]), int(parts[1]), int(parts[2]), parts[3])
+    if got != want:
+        return [Verdict(False, f'key {got} but the expansion is {want}')]
+    return [Verdict(True)]
+
+
+@solver('surds_multiply_coef')
+def _surds_multiply_coef(k1, r1, k2, r2):
+    return [Surd(int(k1) * int(k2), int(r1) * int(r2))]
+
+
+@solver('surds_rationalise_coef')
+def _surds_rationalise_coef(a, b, r):
+    # a / (b sqrt r) = (a / (b r)) sqrt r
+    k = fr(a) / (fr(b) * fr(r))
+    if k.denominator != 1:
+        raise Cannot('the result is not a whole multiple of the root')
+    return [Surd(int(k), int(r))]
+
+
+@solver('surds_match_simplified')
+def _surds_match_simplified(n):
+    def test(text):
+        m = re.fullmatch(r'\s*(\d*)\s*√\s*(\d+)\s*', text)
+        if not m:
+            return False
+        k = int(m.group(1) or 1)
+        return k * k * int(m.group(2)) == int(n)
+    return [Pick(test, f'the option equal to sqrt({n})')]
+
+
+@solver('surds_pythagoras')
+def _surds_pythagoras(a, b):
+    return [Surd(1, int(a) + int(b))]
+
+
+# ── Phase 3 batch A: decimals ──
+
+@solver('dec_round_error')
+def _dec_round_error(x, dp):
+    v = fr(x)
+    scaled = v * 10 ** int(dp)
+    rounded = Fraction(int(scaled + Fraction(1, 2)) if scaled >= 0 else -int(-scaled + Fraction(1, 2)), 10 ** int(dp))
+    return [abs(v - rounded)]
+
+
+# ── Phase 3 batch A: forming equations from shapes ──
+
+@solver('alg_form_perimeter')
+def _alg_form_perimeter(kind, a, b, p):
+    a, b, p = fr(a), fr(b), fr(p)
+    if kind == 'rect':          # 2((x + a) + b) = p
+        return [p / 2 - a - b]
+    if kind == 'tri':           # x + (x + a) + (2x - b) = p
+        x = (p - a + b) / 4
+        sides = sorted([x, x + a, 2 * x - b])
+        if sides[0] <= 0 or sides[2] >= sides[0] + sides[1]:        # review: the sides must make a triangle
+            return [Verdict(False, f'sides {sides} do not make a triangle')]
+        return [x]
+    raise Cannot(f'unknown shape {kind!r}')
+
+
+@solver('alg_angles')
+def _alg_angles(c1, a, c2, b, c3, total):
+    # (c1 x + a) + (c2 x - b) + c3 x = total
+    return [(fr(total) - fr(a) + fr(b)) / (fr(c1) + fr(c2) + fr(c3))]
+
+
+@solver('alg_form_area')
+def _alg_form_area(a, b, area):
+    # (x + a)(x - b) = area, x > b so the width is positive: x^2 + (a - b)x - (ab + area) = 0
+    a, b, area = fr(a), fr(b), fr(area)
+    bq, cq = a - b, -(a * b + area)
+    disc = bq * bq - 4 * cq
+    root = sqrt_exact(disc)
+    return [(-bq + root) / 2]
+
+
+# ── Phase 3 batch A: number and ratio ──
+
+@solver('num_reciprocal')
+def _num_reciprocal(n, d):
+    return [fr(d) / fr(n)]
+
+
+@solver('num_counting')
+def _num_counting(n1, n2, n3):
+    return [int(n1) * int(n2) * int(n3)]
+
+
+@solver('ratio_combine')
+def _ratio_combine(a, b, c, d):
+    a, b, c, d = int(a), int(b), int(c), int(d)
+    lcm = math.lcm(b, c)
+    parts = [a * (lcm // b), lcm, d * (lcm // c)]
+    g = math.gcd(math.gcd(parts[0], parts[1]), parts[2])
+    return [p // g for p in parts]
+
+
+@solver('ratio_from_difference')
+def _ratio_from_difference(a, b, diff, ask):
+    part = fr(diff) / (fr(b) - fr(a))
+    if ask == 'total':
+        return [(fr(a) + fr(b)) * part]
+    if ask == 'smaller':
+        return [fr(a) * part]
+    raise Cannot(f'unknown ask {ask!r}')
+
+
+@solver('prop_square')
+def _prop_square(x1, y1, x2):
+    return [fr(y1) / fr(x1) ** 2 * fr(x2) ** 2]
+
+
+@solver('bidmas_root_mix')
+def _bidmas_root_mix(kind, r, b, c, p, a):
+    root = math.isqrt(int(r))
+    if int(kind) == 0:
+        return [root + int(b) * int(c) ** int(p)]
+    return [int(a) - root * int(c)]
+
+
+@solver('bidmas_sub_neg')
+def _bidmas_sub_neg(k1, a, k2, b):
+    return [int(k1) * int(a) * int(a) - int(k2) * int(b)]

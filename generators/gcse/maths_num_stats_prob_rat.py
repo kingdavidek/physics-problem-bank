@@ -1,5 +1,7 @@
 from generators.shared.rounding import round_half_up as round, fmt_dp
 from generators.shared.verify_hook import record, verifies
+from generators.shared import option_notes as _notes
+from generators.shared.option_fillers import fillers as _option_fillers
 import random
 import re
 from fractions import Fraction
@@ -7,7 +9,9 @@ import math
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
 from generators.shared.utils import (
-    make_problem, problem_from_choice_output, signed_term, bracket_neg, grid_estimate_tolerance,
+    money_num,
+    make_problem, problem_from_choice_output, problem_extra_from_graded_answer, signed_term, bracket_neg,
+    grid_estimate_tolerance,
 )
 from models import svg_kit
 from generators.shared.variant_utils import (
@@ -99,7 +103,24 @@ def _number_sf_value(n, sf):
     return rounded
 
 
+def _pad_options(choices, correct):
+    """Top ``choices`` (the key first) up to four options with fillers that look like the key: the same form, units
+    and precision, never equal to an option, never 0 or negative beside a positive key (docs/GCSE_MATHS_VERIFICATION.md).
+    Answers with no number to move (words) fall back to small whole numbers."""
+    if len(choices) < 4:
+        choices += _option_fillers(str(correct), choices, 4 - len(choices))
+    for cand in ("1", "2", "3", "4", "5"):
+        if len(choices) >= 4:
+            break
+        if cand not in choices:
+            choices.append(cand)
+
+
 def _number_mcq_options(correct, distractors):
+    """Four shuffled options. A distractor may be a ``(value, note_id)`` pair (docs/GCSE_MATHS_HINTS.md section 4); the
+    options and the random calls are the same as for the plain value."""
+    tagged = distractors
+    distractors = _notes.split(tagged)[0]
     correct_s = str(correct)
     choices = [correct_s]
     seen = {correct_s}
@@ -108,19 +129,13 @@ def _number_mcq_options(correct, distractors):
         if ds not in seen:
             choices.append(ds)
             seen.add(ds)
-    pad_pool = ["0", "1", "1/2", "10", "100", "0.1", "-1"]
-    i = 0
-    while len(choices) < 4:
-        cand = pad_pool[i % len(pad_pool)]
-        i += 1
-        if cand not in seen:
-            choices.append(cand)
-            seen.add(cand)
+    _pad_options(choices, correct_s)
     choices = choices[:4]
     random.shuffle(choices)
     letters = ['A', 'B', 'C', 'D']
     options = [f"{letters[i]}  {choices[i]}" for i in range(4)]
     correct_letter = letters[choices.index(correct_s)]
+    _notes.attach(options, tagged, str, correct_s)
     return options, correct_letter
 
 
@@ -469,8 +484,8 @@ def _number_inter_reverse_percentage_decrease():
     pct = random.randint(5, 40)
     original = random.randint(20, 350) * 10
     final = round(original * (1 - pct / 100), 2)
-    q = rf"A price after a {pct}% decrease is £{_number_fmt(final)}. Find the original price."
-    s = rf"After a {pct}% decrease, the multiplier is {_number_fmt(round(1 - pct/100, 6))}. Original = {_number_fmt(final)} ÷ {_number_fmt(round(1 - pct/100, 6))} = <strong>£{_number_fmt(original)}</strong>."
+    q = rf"A price after a {pct}% decrease is £{money_num(final)}. Find the original price."
+    s = rf"After a {pct}% decrease, the multiplier is {_number_fmt(round(1 - pct/100, 6))}. Original = {money_num(final)} ÷ {_number_fmt(round(1 - pct/100, 6))} = <strong>£{money_num(original)}</strong>."
     hint = "The final amount is less than 100% of the original. Divide by the decimal multiplier."
     record('num_reverse_pct', final=final, pct=pct, sign='down')
     return q, s, hint, 3, original
@@ -605,12 +620,12 @@ def _number_inter_vat_word_problem():
     vat = 20
     total = round(price * 1.2, 2)
     q = (
-        rf"A shop quotes £{price} excluding VAT at {vat}%. "
+        rf"A shop quotes £{money_num(price)} excluding VAT at {vat}%. "
         rf"What is the price including VAT?"
     )
     s = (
         rf"Multiplier = 1 + {vat}/100 = 1.2<br>"
-        rf"£{price} × 1.2 = <strong>£{total}</strong>"
+        rf"£{money_num(price)} × 1.2 = <strong>£{money_num(total)}</strong>"
     )
     hint = "Including VAT means multiply by 1 + VAT rate as a decimal."
     record('num_vat_inclusive', price=price, vat=vat)
@@ -785,6 +800,7 @@ def _number_diff_recurring_decimal_fraction():
         'type': 'fraction',
         'value': frac,
         'format_hint': 'Enter a fraction in simplest form (e.g. 1/3)',
+        'form': 'simplified',           # 24/27 for 8/9 is refused (whole-change review C2)
     }
 
 
@@ -954,7 +970,7 @@ def number_mcq(mcq_type=None):
         hundreds = (n // 100) % 10
         correct = hundreds * 100
         q = rf"What is the value of the hundreds digit in {n}?"
-        options, correct_letter = _number_mcq_options(correct, [hundreds, hundreds * 10, hundreds * 1000])
+        options, correct_letter = _number_mcq_options(correct, [(hundreds, 'mcq.digit_not_value'), (hundreds * 10, 'mcq.wrong_column'), (hundreds * 1000, 'mcq.wrong_column')])
         record('num_digit_value', derived=('column',), n=n, column=100)
         hint = "The hundreds digit is worth digit × 100."
 
@@ -964,7 +980,7 @@ def number_mcq(mcq_type=None):
         q = rf"Round {n} to 1 decimal place."
         # int(n) is the "dropped the decimals" distractor; it equals the key when the key is a whole number (7.0).
         dropped = int(n) if int(n) != correct else round(n - 0.1, 1)
-        options, correct_letter = _number_mcq_options(correct, [round(n, 2), dropped, round(n + 0.1, 1)])
+        options, correct_letter = _number_mcq_options(correct, [(round(n, 2), 'gen.accuracy'), ((dropped, 'mcq.round_dropped') if dropped == int(n) else dropped), round(n + 0.1, 1)])
         record('num_round_dp', n=n, dp=1)
         hint = "Keep one digit after the decimal point and look at the next digit."
 
@@ -972,7 +988,7 @@ def number_mcq(mcq_type=None):
         n = random.randint(1200, 9800)
         correct = _number_sf_value(n, 2)
         q = rf"Round {n} to 2 significant figures."
-        options, correct_letter = _number_mcq_options(correct, [round(n, -1), round(n, -3), int(str(n)[:2])])
+        options, correct_letter = _number_mcq_options(correct, [(round(n, -1), 'gen.accuracy'), (round(n, -3), 'mcq.round_place'), (int(str(n)[:2]), 'mcq.digits_cut')])
         record('num_round_sf', n=n, sf=2)
         hint = "Start counting at the first non-zero digit."
 
@@ -981,7 +997,7 @@ def number_mcq(mcq_type=None):
         amount = random.choice([80, 120, 160, 240])
         correct = _number_fmt(amount * pct / 100)
         q = rf"What is {pct}% of {amount}?"
-        options, correct_letter = _number_mcq_options(correct, [_number_fmt(amount + pct), _number_fmt(amount - pct), _number_fmt(pct / amount * 100)])
+        options, correct_letter = _number_mcq_options(correct, [(_number_fmt(amount + pct), 'mcq.pct_as_amount'), (_number_fmt(amount - pct), 'mcq.pct_as_amount'), (_number_fmt(pct / amount * 100), 'mcq.pct_of_inverted')])
         record('num_pct_of', pct=pct, amount=amount)
         hint = "Percentage means out of 100."
 
@@ -990,7 +1006,7 @@ def number_mcq(mcq_type=None):
         pct = random.choice([10, 15, 20])
         correct = _number_fmt(amount * (1 + pct/100))
         q = rf"Increase {amount} by {pct}%."
-        options, correct_letter = _number_mcq_options(correct, [_number_fmt(amount * pct/100), _number_fmt(amount * (1 - pct/100)), _number_fmt(amount + pct)])
+        options, correct_letter = _number_mcq_options(correct, [(_number_fmt(amount * pct/100), 'pct.change_not_applied'), (_number_fmt(amount * (1 - pct/100)), 'pct.opposite'), (_number_fmt(amount + pct), 'mcq.pct_as_amount')])
         record('num_pct_change', amount=amount, pct=pct, sign='up')
         hint = "Use the multiplier 1 + percentage/100."
 
@@ -999,7 +1015,7 @@ def number_mcq(mcq_type=None):
         pct = random.choice([10, 15, 20])
         correct = _number_fmt(amount * (1 - pct/100))
         q = rf"Decrease {amount} by {pct}%."
-        options, correct_letter = _number_mcq_options(correct, [_number_fmt(amount * pct/100), _number_fmt(amount * (1 + pct/100)), _number_fmt(amount - pct)])
+        options, correct_letter = _number_mcq_options(correct, [(_number_fmt(amount * pct/100), 'pct.change_not_applied'), (_number_fmt(amount * (1 + pct/100)), 'pct.opposite'), (_number_fmt(amount - pct), 'mcq.pct_as_amount')])
         record('num_pct_change', amount=amount, pct=pct, sign='down')
         hint = "Use the multiplier 1 - percentage/100."
 
@@ -1009,7 +1025,7 @@ def number_mcq(mcq_type=None):
         ordinary = coeff * (10 ** power)
         q = rf"Write {ordinary} in standard form."
         correct = rf"{coeff} × 10^{power}"
-        options, correct_letter = _number_mcq_options(correct, [rf"{coeff} × 10^{power-1}", rf"{coeff*10} × 10^{power-1}", rf"0.{coeff} × 10^{power+1}"])
+        options, correct_letter = _number_mcq_options(correct, [(rf"{coeff} × 10^{power-1}", 'mcq.sf_power_off'), (rf"{coeff*10} × 10^{power-1}", 'mcq.sf_front_number'), (rf"0.{coeff} × 10^{power+1}", 'mcq.sf_front_number')])
         record('num_to_standard_form', n=_number_fmt(ordinary, 7))
         hint = "Standard form has a front number from 1 up to but not including 10."
 
@@ -1018,7 +1034,7 @@ def number_mcq(mcq_type=None):
         power = random.randint(2, 5)
         correct = _number_fmt(coeff * (10 ** -power), 7)
         q = rf"Write \({coeff} \times 10^{{-{power}}}\) as an ordinary number."
-        options, correct_letter = _number_mcq_options(correct, [_number_fmt(coeff * 10**power), _number_fmt(coeff * 10**-(power-1), 7), _number_fmt(coeff / power, 4)])
+        options, correct_letter = _number_mcq_options(correct, [(_number_fmt(coeff * 10**power), 'idx.power_sign_ignored'), (_number_fmt(coeff * 10**-(power-1), 7), 'gen.pow10'), (_number_fmt(coeff / power, 4), 'mcq.power_as_divisor')])
         record('num_from_standard_form', coef=coeff, power=-power)
         hint = "A negative power moves the decimal point left."
 
@@ -1028,7 +1044,7 @@ def number_mcq(mcq_type=None):
         b = random.randint(2, 5)
         correct = rf"{base}^{a+b}"
         q = rf"Simplify \({base}^{a} \times {base}^{b}\)."
-        options, correct_letter = _number_mcq_options(correct, [rf"{base}^{a*b}", rf"{base}^{a-b}", rf"{base*base}^{a+b}"])
+        options, correct_letter = _number_mcq_options(correct, [(rf"{base}^{a*b}", 'mcq.index_mult'), (rf"{base}^{a-b}", 'mcq.index_mult'), (rf"{base*base}^{a+b}", 'mcq.index_base_changed')])
         record('num_index_mult', base=base, a=a, b=b)
         hint = "When multiplying powers with the same base, add indices."
 
@@ -1038,7 +1054,7 @@ def number_mcq(mcq_type=None):
         b = random.randint(1, 4)
         correct = rf"{base}^{a-b}"
         q = rf"Simplify \({base}^{a} \div {base}^{b}\)."
-        options, correct_letter = _number_mcq_options(correct, [rf"{base}^{a+b}", rf"{base}^{a*b}", rf"{base-base}^{a-b}"])
+        options, correct_letter = _number_mcq_options(correct, [(rf"{base}^{a+b}", 'mcq.index_div'), (rf"{base}^{a*b}", 'mcq.index_div'), rf"{base//base}^{a-b}"])      # dividing the bases gives 1, not 0
         record('num_index_div', base=base, a=a, b=b)
         hint = "When dividing powers with the same base, subtract indices."
 
@@ -1046,7 +1062,7 @@ def number_mcq(mcq_type=None):
         n = random.randint(20, 90)
         correct = f"{n-0.5} ≤ x < {n+0.5}"
         q = rf"A number x is rounded to {n} to the nearest whole number. What is the error interval?"
-        options, correct_letter = _number_mcq_options(correct, [f"{n-1} ≤ x < {n+1}", f"{n} ≤ x < {n+1}", f"{n-0.05} ≤ x < {n+0.05}"])
+        options, correct_letter = _number_mcq_options(correct, [(f"{n-1} ≤ x < {n+1}", 'mcq.bounds_full_unit'), (f"{n} ≤ x < {n+1}", 'mcq.bounds_truncated'), (f"{n-0.05} ≤ x < {n+0.05}", 'mcq.bounds_wrong_unit')])
         record('num_error_interval_text', derived=('unit',), value=n, unit=1)
         hint = "Nearest whole number means half a unit below and above."
 
@@ -1063,7 +1079,7 @@ def number_mcq(mcq_type=None):
             power += 1
         correct = rf"{_number_fmt(coeff)} × 10^{power}"
         q = rf"Calculate \(({a} \times 10^{p})({b} \times 10^{qpow})\) in standard form."
-        options, correct_letter = _number_mcq_options(correct, [rf"{raw} × 10^{p+qpow}", rf"{_number_fmt(coeff)} × 10^{p*qpow}", rf"{_number_fmt(coeff)} × 10^{power-1}"])
+        options, correct_letter = _number_mcq_options(correct, [(rf"{raw} × 10^{p+qpow}", 'mcq.sf_front_number'), (rf"{_number_fmt(coeff)} × 10^{p*qpow}", 'mcq.index_mult'), (rf"{_number_fmt(coeff)} × 10^{power-1}", 'mcq.sf_power_off')])
         record('num_sf_product', a=a, p=p, b=b, q=qpow)
         hint = "Multiply coefficients and add powers, then adjust to standard form."
 
@@ -1087,7 +1103,7 @@ def number_mcq(mcq_type=None):
         power = random.choice([1, 2, 3])
         correct = rf"1/{base**power}"
         q = rf"Evaluate \({base}^{{-{power}}}\)."
-        options, correct_letter = _number_mcq_options(correct, [base**power, -base**power, rf"1/{base*power}"])
+        options, correct_letter = _number_mcq_options(correct, [(base**power, 'idx.power_sign_ignored'), (-base**power, 'idx.negative_power'), (rf"1/{base*power}", 'mcq.base_times_power')])
         record('num_neg_index', base=base, power=power)
         hint = "A negative index means reciprocal."
 
@@ -1097,7 +1113,7 @@ def number_mcq(mcq_type=None):
         error = abs(estimate - actual)
         correct = f"{fmt_dp((error/actual*100), 1)}%"
         q = rf"An estimate is {estimate} and the actual value is {actual}. What is the percentage error to 1 decimal place?"
-        options, correct_letter = _number_mcq_options(correct, [f"{fmt_dp((error/estimate*100), 1)}%", f"{error}%", f"{fmt_dp((actual/estimate*100), 1)}%"])
+        options, correct_letter = _number_mcq_options(correct, [(f"{fmt_dp((error/estimate*100), 1)}%", 'pct.error_wrong_base'), (f"{fmt_dp(error, 1)}%", 'pct.error_not_compared'), (f"{fmt_dp((actual/estimate*100), 1)}%", 'mcq.pct_error_ratio')])      # every option to 1 d.p., as the question asks
         record('num_pct_error', estimate=estimate, actual=actual)
         hint = "Percentage error = absolute error ÷ actual value × 100."
 
@@ -1105,7 +1121,7 @@ def number_mcq(mcq_type=None):
         a, b, hcf = random.choice([(48, 72, 24), (60, 84, 12), (90, 150, 30)])
         correct = hcf
         q = rf"What is the HCF of {a} and {b}?"
-        options, correct_letter = _number_mcq_options(correct, [a // hcf, hcf * 2, a * b // hcf])
+        options, correct_letter = _number_mcq_options(correct, [(a // hcf, 'mcq.hcf_cofactor' if b % (a // hcf) else 'mcq.hcf_not_highest'), hcf * 2, (a * b // hcf, 'mcq.hcf_for_lcm')])
         record('num_hcf', a=a, b=b)
         hint = "HCF is the largest number that divides both numbers exactly."
 
@@ -1115,7 +1131,7 @@ def number_mcq(mcq_type=None):
         q = rf"Write {n} in standard form."
         options, correct_letter = _number_mcq_options(
             correct,
-            [rf"{coeff} × 10^{power + 1}", rf"{coeff * 10} × 10^{power - 1}", rf"{coeff / 10} × 10^{power + 1}"],
+            [(rf"{coeff} × 10^{power + 1}", 'mcq.sf_power_off'), (rf"{_number_fmt(coeff * 10)} × 10^{power - 1}", 'mcq.sf_front_number'), (rf"{_number_fmt(round(coeff / 10, 4))} × 10^{power + 1}", 'mcq.sf_front_number')],     # "52", not the float "52.0"
         )
         record('num_to_standard_form', n=n)
         hint = "Move the decimal point until the front number is between 1 and 10."
@@ -1124,7 +1140,7 @@ def number_mcq(mcq_type=None):
         principal = random.choice([500, 800, 1000])
         rate = random.choice([3, 4, 5])
         years = 2
-        correct = _number_fmt(principal * ((1 + rate / 100) ** years), 2)
+        correct = fmt_dp(principal * ((1 + rate / 100) ** years), 2)         # money to the penny in every option (865.28, 864.00)
         q = (
             rf"£{principal} is invested at {rate}% compound interest per year for {years} years. "
             rf"What is the final amount to the nearest penny?"
@@ -1132,9 +1148,9 @@ def number_mcq(mcq_type=None):
         options, correct_letter = _number_mcq_options(
             correct,
             [
-                _number_fmt(principal * (1 + rate / 100 * years), 2),
-                _number_fmt(principal * (1 + rate / 100), 2),
-                _number_fmt(principal * ((1 + rate / 100) ** (years + 1)), 2),
+                (fmt_dp(principal * (1 + rate / 100 * years), 2), 'pct.same_each_year'),
+                (fmt_dp(principal * (1 + rate / 100), 2), 'pct.years_missed'),
+                (fmt_dp(principal * ((1 + rate / 100) ** (years + 1)), 2), 'pct.years_missed'),
             ],
         )
         record('num_compound', principal=principal, rate=rate, years=years, sign='up')
@@ -1250,6 +1266,7 @@ def _number_problem_from_output(out, difficulty):
                         'format_hint',
                         'Enter a fraction (e.g. 3/4)',
                     ),
+                    **({'answer_form': raw['form']} if raw.get('form') else {}),
                 )
         if isinstance(raw, str):
             fraction_hint = 'Enter a number or fraction (e.g. 1/16)'
@@ -1272,11 +1289,26 @@ def _number_problem_from_output(out, difficulty):
 
 # ---------- VARIANTS FUNCTION ----------
 
+# Phase 2 (2026-10-27): each band serves its own list of the 18 number_mcq types (slot i binds to list[i % len]),
+# so every type is reachable and the bands differ.  Placed by reading each stem: 1 value of a digit, 2 and 3 rounding,
+# 4 to 6 percentages of an amount, 16 HCF are Foundation; 5 and 6 (percentage change) also serve the middle band with
+# 7 to 10 (standard form, indices) and 17 (small numbers in standard form); 11 error interval, 12 standard form
+# product, 13 fractional index, 14 negative index and 15 percentage error are Higher; 18 compound interest serves the
+# top two bands.  Lists shorter than 7 are cycled.
+_NUMBER_MCQ_BANDS = {
+    'foundational': [1, 2, 3, 4, 5, 6, 16],
+    'intermediate': [5, 7, 8, 9, 10, 17, 18],
+    'difficult': [11, 12, 13, 14, 15, 18],
+}
+
+
 def gcse_number_variants(difficulty, mode):
     if mode == 'mcq':
         return mcq_variants_from_fn(
-            number_mcq, 'number', difficulty, slot_param='mcq_type'
+            number_mcq, 'number', difficulty, slot_param='mcq_type',
+            slot_values=_NUMBER_MCQ_BANDS.get(difficulty),
         )
+    from generators.gcse import maths_variety_a as va     # Phase 3 batch A: reciprocals and the counting product rule
 
     if difficulty == 'foundational':
         pool = [
@@ -1295,6 +1327,7 @@ def gcse_number_variants(difficulty, mode):
             _number_found_estimate_simple,
             _number_found_standard_form_large,
             _number_found_indices_multiply,
+            va.gcse_number_reciprocal,
         ]
     elif difficulty == 'intermediate':
         pool = [
@@ -1318,6 +1351,7 @@ def gcse_number_variants(difficulty, mode):
             _number_inter_vat_word_problem,
             _number_inter_calculate_to_sf,
             _number_inter_share_ratio,
+            va.gcse_number_counting_product,
         ]
     elif difficulty == 'difficult':
         pool = [
@@ -1359,6 +1393,7 @@ def gcse_number_variants(difficulty, mode):
             _number_found_estimate_simple,
             _number_found_standard_form_large,
             _number_found_indices_multiply,
+            va.gcse_number_reciprocal,
         ], 4)
         inter = random.sample([
             _number_inter_standard_form_small,
@@ -1381,6 +1416,7 @@ def gcse_number_variants(difficulty, mode):
             _number_inter_vat_word_problem,
             _number_inter_calculate_to_sf,
             _number_inter_share_ratio,
+            va.gcse_number_counting_product,
         ], 4)
         diff = random.sample([
             _number_diff_compound_interest,
@@ -1504,6 +1540,8 @@ def _mcq_distinct_distractors(correct, distractors, fillers):
 
 
 def _mcq_options(correct, distractors):
+    tagged = distractors
+    distractors = _notes.split(tagged)[0]
     correct = str(correct)
     choices = [correct]
     seen = {correct}
@@ -1512,18 +1550,13 @@ def _mcq_options(correct, distractors):
         if d not in seen:
             choices.append(d)
             seen.add(d)
-    pad_pool = ["0", "1", "1/2", "10", "100", "0.1", "-1"]
-    i = 0
-    while len(choices) < 4:
-        cand = pad_pool[i % len(pad_pool)]
-        i += 1
-        if cand not in seen:
-            choices.append(cand)
-            seen.add(cand)
+    _pad_options(choices, correct)
     choices = choices[:4]
     random.shuffle(choices)
     letters = ['A', 'B', 'C', 'D']
-    return [f"{letters[i]}  {choices[i]}" for i in range(4)], letters[choices.index(correct)]
+    options = [f"{letters[i]}  {choices[i]}" for i in range(4)]
+    _notes.attach(options, tagged, str, correct)
+    return options, letters[choices.index(correct)]
 
 # ============================================================
 # RATIO AND PROPORTION
@@ -1551,12 +1584,13 @@ def _ratio_random_two_part(lo=2, hi=9):
     return a, b
 
 
-def _ratio_fraction_answer(num, den):
+def _ratio_fraction_answer(num, den, simplest=False):
+    """A fraction key; ``simplest`` where the question asks for it, so 6/9 for 2/3 is refused (whole-change review C2)."""
     g = math.gcd(int(num), int(den))
     n, d = int(num) // g, int(den) // g
     if d == 1:
         return n
-    return {'type': 'fraction', 'value': f'{n}/{d}'}
+    return {'type': 'fraction', 'value': f'{n}/{d}', **({'form': 'simplified'} if simplest else {})}
 
 
 def _ratio_simplify():
@@ -1567,7 +1601,7 @@ def _ratio_simplify():
     q = rf"Simplify the ratio {x}:{y}."
     s = rf"Divide both parts by the highest common factor, {g}: {x} ÷ {g} = {x//g} and {y} ÷ {g} = {y//g}. Answer: <strong>{x//g}:{y//g}</strong>."
     record('ratio_simplify', a=x, b=y)
-    return q, s, "Divide every part by the same highest common factor.", 1, _ratio_answer(x // g, y // g)
+    return q, s, "Divide every part by the same highest common factor.", 1, _ratio_answer(x // g, y // g, simplest=True)
 
 
 def _ratio_equivalent():
@@ -1607,7 +1641,7 @@ def _ratio_fraction_of_total():
     a, b = random.randint(2, 8), random.randint(2, 8)
     total_parts = a + b
     g = math.gcd(a, total_parts)
-    frac = _ratio_fraction_answer(a, total_parts)
+    frac = _ratio_fraction_answer(a, total_parts, simplest=True)
     q = (
         rf"The ratio of boys to girls in a class is {a}:{b}. "
         rf"What fraction of the students are boys? Give your answer in simplest form."
@@ -1639,7 +1673,8 @@ def _ratio_three_part_as_fraction():
         rf"<strong>{num // g}/{total_parts // g}</strong>."
     )
     record('ratio_part_fraction', derived=('which',), parts=(a, b, c), which=idx)
-    return q, s, "Add all ratio parts for the denominator, then simplify.", 2, _ratio_fraction_answer(num, total_parts)
+    return (q, s, "Add all ratio parts for the denominator, then simplify.", 2,
+            _ratio_fraction_answer(num, total_parts, simplest=True))
 
 
 def _ratio_find_missing_part():
@@ -1657,6 +1692,8 @@ def _ratio_unitary_cost():
     items = random.randint(3, 12)
     cost_each = round(random.uniform(0.75, 5.50), 2)
     new_items = random.randint(5, 20)
+    while new_items == items:                              # given and asked counts must differ
+        new_items = random.randint(5, 20)
     total = items * cost_each
     ans = new_items * cost_each
     q = rf"{items} notebooks cost £{fmt_dp(total, 2)}. How much do {new_items} notebooks cost?"
@@ -1704,6 +1741,8 @@ def _ratio_inverse_workers():
     workers1 = random.randint(3, 8)
     hours1 = random.randint(4, 12)
     workers2 = random.randint(2, 10)
+    while workers2 == workers1:                            # asked workers must differ from given
+        workers2 = random.randint(2, 10)
     work = workers1 * hours1
     ans = work / workers2
     q = rf"{workers1} workers complete a job in {hours1} hours. Assuming the same rate, how long would {workers2} workers take?{_dp_note(ans)}"
@@ -1726,6 +1765,8 @@ def _ratio_inverse_formula():
     y1 = random.randint(24 // x1 + 1, 120 // x1)
     k = x1 * y1
     x2 = random.choice([2, 3, 4, 5, 6, 8, 10])
+    while x2 == x1:                                        # asked x must differ from given x
+        x2 = random.choice([2, 3, 4, 5, 6, 8, 10])
     q = rf"y is inversely proportional to x. When x = {x1}, y = {y1}. Find y when x = {x2}.{_dp_note(k / x2)}"
     s = rf"For inverse proportion, y = k/x. k = xy = {x1}×{y1} = {k}. When x = {x2}, y = {k} ÷ {x2} = <strong>{_fmt_num(k/x2)}</strong>."
     record('prop_inverse', a=x1, b=y1, c=x2)
@@ -1740,7 +1781,8 @@ def _ratio_convert_units():
     g = math.gcd(left_cm, b)
     s = rf"Convert to the same units: {a} m = {left_cm} cm. Ratio = {left_cm}:{b}. Divide by {g}: <strong>{left_cm//g}:{b//g}</strong>."
     record('ratio_units', a_m=a, b_cm=b)
-    return q, s, "Convert both quantities to the same unit before simplifying.", 2, _ratio_answer(left_cm // g, b // g)
+    return (q, s, "Convert both quantities to the same unit before simplifying.", 2,
+            _ratio_answer(left_cm // g, b // g, simplest=True))
 
 
 def _ratio_density_style():
@@ -1766,11 +1808,13 @@ def _ratio_raw(a, b):
     return f"{ai // g}|{bi // g}"
 
 
-def _ratio_answer(a, b, exact=False):
+def _ratio_answer(a, b, exact=False, simplest=False):
+    """A ratio key; ``simplest`` for "Simplify the ratio": 45:55 typed back for 9:11 is refused (whole-change review C3)."""
     return {
         'type': 'ratio_exact' if exact else 'ratio',
         'a': int(a),
         'b': int(b),
+        **({'form': 'simplified'} if simplest else {}),
     }
 
 
@@ -1998,6 +2042,8 @@ def _ratio_diff_plumbers_job():
         w1 = random.randint(3, 7)
         h1 = random.randint(5, 14)
         w2 = random.randint(4, 12)
+        if w2 == w1:                                       # asked workers must differ from given
+            continue
         work = w1 * h1
         valid_h3 = [d for d in range(3, 13) if work % d == 0 and d != h1]
         if valid_h3:
@@ -2139,7 +2185,7 @@ def ratio_proportion_mcq(mcq_type=None):
         a, b = a // g, b // g          # a:b is now the simplest form of (a*k):(b*k)
         correct = f"{a}:{b}"
         q = rf"Simplify the ratio {a*k}:{b*k}."
-        distractors = [f"{a*k}:{b*k}", f"{a*k}:{b}", f"{a}:{b*k}"]
+        distractors = [(f"{a*k}:{b*k}", 'mcq.ratio_unsimplified'), (f"{a*k}:{b}", 'mcq.ratio_one_side'), (f"{a}:{b*k}", 'mcq.ratio_one_side')]
         options, correct_letter = _mcq_options(correct, distractors)
         record('ratio_simplify', a=a * k, b=b * k)
         hint = "Divide both numbers by their highest common factor."
@@ -2152,7 +2198,7 @@ def ratio_proportion_mcq(mcq_type=None):
         total = (a+b)*unit
         correct = f"£{max(a, b)*unit}"
         q = rf"Share £{total} in the ratio {a}:{b}. How much is the larger share?"
-        distractors = [f"£{min(a, b)*unit}", f"£{unit}", f"£{total//2}"]
+        distractors = [(f"£{min(a, b)*unit}", 'mcq.ratio_smaller_share'), (f"£{unit}", 'mcq.ratio_one_part'), ((f"£{total//2}", 'mcq.ratio_equal_split') if total % 2 == 0 else f"£{total//2}")]
         options, correct_letter = _mcq_options(correct, distractors)
         record('ratio_larger_share', total=total, parts=(a, b))
         hint = "Find one part first, then multiply."
@@ -2161,11 +2207,13 @@ def ratio_proportion_mcq(mcq_type=None):
         items = random.randint(3,8)
         price = round(random.uniform(1.5,4.5),2)
         new_items = random.randint(5,12)
+        while new_items == items:                          # given and asked counts must differ
+            new_items = random.randint(5,12)
         total = items*price
         ans = new_items*price
         correct = f"£{fmt_dp(ans, 2)}"
         q = rf"{items} pens cost £{fmt_dp(total, 2)}. What do {new_items} pens cost?"
-        distractors = [f"£{fmt_dp(total, 2)}", f"£{fmt_dp(price, 2)}", f"£{fmt_dp(total+ans, 2)}"]
+        distractors = [(f"£{fmt_dp(total, 2)}", 'mcq.unitary_given_total'), (f"£{fmt_dp(price, 2)}", 'ratio.unit_only'), f"£{fmt_dp(total+ans, 2)}"]
         options, correct_letter = _mcq_options(correct, distractors)
         record('ratio_unitary', n1=items, total=round(total, 2), n2=new_items)
         hint = "Find the price of one pen first."
@@ -2175,8 +2223,10 @@ def ratio_proportion_mcq(mcq_type=None):
         cm = random.randint(3,10)
         real_km = cm*scale/100000
         correct = f"{_fmt_num(real_km)} km"
-        q = rf"A map scale is 1:{scale}. A road is {cm} cm on the map. What is the real distance?"
-        distractors = [f"{_fmt_num(cm*scale/100)} m", f"{_fmt_num(cm*scale/1000)} km", f"{cm} km"]
+        q = rf"A map scale is 1:{scale}. A road is {cm} cm on the map. What is the real distance in km?"
+        # The question names the unit and no option is the key in another unit (300 m beside 0.3 km is also right).
+        # The metres are left as "km": the slip of stopping before the last conversion.
+        distractors = [f"{_fmt_num(cm*scale/100)} km", (f"{_fmt_num(cm*scale/1000)} km", 'mcq.map_km_factor'), (f"{cm} km", 'mcq.map_scale_ignored')]
         options, correct_letter = _mcq_options(correct, distractors)
         record('ratio_map_scale', scale=scale, cm=cm, to='km')
         hint = "Convert to real units: multiply by scale, then convert to km."
@@ -2200,9 +2250,14 @@ def ratio_proportion_mcq(mcq_type=None):
         original = random.randint(2,8)*5
         increase = random.choice([10,20,25])
         ans = original * (1+increase/100)
-        correct = f"£{_fmt_num(ans)}"
+        correct = f"£{money_num(ans)}"
         q = rf"A price of £{original} is increased by {increase}%. What is the new price?"
-        distractors = [f"£{original+increase}", f"£{fmt_dp(original*(increase/100), 0)}", f"£{fmt_dp(original*increase/100, 0)}"]
+        # review C11: the money is written with pence (£12.50, not £12.5), and the third option is the decrease slip
+        # (it used to repeat the second option, so the option builder filled with the answer plus 10p)
+        distractors = [(f"£{original+increase}", 'mcq.pct_as_amount'), f"£{money_num(original*increase/100)}",
+                       f"£{money_num(original*(1-increase/100))}"]
+        if original * increase % 100 == 0:                 # a note only when the change is a whole number of pounds
+            distractors[1] = (distractors[1], 'pct.change_not_applied')
         options, correct_letter = _mcq_options(correct, distractors)
         record('num_pct_change', amount=original, pct=increase, sign='up')
         hint = "Use the multiplier 1 + percentage/100."
@@ -2211,6 +2266,8 @@ def ratio_proportion_mcq(mcq_type=None):
         w1 = random.randint(4, 8)
         h1 = random.randint(6, 12)
         w2 = random.randint(6, 12)
+        while w2 == w1:                                    # asked workers must differ from given
+            w2 = random.randint(6, 12)
         work = w1 * h1
         correct = f"{_fmt_num(work / w2)} hours"
         q = (
@@ -2218,8 +2275,8 @@ def ratio_proportion_mcq(mcq_type=None):
             rf"how long would {w2} workers take?{_dp_note(work / w2)}"
         )
         distractors = [
-            f"{_fmt_num(h1 * w2 / w1)} hours",
-            f"{_fmt_num(work)} hours",
+            (f"{_fmt_num(h1 * w2 / w1)} hours", 'ratio.direct_for_inverse'),
+            (f"{_fmt_num(work)} hours", 'mcq.work_not_shared'),
             f"{_fmt_num(h1 * w1 / w2)} hours",
         ]
         options, correct_letter = _mcq_options(correct, distractors)
@@ -2236,10 +2293,44 @@ def ratio_proportion_mcq(mcq_type=None):
             rf"A charity splits £{total} between projects A, B and C in the ratio {a}:{b}:{c}. "
             rf"How much does project B receive?"
         )
-        distractors = [str(a * unit), str(c * unit), str(unit)]
+        distractors = [(str(a * unit), 'ratio.parts_swapped'), (str(c * unit), 'ratio.parts_swapped'), (str(unit), 'mcq.ratio_one_part')]
         options, correct_letter = _mcq_options(correct, distractors)
         record('ratio_share_one', derived=('which',), total=total, parts=(a, b, c), which=1)
         hint = "Add the ratio parts, find one part, then multiply by B's share."
+
+    elif mcq_type == 10:
+        a, b = random.choice([(1, 2), (1, 3), (2, 3), (3, 4), (2, 5), (3, 5), (1, 4), (3, 2), (5, 2), (4, 3)])   # coprime parts: the fraction is in lowest terms
+        colours = random.choice([("red", "blue"), ("black", "white"), ("green", "yellow")])
+        correct = f"{b}/{a + b}"
+        q = rf"Counters are {colours[0]} and {colours[1]} in the ratio {a}:{b}. What fraction of the counters are {colours[1]}?"
+        distractors = [f"{a}/{a + b}", (f"{b}/{a}", 'ratio.part_to_part'), f"1/{b}"]
+        options, correct_letter = _mcq_options(correct, distractors)
+        record('ratio_part_fraction', derived=('which',), parts=(a, b), which=1)
+        hint = "The total number of parts is a + b; the fraction is the part you want over the total."
+
+    elif mcq_type == 11:
+        a = random.randint(2, 5)
+        b = a + random.randint(1, 3)
+        k = random.randint(2, 6)
+        known = a * k
+        correct = str(b * k)
+        q = rf"The ratio of boys to girls in a class is {a}:{b}. There are {known} boys. How many girls are there?"
+        distractors = [(str(known), 'mcq.ratio_part_as_amount'), str(known + b - a), str(b * k + a)]
+        options, correct_letter = _mcq_options(correct, distractors)
+        record('ratio_find_missing', a=a, b=b, known=known)
+        hint = "Find the multiplier from the boys, then apply it to the girls' part."
+
+    elif mcq_type == 12:
+        n1 = random.choice([2, 4, 5])
+        n2 = random.choice([n for n in (6, 8, 10, 12, 15) if n != n1])
+        unit = random.choice([30, 40, 60, 75])
+        q1 = n1 * unit
+        correct = f"{n2 * unit} g"
+        q = rf"A recipe for {n1} people uses {q1} g of flour. How much flour is needed for {n2} people?"
+        distractors = [f"{q1 + n2 - n1} g", f"{unit} g", f"{_fmt_num(q1 * n1 / n2)} g"]
+        options, correct_letter = _mcq_options(correct, distractors)
+        record('prop_scale', q1=q1, n1=n1, n2=n2)
+        hint = "Find the flour for one person, then multiply by the new number of people."
 
     else:
         a, b = random.randint(3, 8), random.randint(3, 8)
@@ -2250,7 +2341,7 @@ def ratio_proportion_mcq(mcq_type=None):
             rf"In a club, the ratio of members who play tennis to members who play football is {a}:{b}. "
             rf"There are {total} members in total. How many play football?"
         )
-        distractors = [str(total * a // (a + b)), str(total // 2), str(b)]
+        distractors = [(str(total * a // (a + b)), 'ratio.parts_swapped'), ((str(total // 2), 'mcq.ratio_equal_split') if total % 2 == 0 else str(total // 2)), (str(b), 'mcq.ratio_part_as_amount')]
         options, correct_letter = _mcq_options(correct, distractors)
         record('ratio_share_one', derived=('which',), total=total, parts=(a, b), which=1)
         hint = "Football players are b parts out of (a + b) of the total."
@@ -2290,6 +2381,7 @@ def _ratio_problem_from_output(out, difficulty):
                                         else _ratio_raw(raw['a'], raw['b'])),
                     answer_type=raw_type,
                     answer_format_hint='Enter ratio as a:b (e.g. 3:5)',
+                    **({'answer_form': raw['form']} if raw.get('form') and raw_type == 'ratio' else {}),
                 )
             elif raw_type == 'number_pair':
                 val_a, val_b = raw['values']
@@ -2309,6 +2401,10 @@ def _ratio_problem_from_output(out, difficulty):
                         'answer_type': 'fraction',
                         'answer_format_hint': 'Enter a fraction (e.g. 3/8)',
                     }
+                    if raw.get('form'):
+                        extra['answer_form'] = raw['form']
+            else:
+                extra = problem_extra_from_graded_answer(raw)      # Phase 3 batch C1: an exact number payload
         elif isinstance(raw, (str, int, float)):
             format_hint = 'Enter a number or fraction'
             if isinstance(raw, str) and '/' in raw:
@@ -2323,14 +2419,38 @@ def _ratio_problem_from_output(out, difficulty):
     )
 
 
+# Phase 2 (2026-10-27): band lists over the 12 ratio_proportion_mcq types (10 fraction of the whole, 11 missing part, 12 recipe scaling were added so a ten-question quiz has enough kinds).  1 simplify, 2 larger share, 3 unitary
+# method and 5 best buy are Foundation; 4 map scale, 6 percentage of a price and 9 two-part sharing sit in every band
+# they fit (the ratio topic has no harder computed kinds until Phase 4); 7 inverse proportion (workers and hours) and
+# 8 three-part sharing are the top of the range.
+_RATIO_MCQ_BANDS = {
+    'foundational': [1, 2, 3, 5, 10, 12, 9],
+    'intermediate': [4, 6, 11, 8, 5, 9, 3],
+    'difficult': [7, 8, 4, 6, 11, 9],
+}
+
+
 def gcse_ratio_proportion_variants(difficulty, mode):
     if mode == 'mcq':
         return mcq_variants_from_fn(
-            ratio_proportion_mcq, 'ratio_proportion', difficulty, slot_param='mcq_type'
+            ratio_proportion_mcq, 'ratio_proportion', difficulty, slot_param='mcq_type',
+            slot_values=_RATIO_MCQ_BANDS.get(difficulty),
         )
+    from generators.gcse import maths_variety_a as va     # Phase 3 batch A: combined ratios, ratio from a difference, y proportional to x squared
+    from generators.gcse import maths_variety_c as vc     # Phase 3 batch C1: y proportional to x cubed, root x and 1/x squared, a changed ratio, a limiting ingredient
+    from generators.gcse import maths_variety_c2 as vc2   # Phase 3 batch C2: ages in two ratios, fractions of groups, p% more, three parts with a difference, algebraic parts, a ratio of expressions
+    # Phase 1 (2026-10-27): exact duplicates are out of the pools (register.RETIRED): inter 10 to 13, diff 05, 07, 08, 12, 13, 18.
+    # Phase 3 batch C1 (2026-10-28): the difficult tier's echoes of foundational kinds (diff 06, 09, 10, 11, 15) are retired.
+    # Phase 3 batch C2 (2026-10-28): the last five echoes (diff 01, 14, 16, 17, 19) are retired and the limiting-ingredient
+    # recipe, a grade 4 question, moves down to the intermediate tier (section 23 of the variety plan).
     found = [_ratio_found_01,_ratio_found_02,_ratio_found_03,_ratio_found_04,_ratio_found_05,_ratio_found_06,_ratio_found_07,_ratio_found_08,_ratio_found_09,_ratio_found_10,_ratio_found_11,_ratio_found_12,_ratio_found_13,_ratio_found_14,_ratio_found_15,_ratio_found_16]
-    inter = [_ratio_inter_01,_ratio_inter_02,_ratio_inter_03,_ratio_inter_04,_ratio_inter_05,_ratio_inter_06,_ratio_inter_07,_ratio_inter_08,_ratio_inter_09,_ratio_inter_10,_ratio_inter_11,_ratio_inter_12,_ratio_inter_13,_ratio_inter_14,_ratio_inter_15,_ratio_inter_16,_ratio_inter_17,_ratio_inter_18,_ratio_inter_19]
-    diff = [_ratio_diff_01,_ratio_diff_02,_ratio_diff_03,_ratio_diff_04,_ratio_diff_05,_ratio_diff_06,_ratio_diff_07,_ratio_diff_08,_ratio_diff_09,_ratio_diff_10,_ratio_diff_11,_ratio_diff_12,_ratio_diff_13,_ratio_diff_14,_ratio_diff_15,_ratio_diff_16,_ratio_diff_17,_ratio_diff_18,_ratio_diff_19]
+    inter = [_ratio_inter_01,_ratio_inter_02,_ratio_inter_03,_ratio_inter_04,_ratio_inter_05,_ratio_inter_06,_ratio_inter_07,_ratio_inter_08,_ratio_inter_09,_ratio_inter_14,_ratio_inter_15,_ratio_inter_16,_ratio_inter_17,_ratio_inter_18,_ratio_inter_19,va.gcse_ratio_combine,va.gcse_ratio_from_difference,
+             vc.gcse_ratio_recipe_limiting]
+    diff = [_ratio_diff_02,_ratio_diff_03,_ratio_diff_04,va.gcse_ratio_proportional_square,
+            vc.gcse_ratio_proportional_cube, vc.gcse_ratio_proportional_root, vc.gcse_ratio_inverse_square,
+            vc.gcse_ratio_change_after_adding,
+            vc2.gcse_ratio_ages, vc2.gcse_ratio_fraction_of_groups, vc2.gcse_ratio_percent_more,
+            vc2.gcse_ratio_three_part_difference, vc2.gcse_ratio_algebraic_parts, vc2.gcse_ratio_expression_ratio]
     pool = found if difficulty == 'foundational' else inter if difficulty == 'intermediate' else diff if difficulty == 'difficult' else random.sample(found,4)+random.sample(inter,4)+random.sample(diff,2)
     return select_tier_variants(pool)
 
@@ -2406,7 +2526,7 @@ def _prob_svg_tree(c1, c2, p1n, p1d, p2n, p2d,
                    p11n, p11d, p12n, p12d,
                    p21n, p21d, p22n, p22d,
                    title="Two-stage probability tree",
-                   show_probs=True, fill_in=False):
+                   show_probs=True, fill_in=False, show_outcomes=True):
     return str(
         svg_kit.prob_tree(
             c1, c2, p1n, p1d, p2n, p2d,
@@ -2415,6 +2535,7 @@ def _prob_svg_tree(c1, c2, p1n, p1d, p2n, p2d,
             title=title,
             show_probs=show_probs,
             fill_in=fill_in,
+            show_outcomes=show_outcomes,
         )
     )
 
@@ -2690,6 +2811,7 @@ def _prob_tree_replacement(blank=False, structure_only=False):
         title=f"With replacement \u2014 {c1} / {c2}",
         show_probs=not blank and not structure_only,
         fill_in=blank,
+        show_outcomes=False,        # the leaf (c1,c1) = p is the answer to "find P(two c1)"
     )
     ask = (f"Complete the tree diagram — type the probability on every branch — then find "
            f"P(two {c1})." if blank else f"Find P(two {c1}).")
@@ -2717,6 +2839,7 @@ def _prob_tree_no_replacement(blank=False, structure_only=False):
         title=f"Without replacement \u2014 {c1} / {c2}",
         show_probs=not blank and not structure_only,
         fill_in=blank,
+        show_outcomes=False,        # the leaf (c1,c1) = p is the answer to "find P(two c1)"
     )
     ask = (f"Complete the tree diagram — type the probability on every branch — then find "
            f"P(two {c1})." if blank else f"Find P(two {c1}).")
@@ -3070,6 +3193,7 @@ def _prob_tree_simple(blank=False):
         title="Two draws with replacement",
         show_probs=not blank,
         fill_in=blank,
+        show_outcomes=False,        # the leaf (c1,c1) = p is the answer to "find P(both c1)"
     )
     prob = _prob_frac(red * red, total * total)
     ask = ("Complete the tree diagram — type the probability on every branch — then use it to find "
@@ -3246,6 +3370,18 @@ _PROBABILITY_MCQ_GENERATORS = [
 ]
 
 
+# Phase 2 (2026-10-27): band lists over the 8 generators above (indices into _PROBABILITY_MCQ_GENERATORS; slot i binds
+# to list[i % len]).  Before, every band served the first seven and the independent-events product could never be
+# asked.  Placed by reading each stem: one die, one bag, the complement, two coins and relative frequency are
+# Foundation; expected frequency and mutually exclusive events (adding probabilities) are the middle band; the
+# product of independent events, with the exclusive-events and expected-frequency questions, is the top band.
+_PROBABILITY_MCQ_BANDS = {
+    'foundational': [0, 1, 2, 4, 6, 3, 5],
+    'intermediate': [1, 4, 6, 3, 5, 2, 7],
+    'difficult': [7, 5, 3, 6, 4],
+}
+
+
 def probability_mcq(slot_index=None):
     if slot_index is None:
         func = random.choice(_PROBABILITY_MCQ_GENERATORS)
@@ -3308,21 +3444,35 @@ def probability_mcq(slot_index=None):
 def gcse_probability_variants(difficulty, mode):
     if mode == 'mcq':
         return mcq_variants_from_fn(
-            probability_mcq, 'probability', difficulty, slot_param='slot_index'
+            probability_mcq, 'probability', difficulty, slot_param='slot_index',
+            slot_values=_PROBABILITY_MCQ_BANDS.get(difficulty),
         )
+    # Phase 1 (2026-10-27): _prob_found_13 and _prob_diff_17 repeat another slot of their tier (register.RETIRED).
+    # Phase 3 batch C1 (2026-10-28): sample space diagrams, frequency trees, two-way tables and set notation on Venn
+    # diagrams (maths_variety_c); five difficult-tier echoes of foundational kinds (diff 09 to 12 and 15) are retired.
+    # Phase 3 batch C2 (2026-10-28): the six remaining difficult-tier echoes of lower-tier kinds (diff 01, 02, 03, 07, 08
+    # and 14) are retired in favour of harder kinds (maths_variety_c2): an algebraic bag, independent events as
+    # decimals, three picks without replacement, a conditional second day, the trials needed and which bag.
+    from generators.gcse import maths_variety_c as vc
+    from generators.gcse import maths_variety_c2 as vc2
     found = [_prob_found_01, _prob_found_02, _prob_found_03, _prob_found_04,
              _prob_found_05, _prob_found_06, _prob_found_07, _prob_found_08,
              _prob_found_09, _prob_found_10, _prob_found_11, _prob_found_12,
-             _prob_found_13, _prob_found_14, _prob_found_15]
+             _prob_found_14,
+             vc.gcse_prob_spinner_sum_space, vc.gcse_prob_frequency_tree_complete]
     inter = [_prob_inter_01, _prob_inter_02, _prob_inter_03, _prob_inter_04,
              _prob_inter_05, _prob_inter_06, _prob_inter_07, _prob_inter_08,
              _prob_inter_09, _prob_inter_10, _prob_inter_11, _prob_inter_12,
-             _prob_inter_13, _prob_inter_14, _prob_inter_15]
-    diff = [_prob_diff_01, _prob_diff_02, _prob_diff_03, _prob_diff_04,
-            _prob_diff_05, _prob_diff_06, _prob_diff_07, _prob_diff_08,
-            _prob_diff_09, _prob_diff_10, _prob_diff_11, _prob_diff_12,
-            _prob_diff_13, _prob_diff_14, _prob_diff_15, _prob_diff_16,
-            _prob_diff_17]
+             _prob_inter_13, _prob_inter_14, _prob_inter_15,
+             vc.gcse_prob_two_dice_sum, vc.gcse_prob_two_way_table, vc.gcse_prob_venn_union]
+    # Whole-change review C9: the conditional probability by the formula P(B|A) = P(A and B) / P(A) is Higher content.
+    # Batch C2 had retired the difficult copy (_prob_diff_02) as an echo of the Foundation one; the Foundation copy
+    # (_prob_found_15) is retired instead and the difficult one is back in the pool.
+    diff = [_prob_diff_02, _prob_diff_04, _prob_diff_05, _prob_diff_06, _prob_diff_13, _prob_diff_16,
+            vc.gcse_prob_two_dice_product, vc.gcse_prob_frequency_tree_conditional, vc.gcse_prob_two_way_conditional,
+            vc.gcse_prob_venn_set_notation, vc.gcse_prob_venn_conditional,
+            vc2.gcse_prob_counters_algebraic, vc2.gcse_prob_independent_union, vc2.gcse_prob_three_same_colour,
+            vc2.gcse_prob_two_day_dependent, vc2.gcse_prob_trials_needed, vc2.gcse_prob_which_bag]
     if difficulty == 'foundational':
         pool = found
     elif difficulty == 'intermediate':
@@ -4106,6 +4256,50 @@ _STATISTICS_MCQ_GENERATORS = [
 ]
 
 
+# Phase 2 (2026-10-27): each band serves its own list of the 13 generators above (indices into
+# _STATISTICS_MCQ_GENERATORS; slot i binds to list[i % len]).  Before, every band served only the first seven (mean,
+# median, mode, range, class midpoint, pie angle, bar chart) and the other six could never be asked.  Placed by reading
+# each stem: averages from a list, the bar chart, the pie angle and the scatter graph are Foundation; the class
+# midpoint, the frequency-table mean, the estimated mean of grouped data and the comparison of two distributions are the
+# middle band; the box plot, histogram and grouped data are the top.  The scatter graph is not asked in the difficult
+# band (as before) and that band has five generators of its own, so two of its slots repeat one.
+_STATISTICS_MCQ_BANDS = {
+    'foundational': [0, 1, 2, 3, 6, 5, 7],
+    'intermediate': [4, 5, 7, 8, 9, 1, 12],
+    'difficult': [10, 11, 12, 9, 8],
+}
+
+
+def _match_number_form(correct, distractors):
+    """Distractors written the way the key is (Phase 2): a whole-number key has whole-number distractors ("43", not
+    "43.0"), a decimal key has distractors to the same number of places ("3.20", not "3.2" or "7"), and float noise
+    ("7.199999999999999") never reaches the pupil.  A distractor that is not a plain number is left alone."""
+    key = str(correct).strip()
+    if re.fullmatch(r'-?\d+', key):
+        places = 0
+    elif re.fullmatch(r'-?\d+\.\d+', key):
+        places = len(key.split('.')[1])
+    else:
+        return distractors
+    out = []
+    for d in distractors:
+        text = str(d).strip()
+        if re.fullmatch(r'-?\d+(?:\.\d+)?', text):
+            value = Decimal(text)
+            if places == 0 and value != value.to_integral_value():
+                out.append(d)                       # a fractional distractor beside a whole-number key is a real slip
+            else:
+                out.append(f'{value.quantize(Decimal(1).scaleb(-places), rounding=ROUND_HALF_UP):f}')
+        else:
+            out.append(d)
+    return out
+
+
+def _visible(q):
+    """The words a pupil reads: drawings and tags removed (a branch must not match text inside an SVG)."""
+    return re.sub(r'<[^>]+>', ' ', re.sub(r'<svg.*?</svg>', ' ', str(q), flags=re.S))
+
+
 def statistics_mcq(slot_index=None, difficulty='foundational'):
     pool = list(_STATISTICS_MCQ_GENERATORS)
     if difficulty == 'difficult':
@@ -4113,7 +4307,8 @@ def statistics_mcq(slot_index=None, difficulty='foundational'):
     if slot_index is None:
         func = random.choice(pool)
     else:
-        func = pool[slot_index % len(pool)]
+        # a slot index is an index into _STATISTICS_MCQ_GENERATORS (the bands choose which indices they use)
+        func = _STATISTICS_MCQ_GENERATORS[slot_index % len(_STATISTICS_MCQ_GENERATORS)]
     out = func()
     packed = _mcq_from_variant_output(out)
     if packed:
@@ -4153,6 +4348,21 @@ def statistics_mcq(slot_index=None, difficulty='foundational'):
             distractors = [str(round(c * 2, 1)), str(round(c / 2, 1)), str(int(c) + 2)]
         except:
             distractors = ['2', '4', '6', '8']
+    elif 'sector angle' in _visible(q).lower() and correct.endswith('°'):
+        # Phase 2 review: this branch came after the frequency-table one, which matched "fx" inside the pie chart's
+        # drawing, so the options were bare fillers ("10", "12", "14") beside a key in degrees.  Slips in the key's
+        # own form instead: the other sector, the percentage or the frequency taken as the angle, half the angle.
+        m_pie = re.search(r'(\d+) out of (\d+)', _visible(q))
+        distractors = ['90°', '180°', '270°']
+        if m_pie:
+            f_, t_ = int(m_pie.group(1)), int(m_pie.group(2))
+            key_value = round(360 * f_ / t_, 1)
+            picks = []
+            for v in (360 * (t_ - f_) / t_, 100 * f_ / t_, f_, 180 * f_ / t_, 360 * f_ / t_ + 10):
+                v = round(v, 1)
+                if v != key_value and v not in picks:
+                    picks.append(v)
+            distractors = [f'{fmt_dp(v, 1)}°' for v in picks[:3]]
     elif 'frequency table' in q.lower() or 'fx' in q.lower() or '∑' in q:
         try:
             c = round(float(correct), 1)
@@ -4176,9 +4386,12 @@ def statistics_mcq(slot_index=None, difficulty='foundational'):
     else:
         try:
             c = float(correct)
-            distractors = [str(c + 3), str(c - 2), str(c * 2)]
+            shown = (lambda v: str(int(v))) if re.fullmatch(r'-?\d+', correct.strip()) else str     # same form as the key
+            distractors = [shown(v) for v in (c + 3, c - 2, c * 2) if not (c > 0 and v <= 0)]
         except:
             distractors = ['10', '20', '30', '40']
+
+    distractors = _match_number_form(correct, distractors)
 
     def _lead(text):
         # the leading value, read whole (so 1/6 and 1/2 differ, while 0.5, 0.50 and 1/2 or 10 and 10 km/h clash)
@@ -4190,8 +4403,9 @@ def statistics_mcq(slot_index=None, difficulty='foundational'):
         return Fraction(m_.group(1))
 
     clean_distractors = [d for d in distractors if d != correct and not (
-        _lead(d) is not None and _lead(d) == _lead(correct) and str(d)[:1] != '(')]
-    clean_distractors = _mcq_distinct_distractors(correct, clean_distractors, ['10', '20', '30', '40', '50', '60'])
+        _lead(d) is not None and _lead(d) == _lead(correct) and str(d)[:1] != '(')
+        and not (_lead(d) is not None and _lead(correct) is not None and _lead(correct) > 0 >= _lead(d))]   # no 0 or negative beside a positive key
+    clean_distractors = _mcq_distinct_distractors(correct, clean_distractors, _option_fillers(correct, clean_distractors, 6))
     options, letter = _mcq_options(correct, clean_distractors)
 
     # Return the FULL step‑by‑step solution, not just the hint
@@ -4227,6 +4441,8 @@ def _stats_problem_from_output(out, difficulty):
                     'answer_type': 'number_estimate',
                     'answer_format_hint': 'Enter your estimate from the graph (close answers are accepted)',
                 }
+            else:
+                extra = problem_extra_from_graded_answer(raw)      # Phase 3 batch C1: an exact number payload
         elif isinstance(raw, (str, int, float)):
             format_hint = 'Enter a number or fraction'
             q_lower = q.lower()
@@ -4252,11 +4468,26 @@ def gcse_statistics_variants(difficulty, mode):
             return statistics_mcq(slot_index=slot_index, difficulty=_d)
 
         return mcq_variants_from_fn(
-            _tiered, 'statistics', difficulty, slot_param='slot_index'
+            _tiered, 'statistics', difficulty, slot_param='slot_index',
+            slot_values=_STATISTICS_MCQ_BANDS.get(difficulty),
         )
-    found = [_stats_found_01,_stats_found_02,_stats_found_03,_stats_found_04,_stats_found_05,_stats_found_06,_stats_found_07,_stats_found_08,_stats_found_09,_stats_found_10,_stats_found_11,_stats_found_12,_stats_found_13,_stats_found_14,_stats_found_15]
-    inter = [_stats_inter_01,_stats_inter_02,_stats_inter_03,_stats_inter_04,_stats_inter_05,_stats_inter_06,_stats_inter_07,_stats_inter_08,_stats_inter_09,_stats_inter_10,_stats_inter_11,_stats_inter_12,_stats_inter_13,_stats_inter_14,_stats_inter_15]
-    diff = [_stats_diff_01,_stats_diff_02,_stats_diff_03,_stats_diff_04,_stats_diff_05,_stats_diff_06,_stats_diff_07,_stats_diff_08,_stats_diff_09,_stats_diff_10,_stats_diff_11,_stats_diff_12,_stats_diff_13,_stats_diff_14,_stats_diff_15,_stats_diff_16,_stats_diff_17]
+    # Phase 1 (2026-10-27): the wrappers that repeat another slot of the tier are out of the pools (register.RETIRED):
+    # found 09 to 15, inter 10 and 12 to 15, diff 02, 10 to 17 (functions stay defined for stored queues and saved problems).
+    # Phase 3 batch C1 (2026-10-28): two-way tables, stem and leaf, frequency tables, sampling, frequency polygons, a time
+    # series, combined and missing-value means and capture-recapture (maths_variety_c); the difficult tier's echoes of
+    # lower-tier kinds (diff 01, 03, 04, 06, 07, 08) are retired in favour of the harder kinds.
+    # Phase 3 batch C2 (2026-10-28): frequency density (maths_variety_c2) joins the difficult tier and the median class,
+    # a grade 4 to 5 reading, moves down to the intermediate tier (section 23 of the variety plan).
+    from generators.gcse import maths_variety_c as vc
+    from generators.gcse import maths_variety_c2 as vc2
+    found = [_stats_found_01,_stats_found_02,_stats_found_03,_stats_found_04,_stats_found_05,_stats_found_06,_stats_found_07,_stats_found_08,
+             vc.gcse_stats_two_way_read, vc.gcse_stats_stem_leaf_median, vc.gcse_stats_mode_from_table, vc.gcse_stats_sample_proportion]
+    inter = [_stats_inter_01,_stats_inter_02,_stats_inter_03,_stats_inter_04,_stats_inter_05,_stats_inter_06,_stats_inter_07,_stats_inter_08,_stats_inter_09,_stats_inter_11,
+             vc.gcse_stats_two_way_complete, vc.gcse_stats_median_from_table, vc.gcse_stats_freq_polygon_read,
+             vc.gcse_stats_missing_value_mean, vc.gcse_stats_time_series_mean, vc.gcse_stats_median_class]
+    diff = [_stats_diff_05,_stats_diff_09,
+            vc.gcse_stats_capture_recapture, vc.gcse_stats_combined_mean, vc.gcse_stats_missing_frequency_mean,
+            vc2.gcse_stats_frequency_density, vc.gcse_stats_stem_leaf_iqr, vc.gcse_stats_freq_polygon_mean, vc.gcse_stats_two_way_percent]
     pool = found if difficulty == 'foundational' else inter if difficulty == 'intermediate' else diff if difficulty == 'difficult' else random.sample(found,4)+random.sample(inter,4)+random.sample(diff,2)
     return select_tier_variants(pool)
 
@@ -4951,9 +5182,8 @@ def _gra_line_intersection_simple():
     m1,c1,m2,c2 = 2, random.randint(-4,4), -1, random.randint(2,8)
     x = (c2-c1)/(m1-m2); y = m1*x + c1
     note = _dp_note(x) or _dp_note(y)
-    c1_txt = f"- {abs(c1)}" if c1 < 0 else f"+ {c1}"
     q = f"Find the intersection of {_gr_fmt_linear(m1, c1)} and {_gr_fmt_linear(m2, c2)}.{note}"
-    s = f"Set equal → {m1}x {c1_txt} = {m2}x + {c2} → x = {_number_fmt(x)}, y = {_number_fmt(y)}."
+    s = f"Set equal → {_gr_fmt_linear(m1, c1)[4:]} = {_gr_fmt_linear(m2, c2)[4:]} → x = {_number_fmt(x)}, y = {_number_fmt(y)}."
     hint = "At intersection, both equations give same x and y."
     return q, s, hint, 3, _number_pair_answer(round(x, 2), round(y, 2), 'x', 'y', sep=',')
 
@@ -5354,6 +5584,13 @@ def _gra_inter_13(): return _gra_scatter_no_correlation()
 def _gra_inter_14(): return _gra_scatter_line_of_best_fit()
 def _gra_inter_15(): return _gra_root_from_factorised()
 
+def _gra_scatter_correlation_any():
+    """One slot for "what type of correlation does this graph show?", positive, negative or none (merges
+    _gra_found_10 to _12 and _gra_inter_11 to _13, which were the same three fixed graphs in two tiers; those stay
+    defined, retired, because a stored queue or a saved problem may name them)."""
+    return random.choice([_gra_scatter_positive, _gra_scatter_negative, _gra_scatter_no_correlation])()
+
+
 def _gra_diff_01(): return _gra_diff_line_equation_multipart()
 def _gra_diff_02(): return _gra_diff_quadratic_features_multipart()
 def _gra_diff_03(): return _gra_root_from_factorised()
@@ -5524,6 +5761,8 @@ def _gr_problem_from_output(out, difficulty):
                     answer_labels=[raw['label_a'], raw['label_b']],
                     answer_pair_sep=raw.get('sep', 'and'),
                 )
+            else:
+                extra = problem_extra_from_graded_answer(raw)      # Phase 3 batch C1: a fraction (perpendicular gradient)
         elif isinstance(raw, (str, int, float)):
             format_hint = 'Enter a number or fraction'
             extra = {
@@ -5544,19 +5783,29 @@ def gcse_graphs_variants(difficulty, mode):
         return mcq_variants_from_fn(
             _tiered, 'graphs', difficulty, slot_param='slot_index'
         )
+    # Phase 1 (2026-10-27): exact duplicates are out of the pools and the correlation graphs are one slot per tier
+    # (register.RETIRED): found 10 to 15, inter 11 to 13 and 15, diff 11, 13, 15, 16 and 17.
     found = [_gra_found_01, _gra_found_02, _gra_found_03, _gra_found_04,
              _gra_found_05, _gra_found_06, _gra_found_07, _gra_found_08,
-             _gra_found_09, _gra_found_10, _gra_found_11, _gra_found_12,
-             _gra_found_13, _gra_found_14, _gra_found_15]
-    inter = [_gra_inter_01, _gra_inter_02, _gra_inter_03, _gra_inter_04,
-             _gra_inter_05, _gra_inter_06, _gra_inter_07, _gra_inter_08,
-             _gra_inter_09, _gra_inter_10, _gra_inter_11, _gra_inter_12,
-             _gra_inter_13, _gra_inter_14, _gra_inter_15]
-    diff = [_gra_diff_01, _gra_diff_02, _gra_diff_03, _gra_diff_04,
-            _gra_diff_05, _gra_diff_06, _gra_diff_07, _gra_diff_08,
-            _gra_diff_09, _gra_diff_10, _gra_diff_11, _gra_diff_12,
-            _gra_diff_13, _gra_diff_14, _gra_diff_15, _gra_diff_16,
-            _gra_diff_17]
+             _gra_found_09, _gra_scatter_correlation_any]
+    # Phase 3 batch C1 (2026-10-28): perpendicular gradients and lines, the circle x^2 + y^2 = k and its tangent,
+    # velocity-time graphs, graph transformations and an exponential graph (maths_variety_c); the difficult tier's
+    # echoes of lower-tier kinds (diff 03, 05, 07, 08, 09, 14) are retired in favour of the harder kinds.
+    # Phase 3 batch C2 (2026-10-28): the intermediate tier's echoes of foundational kinds (inter 01, 02, 03, 04, 07, 09)
+    # are retired for a line through two points, the x-intercept, a missing coordinate, a parallel line through a
+    # point, a gradient read from a drawn line and a conversion graph; the difficult tier's line of best fit (diff 12,
+    # an echo of inter 14) for the perpendicular bisector (maths_variety_c2). The correlation slot is the one declared
+    # foundational-intermediate echo of the tier.
+    from generators.gcse import maths_variety_c as vc
+    from generators.gcse import maths_variety_c2 as vc2
+    inter = [_gra_inter_05, _gra_inter_06, _gra_inter_08, _gra_inter_10, _gra_scatter_correlation_any, _gra_inter_14,
+             vc.gcse_gra_perpendicular_gradient, vc.gcse_gra_vt_acceleration,
+             vc2.gcse_gra_line_through_two_points, vc2.gcse_gra_x_intercept, vc2.gcse_gra_missing_coordinate,
+             vc2.gcse_gra_parallel_through_point, vc2.gcse_gra_gradient_from_graph, vc2.gcse_gra_conversion_graph]
+    diff = [_gra_diff_01, _gra_diff_02, _gra_diff_04, _gra_diff_06, _gra_diff_10,
+            vc.gcse_gra_perpendicular_line, vc.gcse_gra_circle_equation, vc.gcse_gra_circle_tangent,
+            vc.gcse_gra_vt_distance, vc.gcse_gra_transformation_point, vc.gcse_gra_exponential_read,
+            vc2.gcse_gra_perpendicular_bisector]
     if difficulty == 'foundational':
         pool = found
     elif difficulty == 'intermediate':

@@ -216,6 +216,27 @@ def _cts_f_work_formula():
     return q, s, hint, 2, ans
 
 
+@verifies('alg', task='rearrange')
+def _cts_f_subtracted_subject():
+    """Foundational (Phase 3 batch C1): the subject is being subtracted, y = a - bx (the sign is the trap)."""
+    a = random.randint(4, 20)
+    b = random.choice([1, 1, 2, 3, 4, 5])
+    letter = random.choice(['x', 't', 'p'])
+    term = letter if b == 1 else f'{b}{letter}'
+    q = _q_make(letter, rf"y = {a} - {term}")
+    if b == 1:
+        s = (rf"Add \({letter}\) to both sides: \(y + {letter} = {a}\)<br>"
+             rf"Subtract \(y\): <strong>\({letter} = {a} - y\)</strong>")
+        ans = _subj_algebraic_answer(_subj_formula(letter, f'{a}-y'))
+    else:
+        s = (rf"Add \({term}\) to both sides: \(y + {term} = {a}\)<br>"
+             rf"Subtract \(y\): \({term} = {a} - y\)<br>"
+             rf"Divide by \({b}\): <strong>\({letter} = \dfrac{{{a} - y}}{{{b}}}\)</strong>")
+        ans = _subj_algebraic_answer(_subj_formula(letter, _subj_frac(f'{a}-y', b)))
+    hint = f"The {letter} term is being taken away. Add it to both sides first so it becomes positive."
+    return q, s, hint, 2, ans
+
+
 @verifies('alg', task='first_step')
 def _cts_f_first_step():
     m = random.randint(2, 7)
@@ -812,6 +833,19 @@ _CTS_MCQ_POOL = [
     _cts_mcq_force,
 ]
 
+# Phase 2 (2026-10-27): each band has its own list of the 12 generators (slot i is list[i % len]); before, every band
+# served the first four.  One step (F = a = F/m) and two steps (y = mx + c) are Foundation; a subject that sits in a
+# denominator (v = d/t, rho = m/V, y = k/x) or under a root (A = pi r^2) is the middle band and the top; squares,
+# a half and a root together (E = 1/2 m v^2, c^2 = a^2 + b^2) are the top band.  All twelve are reachable.
+_CTS_MCQ_BANDS = {
+    "foundational": [_cts_mcq_force, _cts_mcq_two_step, _cts_mcq_y_mx_c, _cts_mcq_triangle_h,
+                     _cts_mcq_circumference, _cts_mcq_vuat],
+    "intermediate": [_cts_mcq_vuat, _cts_mcq_triangle_h, _cts_mcq_circumference, _cts_mcq_speed,
+                     _cts_mcq_density, _cts_mcq_inverse, _cts_mcq_sqrt_r],
+    "difficult": [_cts_mcq_kinetic, _cts_mcq_pythagoras, _cts_mcq_sqrt_r, _cts_mcq_inverse,
+                  _cts_mcq_density, _cts_mcq_speed],
+}
+
 
 def _cts_mcq_dispatch():
     return random.choice(_CTS_MCQ_POOL)()
@@ -830,6 +864,7 @@ _FOUNDATIONAL = [
     _cts_f_ax_plus_by,
     _cts_f_speed_time,
     _cts_f_work_formula,
+    _cts_f_subtracted_subject,        # Phase 3 batch C1
 ]
 
 _INTERMEDIATE = [
@@ -868,7 +903,7 @@ _POOLS = {
 def gcse_changing_the_subject_variants(difficulty, mode="practice"):
     if mode == "mcq":
         return mcq_variants_from_pool(
-            _CTS_MCQ_POOL, "changing_the_subject", difficulty, count=4
+            _CTS_MCQ_BANDS.get(difficulty, _CTS_MCQ_POOL), "changing_the_subject", difficulty
         )
 
     pool = _POOLS.get(difficulty)

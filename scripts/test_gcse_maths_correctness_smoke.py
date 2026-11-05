@@ -259,9 +259,20 @@ def scan_arithmetic(text, stated_rounding):
 _DP_STATED = re.compile(r'(?:(?:to|correct to|nearest)\s+)?(\d)\s*(?:decimal places?|d\.p\.)', re.I)
 
 
+_INPUT_ROUNDING = re.compile(
+    r'by rounding each number to (?:1|2|3) (?:significant figures?|s\.f\.|decimal places?|d\.p\.)'
+    r'|by rounding each number to the nearest whole number'
+    r'|is rounded to \d decimal places?(?=\.\s*Work out the difference between the rounded value and)',
+    re.I)
+
+
 def check_stated_rounding(q, raw, at, where):
     if at != 'number' or raw is None:
         return
+    # Phase 3 batch A: a question that rounds its inputs (an estimate, or the error made by rounding one number) states
+    # an accuracy that does not apply to the answer. Review: only that clause is taken out; any accuracy the question
+    # states for the answer itself is still checked (the whole question used to be skipped).
+    q = _INPUT_ROUNDING.sub(' ', q)
     stated = {int(x) for x in _DP_STATED.findall(q)}
     if len(stated) == 1:
         limit = stated.pop()
@@ -860,7 +871,27 @@ def check_problem(slug, diff, mode, name, p, where):
         issue('cosmetic', where, 'sign formatting "+ -" in question')
 
 
+def stated_rounding_selftest():
+    """Review (Phase 3 batch A): taking out an input-rounding clause must not hide the answer's own stated accuracy."""
+    before = len(ISSUES)
+    cases = (
+        ('x = 5.6938. x is rounded to 1 decimal place. Work out the difference between the rounded value and x.',
+         '0.0062', False),
+        ('x = 5.6938. x is rounded to 1 decimal place. Work out the difference between the rounded value and x. '
+         'Give your answer to 2 decimal places.', '0.0062', True),
+        ('Estimate 3.82 × 41.7 by rounding each number to 1 significant figure.', '160', False),
+        ('Estimate 3.82 × 41.7 by rounding each number to 1 significant figure. Give your answer to 1 decimal place.',
+         '159.29', True),
+    )
+    for q, raw, flagged in cases:
+        n = len(ISSUES)
+        check_stated_rounding(q, raw, 'number', 'selftest')
+        assert (len(ISSUES) > n) == flagged, (q, raw, ISSUES[n:])
+    del ISSUES[before:]
+
+
 def main():
+    stated_rounding_selftest()
     probe_checker()
     static_scan()
     n_variants, n_questions = sweep()
