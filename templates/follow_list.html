@@ -30,12 +30,12 @@
         </ul>
         {% else %}
         <div class="empty-state">
-            <span class="study-buddy-face pb-zorp-small" id="follow-empty-zorp" data-buddy-face data-face="nudge" data-zorp-autoplay="shrug" aria-hidden="true">{{ buddy_mascot() }}</span>
-            <h3 data-zorp-voice="system:system_empty_state">No users to show yet</h3>
+            <span class="study-buddy-face pb-zorp-small" id="follow-empty-zorp" data-buddy-face data-face="happy" data-zorp-autoplay="wave" aria-hidden="true">{{ buddy_mascot(face='happy', pose='wave') }}</span>
+            <h3 data-zorp-voice="system:system_empty_state">No one here yet</h3>
             {% if list_title == 'Followers' %}
             <p data-zorp-voice="system:system_empty_state">When someone follows {{ profile_user.display_handle }}, they will appear here.</p>
             {% else %}
-            <p data-zorp-voice="system:system_empty_state">Find other learners and follow them to see their activity in your feed.</p>
+            <p data-zorp-voice="system:system_empty_state">Search for a handle, open their profile and press Follow.</p>
             {% endif %}
             <a href="{{ url_for('site_search') }}" class="btn btn-primary" data-zorp-voice="system:button_label">Find people</a>
         </div>

@@ -14,7 +14,8 @@ sys.path.insert(0, str(ROOT))
 from app import app  # noqa: E402
 
 CSS_DIR = ROOT / 'static' / 'css'
-LESSON_ONLY = {'lesson-pages.css', 'lesson-assist.css'}
+# 2026-11-08: E10 stage.css joins the sheets that are not on every page (zorp-stage.js loads it only when a stage plays).
+LESSON_ONLY = {'lesson-pages.css', 'lesson-assist.css', 'stage.css', 'coach.css', 'badge-stage.css', 'moments.css', 'tour.css', 'wardrobe.css', 'around.css', 'story.css'}   # 2026-11-08: E10 phase 6b wardrobe.css is on demand (profile only), not core; 2026-11-08: E10 phase 4 badge-stage.css and phase 5 moments.css are on demand, not core
 # Uncompressed tree; D2 lesson SVG remaps live in lesson-pages.css.
 # E6 Guide overlay + A3 spotlight + A6 streak fire + B gestures live in chrome.css.
 # ES0 science subject tokens + year/unit topic-path headings.
@@ -66,7 +67,12 @@ LESSON_ONLY = {'lesson-pages.css', 'lesson-assist.css'}
 # eight face show-rules (about 600 bytes). Tree now 233,523 (core 208,531).
 # GCSE maths hints Phase 3 (2026-10-26): practice.css +566 bytes (hint ladder lines and the locked-answer note, no motion).
 # Tree now 237,644 (core 212,652); caps unchanged.
-CSS_BUDGET_BYTES = 246_000
+# 2026-11-08: E10 raised 246,000 -> 256,000, exactly the own cap of the new on-demand stage.css (10,000, test_zorp_stage_smoke.py);
+# the core budget is unchanged because stage.css is not core. Tree 249,045 (core 214,142).
+# 2026-11-08: E10 phase 5 added the on-demand moments.css (4,231 B, own cap 5,000, test_celebration_moments_smoke.py): the tree is 260,077, still under 261,500, so no raise; it joins the not-core set.
+# 2026-11-08: E10 phase 4 raised 256,000 -> 261,500, exactly the own cap of the new on-demand badge-stage.css (5,500, test_badge_stage_smoke.py); core unchanged
+# apart from about 350 bytes in chrome.css.
+CSS_BUDGET_BYTES = 273_700 # 2026-11-08: E10 phase 8 RAISED 268_900 -> 273_700 (+4_800) for the on-demand story.css (own cap 4_800 in test_story_chapters_smoke.py; tree 273,520). 2026-11-08: E10 phase 7 RAISED 265_300 -> 268_900 (+3_600) for the on-demand around.css (own cap 4_000 in test_zorp_around_smoke.py; tree 268,821). 2026-11-08: E10 phase 6b RAISED 262_500 -> 265_300 (+2_800) for the on-demand wardrobe.css (profile page only; own cap 2_800 in test_wardrobe_smoke.py; tree 264,949).  # 2026-11-08: E10 phase 6 RAISED 261_500 -> 262_500 (+1_000) for the on-demand tour.css (own cap 2_800 in test_zorp_tour_smoke.py; tree 262,304).
 # Core sheets loaded on every page after the U8.6 lesson split.
 # S0 added fonts.css (~1KB) plus legal-footer / email-verify chrome.
 # E6 A1–A6 overlay/spotlight/streak-fire and B wink/nod/shake/tap live in chrome.css.
@@ -169,6 +175,8 @@ def test_card_vocabulary_and_mcq_letter_markup():
     diagrams = (ROOT / 'static' / 'css' / 'diagrams.css').read_text(encoding='utf-8')
     assert '#f9f8f5' not in diagrams
     assert 'var(--diagram-paper)' in diagrams
+    # 2026-11-07: the diagram-paper rule must not reach MathJax SVGs (formulas were drawn as raised blocks)
+    assert '.question-content svg:not(.svg-kit):not(mjx-container svg),' in diagrams
     sg = (ROOT / 'templates' / 'styleguide.html').read_text(encoding='utf-8')
     assert 'class="card card-raised"' in sg
     assert 'class="mcq-letter"' in sg

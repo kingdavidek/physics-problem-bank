@@ -62,7 +62,7 @@ Measured by rendering `buddy_mascot()` through Jinja in memory, the same way as 
 
 ## 2. Design decisions (confirmed 2026-09-29; frozen like E7 §2)
 
-1. **Same character, more acting.** Silhouette, colours, face plate, antennae, feet and overlays stay as they are. E6 §2 #1 ("one mascot"), E7 §2 #1 and E7 §2 #13 (no second character; cosmetics automatic-only, no pupil-facing picker) all stand.
+1. **Same character, more acting.** Silhouette, colours, face plate, antennae, feet and overlays stay as they are. E6 §2 #1 ("one mascot"), E7 §2 #1 and E7 §2 #13 (no second character) all stand. *2026-11-08: the "automatic-only, no pupil-facing picker" half of E7 §2 #13 was relaxed by David's answer 8 (E10 phase 6b): badges unlock cosmetics and the pupil chooses in the profile wardrobe; see `docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md` section 11.10.*
 2. **Hand-built SVG + WAAPI/CSS only** (rule 17, `AI_HANDOFF.md:88`). Also banned for performance: animating path `d` (morphing), SMIL `<animate>`, animating `filter`, canvas. Only `transform` and `opacity` are animated. Expressions change by **swapping parts**, the way 2D cartoons do, with a tiny squeeze across the swap so it doesn't look like a hard cut.
 3. **Faces are made from channels.** The channels are `eyeL`, `eyeR` (set together as `eyes`), `brows`, `mouth`, `cheeks`, `fx`. A **preset** is a named combination. The 7 legacy face names plus `sleep` stay valid forever as presets. `setFace(name)` keeps its signature and behaviour. The API emoji field (`models/buddy.py:32-40`) does not change.
 4. **One source of truth for data and one for art.**
@@ -89,7 +89,7 @@ Measured by rendering `buddy_mascot()` through Jinja in memory, the same way as 
 9. **Back-compat is additive.**
    - These keep working: the existing clip names (`zorp-motion.js:7`), API names (`test_zorp_motion_smoke.py:40`), `data-face` values, E6 gesture keyframe names and `playGesture`/`LEGACY_GESTURES` (`test_guide_smoke.py:145-155`), `data-zorp-autoplay`, and `react()` kinds.
    - Tests change only deliberately, in the same commit, with the reason in the commit message.
-10. **No new data, no new processors, nothing more visible to others.** Expressions and poses are presentation only. No pupil-facing picker (E7 §2 #13 still defers that).
+10. **No new data, no new processors, nothing more visible to others.** Expressions and poses are presentation only. *2026-11-08: there is now a pupil-facing cosmetics picker (the profile wardrobe, E10 phase 6b), with one new stored preference and its DPIA row; expressions and poses themselves still have no picker.*
 11. **viewBox stays `0 0 64 64`** with `overflow: visible` (`motion.css:4`). All pivots, overlay anchors (`zorp_overlays.html` header) and sizes are in this frame. Raised fists and effects may go past the frame and are allowed to overflow. See D5.
 
 ### 2.1 Budget ledger (the implementer fills in "actual" per phase)
@@ -845,11 +845,11 @@ David chose every recommendation on 2026-09-29. Frozen like §2; a change needs 
 ## 8. Optional later (not in E8)
 
 - Library as a cached route (`/zorp/parts.svg?v=N`), if page weight ever matters (§4.2).
-- Eyes follow the focused answer option or the hint panel (`lookAt(el)`). Only at full motion, never "watching" text entry.
+- ~~Eyes follow the focused answer option or the hint panel (`lookAt(el)`). Only at full motion, never "watching" text entry.~~ Built 2026-11-08 (E10 phase 7, `static/js/zorp-around.js`, practice page only). The corner Zorp's pupils shift 2.2 by 1.6 units at most (CSS `translate` on `.buddy-pupil`, 220 ms) toward the option or input that takes focus, glance at the hint card when it appears (2.6 s, then back to the focused element), and return on blur. It moves on focus changes only: nothing follows the mouse or the typing. Full motion only (reduced and off keep the eyes still); re-applied after a face swap replaces the eye nodes.
 - Zorp points at the hint after two wrong answers on one question (carried over from E7 §6).
 - Seasonal idle variants (e.g. `float` in space week). Automatic only.
 - New pose-kit tokens built with `zorp_rig.still()` (would change the 11-token pin deliberately).
-- A pupil-facing expression or pose picker. Still deferred per E7 §2 #13. It would need a new stored preference, a fresh gate and a DPIA touch.
+- A pupil-facing expression or pose picker. Still deferred. (A cosmetics picker, the wardrobe, was built on 2026-11-08, E10 phase 6b; an expression or pose picker would need its own stored preference, a fresh gate and a DPIA touch.)
 
 ---
 

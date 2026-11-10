@@ -6,7 +6,9 @@
  */
 
 /* ---- SVG: instructional diagrams only (not MathJax — see mjx-container above) ---- */
-.question-content svg:not(.svg-kit),
+/* 2026-11-07: a MathJax SVG sits inside mjx-container in the question text; without :not(mjx-container svg) this rule
+   outranked the mjx-container rules in pages.css and drew every formula as a raised block on diagram paper. */
+.question-content svg:not(.svg-kit):not(mjx-container svg),
 .question-content > div > svg:not(.svg-kit),
 .question > svg:not(.svg-kit),
 .answer > svg:not(.svg-kit),

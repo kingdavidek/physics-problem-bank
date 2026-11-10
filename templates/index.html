@@ -261,6 +261,11 @@
 {% endif %}
 
 </div>
+{# E10 phase 7: the sparkle on Show answer as it opens after the first try (around.css) and Zorp's eyes following the focused option or the hint (zorp-around.js, full motion only). Not precached. #}
+{% if problem %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/around.css') }}?v=1">
+{% if current_user.is_authenticated %}<script src="{{ url_for('static', filename='js/zorp-around.js') }}?v=1" defer></script>{% endif %}
+{% endif %}
 {% endblock %}
 
 {% block sticky_footer %}

@@ -302,3 +302,7 @@ When M5 lands, the shape is:
 - [ ] `docs/API.md` updated for any new or changed endpoint
 - [ ] `docs/ARCHITECTURE.md` feature table updated; item marked shipped in `docs/AI_HANDOFF.md`
 - [ ] Friends-only scope and opt-out settings verified on every social surface
+
+**E10 phase 4 note (2026-11-08).** Badge copy gained `blurb`, `how` and `family`; `accuracy_top_friend` is now titled "Sharp week" (🎯). Typed checks and set-work answers count as study days. See `docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md` 11.7.
+
+**E10 phase 5 note (2026-11-08).** Using the weekly streak skip now shows a toast with a mini Zorp: "Your weekly skip kept your streak going." (`_record_study_activity` compares the pupil's freeze rows before and after the study day). Effort points (shown as XP) are unchanged; the interface now shows a number only when it is a recorded value (no "+10" per answer, no "+25" per lesson), and a level-up (L = floor(sqrt(xp / 50))) plays a stage once. See `docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md` 11.8.

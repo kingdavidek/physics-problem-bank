@@ -281,7 +281,9 @@ def main():
             f'/api/v1/me/class-work/{aid_b}/answer',
             json={
                 'index': 0,
-                'user_answer': 'definitely-wrong-xyz',
+                # starts with Z: a multiple-choice answer is graded by its first letter, and "definitely..." was D,
+                # the key about one time in four (2026-11-07)
+                'user_answer': 'zz-definitely-wrong',
                 'correct_answer': stored_key,
                 'correct_answer_raw': stored_key,
             },

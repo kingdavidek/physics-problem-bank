@@ -1,8 +1,10 @@
+import hashlib
+import hmac
 import os
 import random
 import re
 import secrets
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 import urllib.error
 from urllib.parse import parse_qs, urlparse
 from pathlib import Path
@@ -30,8 +32,8 @@ def _load_env_file(path: Path) -> None:
 
 _load_env_file(_ROOT / ".env")
 
-from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash, g, send_from_directory, Response, abort
-from flask_login import LoginManager, current_user, login_required, login_user, logout_user
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash, g, send_from_directory, Response, abort, has_request_context
+from flask_login import LoginManager, current_user, login_required, login_user, logout_user, user_logged_in, user_logged_out
 from jinja2.exceptions import TemplateNotFound
 from markupsafe import Markup
 import sqlite3
@@ -143,6 +145,8 @@ from models.user import (
 from models.social import (
     VISIBILITY_CHOICES,
     VISIBILITY_FOLLOWERS,
+    VISIBILITY_PRIVATE,
+    ACTIVITY_SET_WORK_ANSWERED,
     VISIBILITY_PUBLIC,
     ACTIVITY_LESSON_STEP_COMPLETED,
     ACTIVITY_MCQ_ANSWERED,
@@ -182,13 +186,18 @@ from models.social import (
     normalize_zorp_sound,
     public_guide_state,
     quiz_stats_summary,
-    record_activity_event,
+    record_activity_event as _record_activity_event_raw,
     record_mcq_answered,
     record_question_generated,
     record_quiz_completed,
     record_topic_opened,
     search_users_by_handle,
     search_following_by_handle,
+    apply_new_account_defaults,
+    set_guide_origin,
+    start_app_tour,
+    guide_tour_finished,
+    mark_tour_finished,
     set_welcome_state,
     unfollow_user,
     update_profile_settings,
@@ -244,19 +253,28 @@ from models.user_data import (
     save_problem,
     update_saved_problem,
     upsert_lesson_progress,
+    award_new_lesson_steps,
+    valid_lesson_step_keys,
 )
 from models.gamification import (
     MILESTONE_CATALOG,
+    MILESTONE_TOUR,
+    award_tour_badge,
+    badge_display,
+    effort_weight,
     evaluate_milestones,
     friend_accuracy_leaderboard,
     friend_effort_leaderboard,
     get_study_streak,
     get_weekly_recap,
     latest_pose_milestone,
+    level_up_between,
     lifetime_effort_xp,
     list_milestone_shelf,
     list_user_milestones,
     milestone_meta,
+    next_up_badge,
+    personal_best_quiz,
     record_study_day,
     streak_ring_progress,
     streak_week_dots,
@@ -269,7 +287,7 @@ from models.gamification import (
     xp_level_progress,
 )
 from models.topic_status import topic_status_map
-from models.buddy import BUDDY_FACES, build_buddy_prompt, recent_milestone
+from models.buddy import BUDDY_FACES, build_buddy_prompt
 from models.problem_queue import (
     clear_problem_queue as clear_db_problem_queue,
     get_problem_queue as get_db_problem_queue,
@@ -372,6 +390,7 @@ from models.qotd import (
     get_user_attempt,
     qotd_window_day_keys,
     record_qotd_answer,
+    viewer_week_dots,
 )
 from models.bot import (
     ensure_system_bot,
@@ -380,6 +399,8 @@ from models.bot import (
 )
 from models import svg_kit
 from models import zorp_kit
+from models import zorp_wardrobe
+from models import story as zorp_story
 from models import zorp_rig
 from models.avatar import (
     AVATAR_BACKGROUNDS,
@@ -428,6 +449,7 @@ from models.class_progress import (
     student_progress,
 )
 from models.class_assignments import (
+    STATUS_COMPLETE,
     MAX_ASSIGNMENT_QUESTIONS,
     MIN_ASSIGNMENT_QUESTIONS,
     NOT_FROZEN_KEYS,
@@ -549,6 +571,7 @@ app.config['REMEMBER_COOKIE_SAMESITE'] = 'Lax'
 app.config['REMEMBER_COOKIE_SECURE'] = _secure_cookies
 app.jinja_env.globals['svg_kit'] = svg_kit
 app.jinja_env.globals['zorp_kit'] = zorp_kit
+app.jinja_env.globals['zorp_wardrobe'] = zorp_wardrobe
 app.jinja_env.globals['zorp_rig'] = zorp_rig
 app.jinja_env.globals['option_note_qid'] = lambda problem: (
     option_notes.fingerprint(problem) if isinstance(problem, dict) and problem.get('option_notes') else ''
@@ -959,6 +982,248 @@ _QUIZ_RUNNER_ENDPOINTS = frozenset({
     'view_quiz_attempt',
     'challenge_detail',
 })
+# E10 phase 4: the quiz runner stays quiet while questions are on screen, but a results page may play the badge stage
+# (static/js/guide.js reads body[data-guide-quiz-results]; the pending badge list is emitted on these and every other page).
+_QUIZ_RESULTS_ENDPOINTS = frozenset({
+    'lesson_mcq_results',
+    'quicktest_results',
+    'view_quiz_attempt',
+})
+_PENDING_MILESTONES_MAX = 8
+
+
+def _quiz_results_now():
+    """E10 review fix 6: is this request a quiz results page (where the quiz-runner quiet rule lifts)? Decided per request, not
+    from the endpoint name alone: a challenge page is a results page once the viewer has submitted (challenge_detail sets
+    g.pb_results_page); the three results endpoints always are."""
+    return request.endpoint in _QUIZ_RESULTS_ENDPOINTS or bool(getattr(g, 'pb_results_page', False))
+
+
+def _pending_may_emit():
+    """E10 review fix 7: only a page the pupil is actually looking at may read (and so clear) the pending lists. Not the
+    offline page (the service worker precaches it with the pupil's cookie), not any error page (a 404, a static 404, a 500), and
+    not a background fetch: a request carrying `Service-Worker`, a `Sec-Fetch-Dest` other than `document`, or a `Sec-Fetch-Mode`
+    other than `navigate`. Clients that send none of these headers (older browsers, the Flask test client) count as navigations.
+    2026-11-10 (E11 Phase 0, docs/BADGES_AND_CELEBRATIONS_PLAN.md 1.1): a page load that our service worker relays (sw.js
+    `fetch(request)`, so every page after a pupil's first visit) arrives with `Sec-Fetch-Mode: navigate` but `Sec-Fetch-Dest: empty`.
+    Refusing that hid every page-delivered badge and moment. A `navigate` request is a page load, so it now counts whatever its
+    Dest says, except a frame (a page shown inside another page is not what the pupil is looking at). Without a mode, a
+    `Sec-Fetch-Dest` other than `document` is still a background request."""
+    if request.endpoint in (None, 'offline', 'static') or getattr(g, 'pb_error_page', False):
+        return False
+    headers = request.headers
+    if headers.get('Service-Worker'):
+        return False
+    mode = headers.get('Sec-Fetch-Mode')
+    dest = headers.get('Sec-Fetch-Dest')
+    if mode:
+        return mode == 'navigate' and dest not in _FRAME_DESTS
+    if dest and dest != 'document':
+        return False
+    return True
+
+
+_FRAME_DESTS = frozenset({'iframe', 'frame', 'embed', 'object', 'fencedframe'})
+
+
+def _storage_ns():
+    """E11 Phase 0 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 1.2): the name the page scripts add to the browser storage keys that
+    hold one pupil's state (lesson ticks, the guide's local copy, celebrated flags, the corner Zorp's flags), so pupils who share
+    a browser never see or block each other's. Opaque and stable per account: a keyed hash of the account id (the id itself never
+    appears in a key). '' when signed out (those scripts then use their signed-out keys)."""
+    if not current_user.is_authenticated:
+        return ''
+    secret = str(app.secret_key or '').encode('utf-8')
+    digest = hmac.new(secret, f'pb-store:{current_user.id}'.encode('utf-8'), hashlib.sha256).hexdigest()
+    return 'a' + digest[:12]
+
+
+# E10 review fix 1 (privacy): the pending badge and moment lists (session pb_ms, pb_mm) and the XP line (pb_qxp) belong to
+# the pupil who earned them. `pb_own` records that pupil's id next to the lists; the lists are dropped when read or written by
+# anyone else, and cleared on every login and logout (web and API), so a shared browser never shows the next pupil a score.
+_PENDING_LIST_KEYS = ('pb_ms', 'pb_mm', 'pb_qxp')
+_PENDING_SESSION_KEYS = _PENDING_LIST_KEYS + ('pb_own',)
+
+
+def _clear_pending_celebrations():
+    """Drop the pending badge and moment lists, the XP line and the owner mark from the session (no-op without a request)."""
+    if not has_request_context():
+        return
+    for key in _PENDING_SESSION_KEYS:
+        if key in session:   # (pop on a missing key would mark the session changed)
+            session.pop(key, None)
+
+
+def _pending_owned():
+    """True when whatever pending lists the session holds belong to the signed-in viewer. Lists that belong to nobody
+    known (no owner mark) or to someone else are cleared, so they are never read."""
+    if not any(key in session for key in _PENDING_LIST_KEYS):
+        return True
+    if current_user.is_authenticated and session.get('pb_own') == current_user.id:
+        return True
+    _clear_pending_celebrations()
+    return False
+
+
+def _claim_pending():
+    """Call before writing a pending list: drop a stranger's lists and mark the rest as the viewer's."""
+    _pending_owned()
+    if current_user.is_authenticated and session.get('pb_own') != current_user.id:
+        session['pb_own'] = current_user.id
+
+
+@user_logged_in.connect_via(app)
+def _clear_pending_on_login(_sender, user=None, **_extra):
+    # a login as the same pupil (the email-confirm refresh) keeps their own lists; any other login starts clean
+    if session.get('pb_own') != getattr(user, 'id', None):
+        _clear_pending_celebrations()
+
+
+@user_logged_out.connect_via(app)
+def _clear_pending_on_logout(_sender, user=None, **_extra):
+    _clear_pending_celebrations()
+
+
+BADGE_STAGE_FIELDS = ('key', 'title', 'blurb', 'family', 'emoji', 'tier', 'next_title', 'next_how')
+
+
+def _badge_payload(key, conn=None):
+    """What the client needs to celebrate one badge (the fields of models.gamification.badge_display that the stage shows).
+    E10 phase 6b: a badge that newly opens a wardrobe item also carries `wardrobe` {id, name, noun} (the badge stage adds the
+    line and the Try it on button); nothing is added for a badge that opens nothing."""
+    info = badge_display(key)
+    payload = {name: info[name] for name in BADGE_STAGE_FIELDS}
+    if current_user.is_authenticated:
+        try:
+            if conn is not None:
+                found = zorp_wardrobe.wardrobe_payload(conn, current_user.id, key)
+            else:
+                with get_db() as own:
+                    found = zorp_wardrobe.wardrobe_payload(own, current_user.id, key)
+        except Exception:  # the wardrobe line is a bonus: a failure must never hide the badge itself
+            found = None
+        if found:
+            payload['wardrobe'] = found
+    return payload
+
+
+def _note_new_milestones(user_id, keys):
+    """Remember badges earned during this request, for delivery in the response (a JSON body or the page being rendered)
+    or, failing both, the next page through the session (after_request below)."""
+    if not keys or not current_user.is_authenticated or current_user.id != user_id:
+        return
+    mine = getattr(g, 'pb_new_ms', None)
+    if mine is None:
+        mine = g.pb_new_ms = []
+    for key in keys:
+        if key not in mine:
+            mine.append(key)
+    _note_story_unlock(user_id, keys)
+
+
+def _note_story_unlock(user_id, keys):
+    """E10 phase 8: badges that push the pupil over a story threshold (a count, or a topic master or subject complete badge)
+    become one toast moment that offers the first chapter they opened ("Zorp has a new story for you"; Watch or Later, never
+    auto-played). Computed here from the earned badges; the badge stage still plays first (the client holds toasts back)."""
+    try:
+        with get_db() as conn:
+            opened = zorp_story.newly_unlocked(zorp_story.earned_keys(conn, user_id), keys)
+    except Exception:  # the story offer is a bonus: it must never hide a badge
+        return
+    if opened:
+        _note_moment(user_id, zorp_story.offer_moment(opened[0]))
+
+
+def _pending_milestone_keys():
+    """Badges to show on this page: the short session list (earned on an earlier request that redirected or failed) plus
+    this request's own. Emitted once: the session list is cleared as it is read. Cached per request."""
+    cached = getattr(g, 'pb_ms_island', None)
+    if cached is not None:
+        return cached
+    keys = []
+    carried = session.pop('pb_ms', None) if 'pb_ms' in session and _pending_owned() else None   # (pop on a missing key would mark the session changed)
+    for key in (carried or []) + (getattr(g, 'pb_new_ms', None) or []):
+        if isinstance(key, str) and key not in keys:
+            keys.append(key)
+    g.pb_ms_island = keys
+    return keys
+
+
+# E10 phase 5: moments (docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md B1, B4, section 11.8). Small dicts, no personal data:
+#   {'type': 'level', 'id': 'level:4', 'level': 4, 'pct': 0.4}                  full screen
+#   {'type': 'perfect', 'id': 'perfect:<attempt>', 'score': 10, 'total': 10}    full screen
+#   {'type': 'toast', 'id': 'toast:<kind>:<n>', 'kind': 'quiz_done', ...}       corner card with a mini Zorp
+#   {'type': 'micro', 'id': ..., 'kind': 'daily' | 'xp', ...}                  a sparkle or a "+N XP" float
+# They travel like badges: `new_moments` in a JSON body (with the X-PB-Milestones header), the page data island, or the session
+# list `pb_mm` for the next page. The client (static/js/celebrate.js -> pbGuide.moments -> static/js/moments.js) plays them.
+_PENDING_MOMENTS_MAX = 8
+_MOMENT_KEYS = ('type', 'id', 'kind', 'level', 'pct', 'score', 'total', 'wrong', 'points', 'correct', 'url', 'days', 'chapter')
+# a perfect quiz that earns one of these badges is the badge's story: the badge stage plays alone (the client drops the perfect
+# stage and its toast, see _note_quiz_finished)
+_PERFECT_BADGE_PREFIXES = ('topic_ninja:', 'topic_master:')
+_MOMENT_ID_RE = re.compile(r'^[a-z0-9_:\-]{1,64}$')
+
+
+def _note_moment(user_id, moment):
+    """Remember a moment earned during this request (see the block above). Only for the signed-in pupil it belongs to."""
+    if not isinstance(moment, dict) or not current_user.is_authenticated or current_user.id != user_id:
+        return
+    if not _MOMENT_ID_RE.match(str(moment.get('id') or '')) or moment.get('type') not in ('level', 'perfect', 'toast', 'micro'):
+        return
+    clean = {k: moment[k] for k in _MOMENT_KEYS if k in moment and isinstance(moment[k], (str, int, float, bool))}
+    mine = getattr(g, 'pb_new_moments', None)
+    if mine is None:
+        mine = g.pb_new_moments = []
+    if all(m.get('id') != clean['id'] for m in mine):
+        mine.append(clean)
+
+
+def _pending_moments():
+    """Moments to show on this page: the session list (noted on a request that redirected or failed) plus this request's own.
+    Emitted once: the session list is cleared as it is read. Cached per request."""
+    cached = getattr(g, 'pb_mm_island', None)
+    if cached is not None:
+        return cached
+    out = []
+    carried = session.pop('pb_mm', None) if 'pb_mm' in session and _pending_owned() else None
+    for m in (carried or []) + (getattr(g, 'pb_new_moments', None) or []):
+        if isinstance(m, dict) and m.get('id') and all(o.get('id') != m['id'] for o in out):
+            out.append(m)
+    g.pb_mm_island = out
+    return out
+
+
+def _story_catchup(conn, guide_state, moments):
+    """E10 phase 8: a pupil who already had enough badges before the story chapters existed is offered the first unlocked chapter
+    once, as a toast on an ordinary page (never all at once). Only after the arrival and the app tour are done, never while a tour
+    is running, never beside a story offer that this page already carries, and never once any chapter was offered or watched."""
+    tours = (guide_state or {}).get('tours') or {}
+    if (not (guide_state or {}).get('origin') or not tours.get('app') or (guide_state or {}).get('run')
+            or request.endpoint in ('welcome', 'profile_settings')
+            or any(m.get('kind') == zorp_story.OFFER_MOMENT_KIND for m in moments)
+            or zorp_story.any_story_flag(guide_state)):
+        return moments
+    n = zorp_story.catchup_chapter(zorp_story.earned_keys(conn, current_user.id), guide_state)
+    if not n:
+        return moments
+    return moments + [zorp_story.offer_moment(n)]
+
+
+def record_activity_event(conn, user_id, event_type, payload, visibility=VISIBILITY_FOLLOWERS):
+    """models.social.record_activity_event, plus the E10 phase 5 level-up check: an event that carries effort points
+    (models.gamification.EFFORT_WEIGHTS) is compared against the pupil's lifetime points before it, and a new level becomes
+    a `level` moment. Every place that records effort goes through here, so one check covers them all."""
+    weight = effort_weight(event_type)
+    mine = bool(weight) and has_request_context() and current_user.is_authenticated and current_user.id == user_id
+    before = lifetime_effort_xp(conn, user_id) if mine else None
+    _record_activity_event_raw(conn, user_id, event_type, payload, visibility)
+    if mine:
+        g.pb_xp_recorded = getattr(g, 'pb_xp_recorded', 0) + weight
+        up = level_up_between(before, before + weight)
+        if up:
+            _note_moment(user_id, {'type': 'level', 'id': f"level:{up['level']}", 'level': up['level'], 'pct': up['pct']})
+
+
 @app.context_processor
 def inject_nav():
     lesson_meta = None
@@ -1026,13 +1291,15 @@ def inject_nav():
     theme_preference = THEME_SYSTEM
     motion_preference = MOTION_SYSTEM
     zorp_sound = ZORP_SOUND_OFF
-    guide_state = {'v': 1, 'origin': False, 'tours': {}, 'rewards': {}}
+    guide_state = {'v': 1, 'origin': False, 'tours': {}, 'rewards': {}, 'run': None}
     guide_json_persisted = False
+    tour_in_class = False
     nav_streak = 0
     xp_progress = None
     tab_badges = {}
     buddy_look = {}
-    new_milestone_key = None
+    pb_new_milestones = []
+    pb_new_moments = []
     if current_user.is_authenticated:
         with get_db() as conn:
             unread_notifications = count_unread_notifications(conn, current_user.id)
@@ -1054,6 +1321,9 @@ def inject_nav():
             )
             guide_state = profile_settings.get('guide') or guide_state
             guide_json_persisted = bool(profile_settings.get('guide_json_persisted'))
+            if not (guide_state.get('tours') or {}).get('app') or guide_state.get('run'):
+                # E10 phase 6: the app tour has a Classes stop only for a pupil who is in a class (asked only while the tour is due)
+                tour_in_class = bool(list_classes_for_student(conn, current_user.id))
             streak = get_study_streak(conn, current_user.id)
             nav_streak = int(streak.get('current') or 0)
             teacher_enabled = teacher_is_enabled(conn, current_user.id)
@@ -1071,10 +1341,8 @@ def inject_nav():
             # /welcome is the only other place that renders with hide_study_buddy=True
             # (set as a render_template kwarg by the welcome() view itself, so it isn't
             # known here) -- the aside doesn't render on either page, so skip building
-            # the prompt/task_mark there too. Milestone lookup is only skipped for the
-            # quiz runner: the reward popup is confirmed suppressed there (guide.js
-            # isQuizRunner()) but not on /welcome, so new_milestone_key must still be
-            # computed for /welcome.
+            # the prompt/task_mark there too. The pending badge list (E10 phase 4) is held back only on quiz
+            # question pages; results pages and /welcome emit it.
             skip_buddy_prompt = quiz_runner_mode_now or request.endpoint == 'welcome'
             if skip_buddy_prompt:
                 buddy_prompt = None
@@ -1088,22 +1356,28 @@ def inject_nav():
                     current_topic=page_topic,
                 )
                 buddy_prompt = _serialize_buddy_prompt(raw_prompt)
-            buddy_look = zorp_kit.live_look(latest_pose_milestone(conn, current_user.id))
-            if not quiz_runner_mode_now:
-                from datetime import datetime, timezone
-                milestone_row = recent_milestone(conn, current_user.id, datetime.now(timezone.utc))
-                new_milestone_key = milestone_row['key'] if milestone_row else None
+            # E10 phase 6b: the pupil's own wardrobe choice wins; a pupil who never chose keeps the automatic look
+            buddy_look = zorp_wardrobe.outfit_look(conn, current_user.id, profile_settings.get('zorp_outfit_json'))
+            if buddy_look is None:
+                buddy_look = zorp_kit.live_look(latest_pose_milestone(conn, current_user.id))
+            if (not quiz_runner_mode_now or _quiz_results_now()) and _pending_may_emit():
+                pb_new_milestones = [_badge_payload(k, conn) for k in _pending_milestone_keys()[:_PENDING_MILESTONES_MAX]]
+                pb_new_moments = _pending_moments()[:_PENDING_MOMENTS_MAX]
+                pb_new_moments = _story_catchup(conn, guide_state, pb_new_moments)
     return {
         'nav_endpoint': request.endpoint,
         'lesson_meta': lesson_meta,
         'lesson_assist_enabled': assist_on,
         'lesson_progress_enabled': lesson_progress_on,
         'csrf_token': _csrf_token,
+        'pb_store_ns': _storage_ns(),
         'unread_notifications': unread_notifications,
         'buddy_page': buddy_page,
         'buddy_prompt': buddy_prompt,
         'buddy_look': buddy_look,
-        'new_milestone_key': new_milestone_key,
+        'pb_new_milestones': pb_new_milestones,
+        'pb_new_moments': pb_new_moments,
+        'quiz_results_mode': _quiz_results_now(),
         'viewer_xp': viewer_xp,
         'viewer_level': viewer_level,
         'xp_progress': xp_progress,
@@ -1114,6 +1388,7 @@ def inject_nav():
         'motion_preference': motion_preference,
         'zorp_sound': zorp_sound,
         'guide_state': guide_state,
+        'tour_in_class': tour_in_class,
         'guide_json_persisted': guide_json_persisted,
         'nav_streak': nav_streak,
         'teacher_enabled': teacher_enabled,
@@ -1138,6 +1413,62 @@ def _is_python_lesson_page():
         and view_args.get('subject') == 'cs'
         and view_args.get('topic') == 'python_programming'
     )
+
+
+@app.after_request
+def deliver_new_milestones(response):
+    """Badges and moments earned during this request reach the pupil as soon as they can (E10 phases 4 and 5, plan 6.3).
+
+    * A successful JSON object response gets `new_milestones` (display data for each badge) and `new_moments` (levels, perfect
+      quizzes, toasts) and the header `X-PB-Milestones` (static/js/celebrate.js reads it for any fetch and plays them).
+    * A page that was rendered already carried them in its data islands (`_pending_milestone_keys`, `_pending_moments`).
+    * Anything else (a redirect after a form post, an error, a non-object body) keeps them in short session lists
+      that the next page emits once and clears. Only badge keys and the small moment dicts are stored, no personal data.
+    """
+    keys = [] if getattr(g, 'pb_ms_island', None) is not None else (getattr(g, 'pb_new_ms', None) or [])
+    moments = [] if getattr(g, 'pb_mm_island', None) is not None else (getattr(g, 'pb_new_moments', None) or [])
+    if not keys and not moments:
+        return response
+    # E10 review fix 3: a fetch made from a quiz question page sends X-PB-Quiz (static/js/celebrate.js), because that page stays
+    # quiet; the badges and moments are then kept for the results page instead of being sent in an answer the client would drop.
+    from_quiz_question = request.headers.get('X-PB-Quiz') == '1'
+    if (
+        200 <= response.status_code < 300
+        and response.mimetype == 'application/json'
+        and not response.direct_passthrough
+        and not from_quiz_question
+    ):
+        try:
+            body = json.loads(response.get_data(as_text=True))
+        except (TypeError, ValueError):
+            body = None
+        if isinstance(body, dict) and 'new_milestones' not in body and 'new_moments' not in body:
+            if keys:
+                body['new_milestones'] = [_badge_payload(k) for k in keys]
+            if moments:
+                body['new_moments'] = moments[:_PENDING_MOMENTS_MAX]
+            response.set_data(json.dumps(body))
+            response.headers['X-PB-Milestones'] = str(len(keys) + len(moments))
+            g.pb_new_ms = []
+            g.pb_new_moments = []
+            return response
+    if keys or moments:
+        _claim_pending()
+    if keys:
+        pending = [k for k in (session.get('pb_ms') or []) if isinstance(k, str)]
+        for key in keys:
+            if key not in pending:
+                pending.append(key)
+        session['pb_ms'] = pending[-_PENDING_MILESTONES_MAX:]
+        g.pb_new_ms = []
+    if moments:
+        held = [m for m in (session.get('pb_mm') or []) if isinstance(m, dict)]
+        for m in moments:
+            if all(h.get('id') != m.get('id') for h in held):
+                held.append(m)
+        session['pb_mm'] = held[-_PENDING_MOMENTS_MAX:]
+        g.pb_new_moments = []
+    return response
 
 
 @app.after_request
@@ -1286,6 +1617,25 @@ def _close_db(exception=None):
         except sqlite3.Error:
             pass
 
+def _seed_lesson_step_awards(conn):
+    """One-time (E10 review fix 5): steps already complete when the lesson_step_awards ledger arrived have earned their points."""
+    for row in conn.execute(
+        'SELECT user_id, level, subject, topic, section_key, completed_keys_json, step_total, updated_at FROM lesson_progress'
+    ).fetchall():
+        try:
+            done = json.loads(row['completed_keys_json'] or '[]')
+        except (TypeError, ValueError):
+            done = []
+        if not isinstance(done, list):
+            done = []
+        for key in valid_lesson_step_keys(row['level'], row['subject'], row['topic'], done + [row['section_key']], row['step_total']):
+            conn.execute(
+                'INSERT OR IGNORE INTO lesson_step_awards (user_id, level, subject, topic, step_key, awarded_at) VALUES (?, ?, ?, ?, ?, ?)',
+                (row['user_id'], row['level'], row['subject'], row['topic'], key, row['updated_at']),
+            )
+    conn.commit()
+
+
 with get_db() as conn:
     conn.execute("""
         CREATE TABLE IF NOT EXISTS quicktest_sessions (
@@ -1417,6 +1767,9 @@ with get_db() as conn:
     }
     if 'problems_json' not in quiz_cols:
         conn.execute('ALTER TABLE quiz_attempts ADD COLUMN problems_json TEXT')
+    if 'is_retry' not in quiz_cols:
+        # 2026-11-08 (E10 phase 6): Retry wrong ones runs are marked, so statistics count full quizzes only. Older rows stay 0.
+        conn.execute('ALTER TABLE quiz_attempts ADD COLUMN is_retry INTEGER NOT NULL DEFAULT 0')
     lesson_cols = {
         row[1] for row in conn.execute('PRAGMA table_info(lesson_progress)').fetchall()
     }
@@ -1548,6 +1901,7 @@ with get_db() as conn:
         ('motion_preference', "TEXT NOT NULL DEFAULT 'system'"),
         ('zorp_sound', "TEXT NOT NULL DEFAULT 'off'"),
         ('guide_json', "TEXT NOT NULL DEFAULT '{}'"),
+        ('zorp_outfit_json', "TEXT NOT NULL DEFAULT ''"),   # E10 phase 6b: Zorp's wardrobe choice ('' = never chose)
     ):
         if col not in profile_cols:
             conn.execute(f'ALTER TABLE user_profile_settings ADD COLUMN {col} {ddl}')
@@ -1599,6 +1953,26 @@ with get_db() as conn:
         conn.execute(
             "INSERT INTO schema_migrations (name, applied_at) VALUES (?, datetime('now'))",
             ('lesson_progress_step_totals',),
+        )
+    # 2026-11-08 (E10 review fix 5): which lesson steps have earned effort points. Kept apart from lesson_progress so that clearing
+    # the bookmark and redoing the lesson earns nothing again. Personal data: in the export, erased with the account (cascade).
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS lesson_step_awards (
+            user_id INTEGER NOT NULL,
+            level TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            step_key TEXT NOT NULL,
+            awarded_at TEXT NOT NULL,
+            PRIMARY KEY (user_id, level, subject, topic, step_key),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    if 'lesson_step_awards_seed' not in migrated:
+        _seed_lesson_step_awards(conn)
+        conn.execute(
+            "INSERT INTO schema_migrations (name, applied_at) VALUES (?, datetime('now'))",
+            ('lesson_step_awards_seed',),
         )
     conn.execute("""
         CREATE TABLE IF NOT EXISTS email_digest_log (
@@ -2122,6 +2496,7 @@ def load_user_from_bearer_token(req):
 def _handle_not_found(err):
     if _is_api_path():
         return _api_error('Not found', 404, 'not_found')
+    g.pb_error_page = True   # E10 review fix 7: an error page never reads the pending lists
     return render_template('errors/404.html'), 404
 
 
@@ -2137,6 +2512,7 @@ def _handle_server_error(err):
     app.logger.exception('Unhandled server error')
     if _is_api_path():
         return _api_error('Internal server error', 500, 'server_error')
+    g.pb_error_page = True
     return render_template('errors/500.html'), 500
 
 
@@ -2241,6 +2617,7 @@ def _render_quiz_results(
     show_wrong_explanations_only=True,
     quiz_attempt_id=None,
     can_retry_wrong=None,
+    quiz_xp=0,
 ):
     if can_retry_wrong is None:
         can_retry_wrong = _lesson_quiz_session_can_retry(level, subject, topic)
@@ -2268,6 +2645,7 @@ def _render_quiz_results(
         quiz_attempt_id=quiz_attempt_id,
         can_retry_wrong=can_retry_wrong,
         accuracy_trend=accuracy_trend,
+        quiz_xp=quiz_xp,
     )
 
 
@@ -2940,12 +3318,18 @@ def welcome_step():
 
     step = request.form.get('step')
 
+    # E10 (docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md A1): the arrival film on /welcome tells the origin story, so every
+    # accepted step (Let's go, a level, a topic, Skip for now) records it as seen or skipped (set_guide_origin), and the
+    # old origin story never plays after it. A refused step (bad CSRF, a level or topic not on offer) writes nothing.
     if step == 'skip':
         with get_db() as conn:
             set_welcome_state(conn, current_user.id, done=True)
+            set_guide_origin(conn, current_user.id, True)
         return redirect(url_for('index'))
 
     if step == 'hello':
+        with get_db() as conn:
+            set_guide_origin(conn, current_user.id, True)
         return redirect(url_for('welcome', step='level'))
 
     if step == 'level':
@@ -2959,6 +3343,7 @@ def welcome_step():
             existing_topic = settings['welcome']['topic']
             new_topic = existing_topic if existing_topic in _welcome_topic_slugs(track) else None
             set_welcome_state(conn, current_user.id, level=track['key'], topic=new_topic)
+            set_guide_origin(conn, current_user.id, True)
         return redirect(url_for('welcome', step='topic'))
 
     if step == 'topic':
@@ -2982,6 +3367,7 @@ def welcome_step():
             return redirect(url_for('welcome', step='topic'))
         with get_db() as conn:
             set_welcome_state(conn, current_user.id, topic=chosen, done=True)
+            set_guide_origin(conn, current_user.id, True)
         return redirect(url_for('welcome', step='ready'))
 
     return redirect(url_for('welcome'))
@@ -3150,6 +3536,8 @@ def index():
         ],
         generator_topics=_generator_topic_options(),
         recent_topics=recent_topics,
+        # E10 phase 3: only the question that Start on /welcome (the arrival) asks for is coached (guide.js decides if it is due)
+        coach_first=bool(problem and not error and request.method == 'POST' and request.form.get('coach') == '1'),
     )
 
 
@@ -3784,11 +4172,15 @@ def _serialize_quiz_attempt_detail(attempt, *, external_urls=False):
         enriched = enrich_quiz_attempt_problems(attempt['problems'], attempt['answers'])
         for index, problem in enumerate(enriched):
             entry = _quicktest_question_payload(problem, reveal=True)
-            user_answer = (problem.get('user_answer') or '').strip().upper()[:1]
+            raw_answer = str(problem.get('user_answer') or '').strip()
+            user_answer = raw_answer.upper()[:1] if problem.get('options') else raw_answer
             correct_answer = (problem.get('correct_answer') or '').strip().upper()[:1]
             entry['index'] = index
             entry['user_answer'] = user_answer
-            entry['correct'] = bool(user_answer and user_answer == correct_answer)
+            if problem.get('answered_correctly') is not None:   # graded (a typed answer has no letter to compare)
+                entry['correct'] = bool(problem['answered_correctly'])
+            else:
+                entry['correct'] = bool(user_answer and user_answer == correct_answer)
             questions.append(entry)
     return {
         'id': attempt['id'],
@@ -4234,6 +4626,8 @@ def _settings_to_json(settings):
         ),
         'zorp_sound': normalize_zorp_sound(settings.get('zorp_sound', ZORP_SOUND_OFF)),
         'avatar': parse_avatar(settings.get('avatar')),
+        # E10 phase 6b: Zorp's wardrobe choice; None = never chose (the automatic look). Owner only, like the other display settings.
+        'zorp_outfit': zorp_wardrobe.parse_outfit(settings.get('zorp_outfit_json', settings.get('zorp_outfit'))),
         'guide': public_guide_state(
             settings.get('guide') if isinstance(settings.get('guide'), dict)
             else settings.get('guide_json')
@@ -4297,12 +4691,102 @@ def _record_user_activity(user_id, event_type, payload, visibility=VISIBILITY_FO
         record_activity_event(conn, user_id, event_type, payload, visibility)
 
 
+def _freeze_count(conn, user_id):
+    row = conn.execute('SELECT COUNT(*) AS n FROM user_streak_freezes WHERE user_id = ?', (user_id,)).fetchone()
+    return int(row['n'] or 0) if row else 0
+
+
 def _record_study_activity(user_id):
+    """Record today as a study day and award any badges earned. Returns the new badge keys; they are also handed to
+    the response (`new_milestones` in a JSON body, the page data island, or the session for the next page).
+    E10 phase 5: a weekly streak skip used by this study day becomes a toast moment."""
     if not user_id:
+        return []
+    with get_db() as conn:
+        freezes_before = _freeze_count(conn, user_id)
+        record_study_day(conn, user_id)
+        used_skip = _freeze_count(conn, user_id) > freezes_before
+        earned = evaluate_milestones(conn, user_id)
+    _note_new_milestones(user_id, earned)
+    if used_skip:
+        _note_moment(user_id, {'type': 'toast', 'id': f'toast:skip:{current_day_key()}', 'kind': 'streak_skip'})
+    return earned
+
+
+def _record_set_work_answer(assignment_id, work=None):
+    """A set-work question answered for the first time (answers can only be given once): one effort point (a private
+    activity event, never in a feed) and a study day, so streaks and badges move. E10 phase 4, owner's answer 11.
+    E10 phase 5: the real point is shown as a "+1 XP" float, and the last answer of an assignment is a toast moment."""
+    if not current_user.is_authenticated:
         return
     with get_db() as conn:
-        record_study_day(conn, user_id)
-        evaluate_milestones(conn, user_id)
+        record_activity_event(
+            conn,
+            current_user.id,
+            ACTIVITY_SET_WORK_ANSWERED,
+            {'assignment_id': int(assignment_id)},
+            VISIBILITY_PRIVATE,
+        )
+    _record_study_activity(current_user.id)
+    n = int(assignment_id)
+    _note_moment(current_user.id, {'type': 'micro', 'id': f'micro:xp:setwork:{n}:{secrets.token_hex(2)}', 'kind': 'xp',
+                                   'points': effort_weight(ACTIVITY_SET_WORK_ANSWERED)})
+    if isinstance(work, dict) and work.get('status') == STATUS_COMPLETE:
+        _note_moment(current_user.id, {'type': 'toast', 'id': f'toast:setwork:{n}', 'kind': 'set_work_done'})
+
+
+def _note_quiz_finished(user_id, level, subject, topic, score, total, attempt_id, *, wrong, retry_mode=False, kind='lesson'):
+    """E10 phase 5: the moment a finished quiz earns (plan B4). One of:
+    * retry run with every question right: toast "All fixed.";
+    * a perfect lesson quiz (every answer right, at least 3 questions): the full-screen perfect moment, unless this very request
+      earned a topic ninja or topic master badge, whose stage already says it (the badge plays alone, no second stage and no toast);
+    * a new personal best on the topic (against the pupil's own earlier attempts only): a toast with the Retry link;
+    * otherwise a toast with the score and a Retry link. Quick Test: a toast with the marks.
+    Only for a signed-in pupil whose attempt was saved (attempt_id)."""
+    total = int(total or 0)
+    score = int(score or 0)
+    if not attempt_id or total <= 0 or not current_user.is_authenticated or current_user.id != user_id:
+        return
+    aid = int(attempt_id)
+    wrong = max(0, int(wrong))
+    done = wrong == 0 and score >= total
+    if retry_mode and done:
+        _note_moment(user_id, {'type': 'toast', 'id': f'toast:retry:{aid}', 'kind': 'retry_cleared'})
+        return
+    if kind == 'lesson' and not retry_mode and done and total >= 3:
+        badges = getattr(g, 'pb_new_ms', None) or []
+        if not any(str(k).startswith(_PERFECT_BADGE_PREFIXES) for k in badges):
+            _note_moment(user_id, {'type': 'perfect', 'id': f'perfect:{aid}', 'score': score, 'total': total})
+        return
+    base = {'type': 'toast', 'id': f'toast:quiz:{aid}', 'score': score, 'total': total, 'wrong': wrong}
+    if kind == 'quicktest':
+        _note_moment(user_id, dict(base, kind='quicktest_done'))
+        return
+    best = False
+    if not retry_mode and not done:
+        with get_db() as conn:
+            best = personal_best_quiz(conn, user_id, level, subject, topic, score, total)
+    _note_moment(user_id, dict(base, kind='personal_best' if best else 'quiz_done'))
+
+
+def _note_daily_answered(user_id, day_key, correct):
+    """E10 phase 5: the Daily answer is a micro moment (Zorp's small reaction when right); answering on all seven days of the
+    calendar week (Monday to Sunday, UTC) is a toast, once per week."""
+    _note_moment(user_id, {'type': 'micro', 'id': f'micro:daily:{day_key}', 'kind': 'daily', 'correct': bool(correct)})
+    try:
+        today = date.fromisoformat(day_key)
+    except ValueError:
+        return
+    monday = today - timedelta(days=today.weekday())
+    keys = [(monday + timedelta(days=i)).isoformat() for i in range(7)]
+    with get_db() as conn:
+        row = conn.execute(
+            f"SELECT COUNT(*) AS n FROM qotd_attempts WHERE user_id = ? AND day_key IN ({','.join('?' * 7)})",
+            (user_id, *keys),
+        ).fetchone()
+    if int(row['n'] or 0) >= 7:
+        y, w, _ = today.isocalendar()
+        _note_moment(user_id, {'type': 'toast', 'id': f'toast:qotd_week:{y}w{w}', 'kind': 'daily_week'})
 
 
 def _topic_page_url(level, subject, topic):
@@ -4949,6 +5433,7 @@ def _finalize_quicktest_session(data):
                 total,
                 answers,
                 problems,
+                is_retry=bool(data.get('retry_mode')),
             )
         _track_quiz_completed(
             data.get('level', 'gcse'),
@@ -4956,6 +5441,11 @@ def _finalize_quicktest_session(data):
             data.get('topic', 'forces'),
             score,
             total,
+        )
+        _note_quiz_finished(
+            current_user.id, data.get('level', 'gcse'), data.get('subject', 'physics'), data.get('topic', 'forces'),
+            score, total, attempt_id, wrong=_quicktest_wrong_count(problems, answers),
+            retry_mode=bool(data.get('retry_mode')), kind='quicktest',
         )
         data['attempt_id'] = attempt_id
         _save_qt(data)
@@ -5039,6 +5529,7 @@ def _finalize_lesson_quiz_session(data, session_id):
                 len(problems),
                 answers,
                 problems,
+                is_retry=bool(data.get('retry_mode')),
             )
         data['attempt_id'] = attempt_id
         _track_quiz_completed(
@@ -5047,6 +5538,10 @@ def _finalize_lesson_quiz_session(data, session_id):
             data['topic'],
             score,
             len(problems),
+        )
+        _note_quiz_finished(
+            current_user.id, data['level'], data['subject'], data['topic'], score, len(problems), attempt_id,
+            wrong=len(problems) - score, retry_mode=bool(data.get('retry_mode')),
         )
 
     with get_db() as conn:
@@ -5080,6 +5575,24 @@ def _apply_lesson_progress_update(
         settings = get_profile_settings(conn, user_id)
 
     completed_count = len((progress or {}).get('completed_keys') or [])
+    # 2026-11-08 (E10 phase 6): a lesson page saves on load as well as on each step, and that save used to record a
+    # lesson-step event (effort points, and so level-ups) every time, so reloading a part-finished lesson farmed points. This
+    # was already so before E10 (the event was recorded on every save); the points are now awarded only when the save
+    # actually adds a step, and never beyond the lesson's own step total (a client cannot invent steps to farm).
+    # The study day is unchanged (one per day, so it cannot be farmed).
+    # 2026-11-08 (E10 review fix 5): points follow a ledger of the steps that have earned them (lesson_step_awards), counted against
+    # the lesson's own step total from the server (never the client's value; the stored total is only a fallback for a lesson with
+    # no known count). Clearing the progress and redoing the lesson, or sending invented keys, earns nothing.
+    with get_db() as conn:
+        new_steps = award_new_lesson_steps(
+            conn, user_id, level, subject, topic,
+            (progress or {}).get('completed_keys') or [],
+            fallback_total=(progress or {}).get('step_total') or 0,
+        )
+    if new_steps <= 0:
+        if completed_count > 0:
+            _record_study_activity(user_id)
+        return progress
     visibility = VISIBILITY_FOLLOWERS
     if settings.get('auto_share_lesson'):
         visibility = _normalize_share_visibility(settings.get('default_share_visibility'))
@@ -5584,7 +6097,15 @@ def guide_preview():
     """E6 / A1 — preview origin overlay without logging in. Dev-only."""
     if not _guide_preview_enabled():
         abort(404)
-    return render_template('guide_preview.html', guide_preview_mode=True)
+    # E10 phase 4: one real badge per family for the badge stage buttons (the same display data a page would carry)
+    samples = {
+        'streak': 'streak_7', 'daily': 'qotd_7', 'practice': 'questions_25', 'explorer': 'topics_10',
+        'learning': 'first_lesson_step', 'topic_completed': 'topic_completed:gcse:maths:algebra',
+        'topic_ninja': 'topic_ninja:gcse:maths:algebra', 'topic_master': 'topic_master:gcse:maths:algebra',
+        'subject': 'subject_completed:gcse:maths', 'accuracy': 'accuracy_top_friend',
+    }
+    preview_badges = {name: _badge_payload(key) for name, key in samples.items()}
+    return render_template('guide_preview.html', guide_preview_mode=True, preview_badges=preview_badges)
 
 
 @app.route('/about')
@@ -5741,6 +6262,7 @@ def register():
                     else:
                         user = User.create(conn, email, handle, password)
                         ensure_user_profile(conn, user.id)
+                        apply_new_account_defaults(conn, user.id)   # E10: sounds on for a new account
                         raw = create_email_verification_token(conn, user.id)
                         _send_verify_email(user, raw)
                         login_user(user, remember=True)
@@ -5941,7 +6463,12 @@ def profile():
         weak_topics = _weak_topics_for_user(conn, current_user.id, limit=8)
         due_today = _revision_queue_for_user(conn, current_user.id)
         skill_gaps = _skill_gaps_for_user(conn, current_user.id, limit=6)
-        avatar = get_profile_settings(conn, current_user.id).get('avatar')
+        own_settings = get_profile_settings(conn, current_user.id)
+        avatar = own_settings.get('avatar')
+        # E10 phase 6b: Zorp's wardrobe panel (?try=<item id> puts an unlocked item on in the preview, unsaved)
+        wardrobe = zorp_wardrobe.page_model(
+            conn, current_user.id, own_settings.get('zorp_outfit_json'), (request.args.get('try') or '')[:40]
+        )
         reflection_type = (request.args.get('reflection_type') or '').strip().lower() or None
         if reflection_type and reflection_type not in REFLECTION_PROMPT_TYPES:
             reflection_type = None
@@ -5976,6 +6503,13 @@ def profile():
             if len(mastery_topics) >= 12:
                 break
         badges_earned = sum(1 for item in milestones if item.get('earned'))
+        # E10 phase 7: badges earned in the last 7 days wear a small "New" ribbon on the Milestones shelf.
+        new_cutoff = (datetime.now(timezone.utc) - timedelta(days=7)).replace(microsecond=0).isoformat()
+        for item in milestones:
+            item['is_new'] = bool(item.get('earned') and (item.get('earned_at') or '') >= new_cutoff)
+        next_up = next_up_badge(milestones)
+        # E10 phase 8: Zorp's story shelf (which chapters the earned badges open; watched flags are in the guide state)
+        story_shelf = zorp_story.shelf([i['key'] for i in milestones if i.get('earned')], own_settings.get('guide'))
     for item in saved:
         item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
     for item in progress:
@@ -6024,6 +6558,7 @@ def profile():
         accuracy_trend=accuracy_trend,
         streak_ring=streak_ring,
         milestones=milestones,
+        story_shelf=story_shelf,
         weekly_recap=weekly_recap,
         friend_leaderboard=leaderboard[:5],
         pending_suggestions=pending_suggestions,
@@ -6043,8 +6578,10 @@ def profile():
         revision_plan_subjects=_revision_plan_scope_options(),
         public_profile_url=_public_profile_url(current_user.handle),
         avatar=avatar or dict(DEFAULT_AVATAR),
+        wardrobe=wardrobe,
         mastery_topics=mastery_topics,
         badges_earned=badges_earned,
+        next_up=next_up,
     )
 
 
@@ -6721,7 +7258,7 @@ def student_class_work_detail(assignment_id):
             return redirect(url_for('student_class_work_detail', assignment_id=assignment_id))
         try:
             with get_db() as conn:
-                submit_student_answer(
+                work = submit_student_answer(
                     conn,
                     current_user.id,
                     assignment_id,
@@ -6733,6 +7270,7 @@ def student_class_work_detail(assignment_id):
                 abort(404)
             flash_for('student_class_work_detail', _class_value_error_flash(exc), 'error')
             return redirect(url_for('student_class_work_detail', assignment_id=assignment_id))
+        _record_set_work_answer(assignment_id, work)
         flash_for('student_class_work_detail', 'Answer checked.', 'success')
         return redirect(url_for('student_class_work_detail', assignment_id=assignment_id))
 
@@ -6819,7 +7357,15 @@ def profile_settings():
                 update_profile_settings(conn, current_user.id, updated)
             flash_for('index', 'Intro will play on Practice.', 'success')
             return redirect(url_for('index'))
-        elif request.form.get('action') == 'replay_welcome':
+        elif request.form.get('action') == 'replay_tour':
+            # E10 phase 6: "Replay the tour" starts the app tour again from Practice (guide.js sees the run in the guide state)
+            with get_db() as conn:
+                start_app_tour(conn, current_user.id)
+            return redirect(url_for('index'))
+        elif request.form.get('action') in ('replay_arrival', 'replay_welcome'):
+            # E10: one "Replay the arrival" button (Settings) plays the film again on /welcome from scene 1. The E7
+            # replay_welcome action is the same thing and stays accepted (an old cached settings page); replay_guide_intro
+            # above is kept for the same reason and plays the story part on the next page.
             with get_db() as conn:
                 set_welcome_state(conn, current_user.id, done=False)
             return redirect(url_for('welcome'))
@@ -7499,6 +8045,7 @@ def api_v1_problems_check():
             try:
                 response['hint'] = build_ladder(
                     problem, topic=topic, correct_raw=str(problem.get('correct_answer_raw') or ''), slip=slip,
+                    slip_text=diagnosis.message if slip else '',
                 )
             except Exception:  # noqa: BLE001 - the ladder is a courtesy; the grade is already decided
                 pass
@@ -7539,6 +8086,9 @@ def api_v1_problems_check():
                 )
                 if attempt_id is not None:
                     response['attempt_id'] = attempt_id
+                # E10 phase 4 (owner's answer 11): a typed check is a study day (streaks, badges). No activity event is
+                # added here, so no effort point: the question already earned its point when it was generated.
+                _record_study_activity(current_user.id)
 
     field_correct_raw = correct_answer_raw if partial_field else None
     cohort = _cohort_from_stored_problem(
@@ -7661,6 +8211,7 @@ def api_v1_patch_settings():
         'avatar_bg',
         'avatar_extra',
         'guide',
+        'zorp_outfit',
     }
     unknown = set(payload.keys()) - allowed_keys
     if unknown:
@@ -7737,6 +8288,13 @@ def api_v1_patch_settings():
     if 'avatar' in payload and payload['avatar'] is not None and not isinstance(payload['avatar'], dict):
         return _api_error('avatar must be an object', 400, 'invalid_field')
 
+    outfit_patch = None
+    wants_outfit = 'zorp_outfit' in payload
+    if wants_outfit:
+        if payload['zorp_outfit'] is not None and not isinstance(payload['zorp_outfit'], dict):
+            return _api_error('zorp_outfit must be an object or null', 400, 'invalid_outfit')
+        outfit_patch = payload['zorp_outfit']
+
     guide_patch = None
     if 'guide' in payload:
         guide_patch, guide_err = validate_guide_patch(payload['guide'])
@@ -7748,6 +8306,14 @@ def api_v1_patch_settings():
 
     with get_db() as conn:
         current = _settings_to_json(get_profile_settings(conn, current_user.id))
+        if wants_outfit:
+            # validated against the catalogue and this pupil's badges before anything is written (the whole PATCH is refused)
+            if outfit_patch is None:
+                clean = None
+            else:
+                clean, outfit_err = zorp_wardrobe.validate_outfit(conn, current_user.id, outfit_patch)
+                if outfit_err:
+                    return _api_error(outfit_err[0], 400, outfit_err[1])
         if wants_avatar:
             previous_avatar = current.get('avatar')
             current['avatar'] = _save_avatar_for_user(
@@ -7759,6 +8325,8 @@ def api_v1_patch_settings():
         for key in avatar_keys:
             payload.pop(key, None)
         payload.pop('guide', None)
+        payload.pop('zorp_outfit', None)
+        current.pop('zorp_outfit', None)
         current.update(payload)
         if guide_patch is not None:
             current['guide'] = guide_patch
@@ -7768,9 +8336,36 @@ def api_v1_patch_settings():
             update_profile_settings(conn, current_user.id, current)
         except ValueError as err:
             return _api_error(str(err), 400, 'invalid_field')
+        if wants_outfit:
+            zorp_wardrobe.save_outfit(conn, current_user.id, clean)
         settings = _settings_to_json(get_profile_settings(conn, current_user.id))
 
     return jsonify({'ok': True, 'settings': settings})
+
+
+@app.post('/api/v1/me/tour/complete')
+@login_required
+def api_v1_tour_complete():
+    """E10 phase 6: the app tour was finished; award the Pathfinder badge once. It reaches the pupil through the ordinary badge
+    delivery (new_milestones in this answer, played by celebrate.js). E10 review fix 8: only after the server has recorded that
+    the tour reached its end (POST /api/v1/me/tour/reached-end); "Not now" (tours.app) or an unfinished run earns nothing."""
+    with get_db() as conn:
+        if not guide_tour_finished(conn, current_user.id):
+            return jsonify({'ok': True, 'awarded': False})
+        awarded = award_tour_badge(conn, current_user.id)
+    if awarded:
+        _note_new_milestones(current_user.id, [MILESTONE_TOUR])
+    return jsonify({'ok': True, 'awarded': awarded})
+
+
+@app.post('/api/v1/me/tour/reached-end')
+@login_required
+def api_v1_tour_reached_end():
+    """E10 review fix 8: the tour's last step is on screen. The client saves the guide state first, and the server records the
+    finish only when that saved run is the app tour on its last page (models.social.mark_tour_finished)."""
+    with get_db() as conn:
+        recorded = mark_tour_finished(conn, current_user.id)
+    return jsonify({'ok': True, 'recorded': recorded})
 
 
 AUTH_REGISTER_DAILY_LIMIT = 10
@@ -7779,6 +8374,7 @@ AUTH_LOGIN_DAILY_LIMIT = 30
 
 @app.post('/api/v1/auth/register')
 def api_v1_auth_register():
+    _clear_pending_celebrations()   # E10 review fix 1: a new account never inherits a browser's pending moments
     allowed, _remaining = _auth_rate_limit('register', AUTH_REGISTER_DAILY_LIMIT)
     if not allowed:
         return _api_error('Too many registration attempts today', 429, 'rate_limited')
@@ -7827,6 +8423,7 @@ def api_v1_auth_register():
             )
         user = User.create(conn, email, handle, password)
         ensure_user_profile(conn, user.id)
+        apply_new_account_defaults(conn, user.id)   # E10: sounds on for a new account
         raw = create_email_verification_token(conn, user.id)
         _send_verify_email(user, raw)
         token = _issue_api_token(conn, user, label=label or 'Registration')
@@ -7836,6 +8433,7 @@ def api_v1_auth_register():
 
 @app.post('/api/v1/auth/login')
 def api_v1_auth_login():
+    _clear_pending_celebrations()   # E10 review fix 1
     allowed, _remaining = _auth_rate_limit('login', AUTH_LOGIN_DAILY_LIMIT)
     if not allowed:
         return _api_error('Too many login attempts today', 429, 'rate_limited')
@@ -7874,6 +8472,7 @@ def api_v1_auth_login():
 
 @app.post('/api/v1/auth/logout')
 def api_v1_auth_logout():
+    _clear_pending_celebrations()   # E10 review fix 1
     raw = _extract_bearer_token()
     if not raw:
         return _api_error('Authorization Bearer token required', 401, 'auth_required')
@@ -8312,6 +8911,7 @@ def api_v1_me_class_work_answer(assignment_id):
             )
     except ValueError as exc:
         return _class_value_error_api(exc)
+    _record_set_work_answer(assignment_id, work)
     return jsonify({'ok': True, 'class_work': serialize_student_work(work)})
 
 
@@ -10710,6 +11310,12 @@ def view_quiz_attempt(attempt_id):
         topic=attempt['topic'],
     )
     problems = enrich_quiz_attempt_problems(attempt['problems'], attempt['answers'])
+    # E10 phase 5, honest XP: the effort points the quiz recorded, shown once, on the page the pupil lands on after submitting
+    held = session.get('pb_qxp') if _pending_owned() else None
+    quiz_xp = 0
+    if isinstance(held, list) and len(held) == 2 and held[0] == attempt_id:
+        quiz_xp = int(held[1] or 0)
+        session.pop('pb_qxp', None)
     return _render_quiz_results(
         problems,
         attempt['score'],
@@ -10724,6 +11330,7 @@ def view_quiz_attempt(attempt_id):
         back_label='← Back to profile',
         show_wrong_explanations_only=True,
         quiz_attempt_id=attempt_id,
+        quiz_xp=quiz_xp,
     )
 
 
@@ -11129,6 +11736,7 @@ def lesson_mcq_next(level, subject, topic):
                     data.get('total', len(problems)),
                     data.get('answers') or [],
                     problems,
+                    is_retry=bool(data.get('retry_mode')),
                 )
             _track_quiz_completed(
                 level,
@@ -11137,6 +11745,14 @@ def lesson_mcq_next(level, subject, topic):
                 score,
                 data.get('total', len(problems)),
             )
+            # E10 review fix 4: the one-question-at-a-time path finishes like /submit does (perfect stage, toast, personal best, XP line)
+            quiz_total = data.get('total', len(problems))
+            _note_quiz_finished(
+                current_user.id, level, subject, topic, score, quiz_total, attempt_id,
+                wrong=quiz_total - score, retry_mode=bool(data.get('retry_mode')),
+            )
+            _claim_pending()
+            session['pb_qxp'] = [int(attempt_id), effort_weight(ACTIVITY_QUIZ_COMPLETED)]
             return redirect(url_for('view_quiz_attempt', attempt_id=attempt_id))
         return redirect(url_for('lesson_mcq_results', level=level, subject=subject, topic=topic))
     return redirect(url_for('lesson_mcq_question', level=level, subject=subject, topic=topic))
@@ -11174,6 +11790,7 @@ def lesson_mcq_submit(level, subject, topic):
                 data.get('total', len(data['problems'])),
                 answers,
                 data['problems'],
+                is_retry=bool(data.get('retry_mode')),
             )
         _track_quiz_completed(
             level,
@@ -11182,6 +11799,13 @@ def lesson_mcq_submit(level, subject, topic):
             score,
             data.get('total', len(data['problems'])),
         )
+        quiz_total = data.get('total', len(data['problems']))
+        _note_quiz_finished(
+            current_user.id, level, subject, topic, score, quiz_total, attempt_id,
+            wrong=quiz_total - score, retry_mode=bool(data.get('retry_mode')),
+        )
+        _claim_pending()
+        session['pb_qxp'] = [int(attempt_id), effort_weight(ACTIVITY_QUIZ_COMPLETED)]   # the XP line on the results page, once
         return redirect(url_for('view_quiz_attempt', attempt_id=attempt_id))
 
     return redirect(url_for('lesson_mcq_results', level=level, subject=subject, topic=topic))
@@ -11445,6 +12069,8 @@ def challenge_detail(challenge_id):
                     updated['opponent_score'],
                 )
         flash_for('challenge_detail', f'Score recorded: {score}/{total}.', 'success')
+        _note_moment(current_user.id, {'type': 'toast', 'id': f'toast:challenge:{int(challenge_id)}', 'kind': 'challenge_done',
+                                       'score': int(score), 'total': int(total)})
         return redirect(url_for('challenge_detail', challenge_id=challenge_id))
 
     show_quiz = (
@@ -11457,6 +12083,8 @@ def challenge_detail(challenge_id):
         and challenge.get('opponent_score') is not None
     )
     comparison = build_head_to_head(challenge) if show_head_to_head else None
+    # E10 review fix 6: once the viewer has submitted there are no questions left, so this page may play the pending toast
+    g.pb_results_page = user_has_submitted(challenge, current_user.id)
     return render_template(
         'challenge_detail.html',
         challenge=challenge,
@@ -11588,10 +12216,15 @@ def qotd_page():
             else:
                 # Streak only — QOTD must not count as practising this topic.
                 _record_study_activity(current_user.id)
+                _note_daily_answered(current_user.id, day_key, correct)
+                # E10 phase 7: the Daily week strip pops today's dot once, on the page that follows this answer.
+                session['qotd_pop'] = day_key
         return redirect(url_for('qotd_page'))
 
+    popped = session.pop('qotd_pop', None) == day_key
     with get_db() as conn:
         attempt = get_user_attempt(conn, current_user.id, day_key)
+        week_dots = viewer_week_dots(conn, current_user.id)
         board = (request.args.get('board') or 'today').strip().lower()
         if board not in ('today', 'week'):
             board = 'today'
@@ -11610,6 +12243,8 @@ def qotd_page():
         problem=problem,
         board=board,
         week_day_keys=week_day_keys,
+        week_dots=week_dots,
+        pop_today=bool(popped and attempt),
     )
 
 
@@ -11731,6 +12366,8 @@ def api_v1_challenge_submit(challenge_id):
                 updated['creator_score'],
                 updated['opponent_score'],
             )
+    _note_moment(current_user.id, {'type': 'toast', 'id': f'toast:challenge:{int(challenge_id)}', 'kind': 'challenge_done',
+                                   'score': int(score), 'total': len(challenge['problems'])})
     return jsonify({
         'ok': True,
         'score': score,
@@ -11889,6 +12526,7 @@ def api_v1_qotd_answer():
         except ValueError:
             return _api_error('Already answered today', 409, 'already_answered')
     _record_study_activity(current_user.id)
+    _note_daily_answered(current_user.id, day_key, correct)
     with get_db() as conn:
         attempt = get_user_attempt(conn, current_user.id, day_key)
     body = _qotd_json(daily, attempt)

@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 from generators.shared.lesson_quiz import topic_supports_lesson_quiz
-from models.gamification import get_study_streak, milestone_meta
+from models.gamification import get_study_streak
 from models.moderation import is_blocked
 from models.qotd import get_daily_question
 from models.social import list_following
@@ -50,32 +50,8 @@ def _finish(prompt):
     return prompt
 
 
-def recent_milestone(conn, user_id, now):
-    cutoff = (now - timedelta(hours=24)).replace(microsecond=0).isoformat()
-    row = conn.execute(
-        '''
-        SELECT milestone_key, earned_at
-        FROM user_milestones
-        WHERE user_id = ? AND earned_at >= ?
-        ORDER BY earned_at DESC
-        LIMIT 1
-        ''',
-        (user_id, cutoff),
-    ).fetchone()
-    if not row:
-        return None
-    key = row['milestone_key']
-    meta = milestone_meta(key)
-    return {
-        'key': key,
-        'title': meta.get('title', key.replace('_', ' ').title()),
-        'emoji': meta.get('emoji', '🏅'),
-        'earned_at': row['earned_at'],
-    }
-
-
-# Back-compat alias: kept in case anything still imports the private name.
-_recent_milestone = recent_milestone
+# E10 phase 4: recent_milestone() (the newest badge of the last 24 hours, one at a time) is gone. Badges are celebrated when
+# they are earned: app.py _note_new_milestones / deliver_new_milestones and the #pb-new-milestones island.
 
 
 def buddy_task_mark(conn, user_id, now):

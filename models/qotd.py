@@ -96,6 +96,29 @@ def get_user_attempt(conn, user_id, day_key):
     return dict(row) if row else None
 
 
+def viewer_week_dots(conn, user_id, *, end_day=None):
+    """The viewer's own Daily answers for the last 7 UTC days, oldest first (E10 phase 7: the Daily week strip).
+
+    Each dot is {date, label, state, is_today}; state is 'studied' (answered) or 'missed' (not yet), the names the
+    streak strip's styles already use. Answered means any answer, right or wrong."""
+    keys = qotd_window_day_keys(days=7, end_day=end_day)
+    marks = ','.join('?' * len(keys))
+    rows = conn.execute(
+        f'SELECT day_key FROM qotd_attempts WHERE user_id = ? AND day_key IN ({marks})',
+        (user_id, *keys),
+    ).fetchall()
+    answered = {row['day_key'] for row in rows}
+    dots = []
+    for i, key in enumerate(keys):
+        dots.append({
+            'date': key,
+            'label': date.fromisoformat(key).strftime('%a')[0],
+            'state': 'studied' if key in answered else 'missed',
+            'is_today': i == len(keys) - 1,
+        })
+    return dots
+
+
 def record_qotd_answer(conn, user_id, day_key, answer, correct):
     existing = get_user_attempt(conn, user_id, day_key)
     if existing:

@@ -1833,7 +1833,7 @@ Fix pass 2 of the whole-change review (findings F1 to F10 of review B, the hints
 
 **Runs.** Hints smoke 17.0 to 17.6 s (was 15.9 s; the 15 s budget note was already printed), ladder smoke 5.5 s (four draws per slot), MCQ notes, voice and answer-check smokes and ruff pass.
 
-## Hint card and Show answer change (2026-11-04, not committed)
+## Hint card and Show answer change (2026-11-04, committed in 73163d3)
 
 Supersedes D1 (Show answer unlocked by the last hint rung) and D1d (the pre-attempt Hint drawer stays). Requested by David after screenshots showed the same hint text twice.
 
@@ -1843,3 +1843,31 @@ Supersedes D1 (Show answer unlocked by the last hint rung) and D1d (the pre-atte
 - **Colour.** The site's existing hint tokens (`--hint-bg`, `--hint-border`, left bar and heading `--on-streak`): amber against the blue site, no new colour. Contrast: heading on `--hint-bg` 4.84:1 light, 11.0:1 dark; body text 15.1:1 light, 14.5:1 dark.
 - **Bytes and pins.** `site.js` 211,633 B (+1,217; cap raised 210,446 to 211,696 in the ladder smoke, ledger line dated 2026-11-04), `practice.css` 32,820 B (+873; cap 31,981 to 32,881). `site.js?v=38`, `practice.css?v=31`, `pages.css?v=58`, `sw.js` `pb-v109`. LADDER_COPY lost `open` and `locked_pick`; `hint` and `bigger` lost their colons.
 - **Tests.** Ladder, MCQ and PWA/zorp pins updated; the ladder smoke now pins no drawer, the greyed bar, the card markup and the dedupe rules. Screenshots in `/mnt/user-data/outputs/hint_card/`.
+
+## No bigger hint that repeats the first line (2026-11-07, not committed)
+
+Requested by David after a screenshot: "Calculate 3 × 3^2" showed the Hint "Indices (powers) come before multiplication in BIDMAS." and then the Bigger hint "Indices before multiplication.", the same hint twice.
+
+- **Rule.** `build_ladder` drops rung 2 when `adds_nothing(first line, step)` is true, so the page shows no "Show a bigger hint" button (the page already hides the button when `bigger` is empty). Rung 2 adds nothing when it is the same line, a near copy (squashed text contained in the first line, or 90% alike), or, when the first line is the question's own hint, uses only words, numbers and symbols the hint already has (filler words such as "the", "first", "find", "use" and plural endings ignored; a number, a symbol such as `=` or `→`, or a new idea counts as new).
+- **General lines are looser.** A slip message or a topic nudge can offer several facts, so a step that picks the one that applies is kept: "Some pairs of angles are equal, and others add up to 180°." then "The angles add up to 180°." stays. Only a near copy of a general line is dropped. The route passes the slip message to `build_ladder` as `slip_text`.
+- **Effect.** 85 of 1,110 typed practice slots (run 0) lose a rung 2 that only repeated the hint, for example the BIDMAS, compound measures ("Cover S in the SDT triangle: Speed = Distance ÷ Time." then "Speed = Distance ÷ Time"), mensuration formula and angle-fact slots. 591 keep a rung 2.
+- **Second pass, same day: paraphrases.** David then found "Reverse the machine: undo the last operation first, then undo the first operation." followed by "Work backwards, undoing each step in reverse order.": the same advice in other words, which the word check cannot see. So after the question's own hint, rung 2 must also bring something concrete that the hint lacks (`_concrete`): a number (a value from the question or one worked from it), an operation ("subtract" and "−" count as the same operation; a power or a fraction counts as one), or a letter, term or named point from the question. Labels ("Step 1", "(a)", "CT4") and names of rules ("SOH", "LSF", "SAS") do not count. Reviewed by hand on all 155 slots it newly drops: nearly all restate a formula or fact ("Expected frequency = probability × number of trials" after "Multiply the probability by the number of trials"; the transformation rules; the circle theorem names). A few word-only steps that did add a little are dropped too (which side is opposite in the angle of elevation and depression questions, the elimination step after a hint about method marks); the rewrite stage can give them a concrete step instead. Kept: steps with the question's numbers ("Perimeter = 2(l + w) = 2(12 + 6)"), a new operation ("Subtract \(2w\) from both sides" after "Treat P = 2l + 2w like a normal equation"), named points ("angle B = angle D"). Typed practice slots with a rung 2: 591 before this pass, 447 after (229 dropped as repeats in all).
+- **Noticed, not changed:** in two multi-part transformation questions rung 2 describes the single transformation the last part asks for (`_trans_diff_combination_single_equiv`, `_trans_inter_combination_reflect_reflect`; in the second the hint already says it). For the rewrite stage.
+- **Tests.** The ladder smoke checks the BIDMAS case, a slip case, seven rule cases, nine concrete-rule cases, and that no slot's rung 2 repeats rung 1; its coverage floor counts dropped repeats (a usable step that only repeated the hint). One hand-made case's hint changed from "Use angles on a line." to "Look for parallel lines." so its step still adds something. `hints_census.py` no longer flags a dropped repeat as `no_bigger`. Server-side only: no `site.js` or cache change.
+
+## Folded wrong-answer note (2026-11-07, not committed)
+
+Requested by David after a screenshot: the "What tripped you up?" panel put five large reason buttons, a text box and two actions under every wrong answer.
+
+- **Folded.** After a wrong answer (signed-in pupils, as before) the page shows one quiet "Add a note ▾" toggle (`.wrong-answer-reflection-toggle`, `aria-expanded`, `aria-controls` on `.wrong-answer-reflection-body`). The reasons, the text box, "Save note" and "Not now" open only when it is clicked. "Not now" folds it again and returns focus to the toggle; saving hides the toggle, says "Thanks, noted." and removes the panel as before. Nothing else changed: same five reasons, a reason with no text still saves at once, same API.
+- **Smaller.** The reasons are small outline pills (0.8125rem, 31 px tall on desktop, no 3D edge, no `.btn` classes); phones keep the 44 px tap target from `responsive.css`. The panel uses the body font, a thin border and smaller text; "Save note" lost its 3D edge.
+- **Bytes and pins.** `site.js` 212,471 B (+838; cap +800 to 212,496, ledger line dated 2026-11-07 in the ladder and MCQ smokes), `practice.css` 33,756 B (+890; cap +900). `site.js?v=39`, `practice.css?v=32`, `sw.js` `pb-v110` (pins in the ladder, MCQ, PWA, zorp charm and zorp expression smokes; `pb-v111` after the MathJax fix below). Screenshots in `/mnt/user-data/outputs/note_toggle/`.
+
+## Formulas drawn as raised blocks (2026-11-07, not committed)
+
+Reported by David on "The force \(F\) (in newtons) is given by \(F = ma\)": every formula and variable in the question sat above the line on a pale box.
+
+- **Cause.** The diagram rule in `static/css/diagrams.css` (`.question-content svg:not(.svg-kit)`, with `display: block`, a `--diagram-paper` background and a 10 px margin, all `!important`) also matched the SVG that MathJax draws for each formula, and its specificity (0,2,1) beat the `mjx-container ... svg` rules in `pages.css` (0,1,2). So every inline formula in any practice question was a block, raised off the baseline. It dates from August (`2a9c2ab`), not from the hints work.
+- **Fix.** The selector is now `.question-content svg:not(.svg-kit):not(mjx-container svg)`; the other diagram selectors only take direct children and never matched MathJax. `diagrams.css?v=27`, `sw.js` `pb-v111`. `test_u8_a11y_smoke.py` pins the exclusion.
+- **Checked elsewhere.** A browser scan after the fix: every GCSE maths topic at all three levels, two questions each with Show answer forced open (192 pages, 291 MathJax SVGs), and a crawl of 199 pages from `/topics` (lessons, topic pages, Quick Test, the style guide). No MathJax SVG anywhere is a block, has a background or has a margin.
+

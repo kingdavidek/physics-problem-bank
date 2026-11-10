@@ -35,6 +35,7 @@ string literal.
 from __future__ import annotations
 
 import ast
+import difflib
 import html as _html
 import json as _json
 import re
@@ -1958,6 +1959,96 @@ def solution_step(problem, correct_raw):
     return ''
 
 
+# Rung 2 must add something to the line above it (2026-11-07: "Indices (powers) come before multiplication in
+# BIDMAS." then "Indices before multiplication." is the same hint twice). Filler words and plural endings are ignored;
+# a number, a symbol or a new idea counts as something new.
+_REPEAT_FILLER = frozenset((
+    'a an the in of to is are be by for it its on at as and or so this that these those with from into your you then '
+    'than also just only each which what when how do does first next now step steps use using remember work out find '
+    'calculate start there here will can must should always').split())
+_REPEAT_TEX = (('\\left', ''), ('\\right', ''), ('\\times', '×'), ('\\div', '÷'), ('\\sqrt', '√'), ('\\to', '→'),
+               ('\\pi', 'π'), ('\\leq', '≤'), ('\\geq', '≥'), ('\\le', '≤'), ('\\ge', '≥'), ('\\dfrac', '/'),
+               ('\\frac', '/'), ('−', '-'), ('²', '^2'), ('³', '^3'))
+_REPEAT_TOKEN_RE = re.compile(r'[a-z]+|\d+(?:\.\d+)?|[=×÷+\-/^√<>≤≥%°π→]')
+
+
+def _repeat_tokens(text):
+    text = str(text).lower()
+    for tex, sym in _REPEAT_TEX:
+        text = text.replace(tex, sym)
+    text = re.sub(r'\\[a-z]+', ' ', text)
+    out = set()
+    for tok in _REPEAT_TOKEN_RE.findall(text):
+        if tok in _REPEAT_FILLER:
+            continue
+        if tok.isalpha() and len(tok) > 3 and tok.endswith('s') and not tok.endswith('ss'):
+            tok = tok[:-1]          # "indices" and "indice", "powers" and "power" are the same word here
+        out.add(tok)
+    return out
+
+
+# After the question's own hint, rung 2 must also bring something concrete (2026-11-07: "Reverse the machine: undo
+# the last operation first, then undo the first operation." then "Work backwards, undoing each step in reverse order."
+# says the same thing in other words). Concrete means a number the hint does not have (a value from the question or
+# one worked from it), an operation the hint does not name ("Subtract \(2w\) from both sides" after "Treat P = 2l + 2w
+# like a normal equation"; "subtract" and "−" are the same operation), or a letter, term or named point from the
+# question that the hint does not mention. Labels such as "Step 1", "(a)" or "CT4" do not count, nor do names of rules
+# and methods ("SOH", "LSF", "SAS").
+_STEP_LABEL_RE = re.compile(r'\b(?:step|method|part)\s*\d+\s*:?|(?:^|\s)\(?[a-h]\)\s|\((?:i|ii|iii|iv|v|vi)\)|\bCT\d+\b', re.I)
+_OPERATION_WORDS = (
+    ('−', r'\b(?:subtract\w*|minus|take away|difference)\b'), ('+', r'\b(?:add|adding|added|plus|sum\w*|total)\b'),
+    ('×', r'\b(?:multipl\w*|times|product)\b'), ('÷', r'\b(?:divid\w*|quotient)\b'), ('√', r'\b(?:square roots?|root)\b'))
+_NOT_POINTS = frozenset((
+    'SOH CAH TOA LSF ASF VSF SF HCF LCM SSS SAS ASA AAS RHS AA BIDMAS BODMAS SDT DMV PFA CT SA FOIL CW ACW BPT LHS').split())
+
+
+def _concrete(text):
+    """(numbers, letters, point names, operations) in a line, for ``adds_nothing``."""
+    # a power is an operation, not a value: "LSF²" and "2²" share no number, and "n²" and \(n^2\) are the same
+    t = re.sub(r'\^\{?-?\d+\}?|[²³⁴⁻¹]+', ' ^ ', _STEP_LABEL_RE.sub(' ', str(text)))
+    low = t.lower()
+    ops = {sym for sym, pattern in _OPERATION_WORDS if re.search(pattern, low)}
+    ops |= set(re.findall(r'[+×÷√−^]|\\times|\\div|\\sqrt|\\d?frac', t))
+    ops |= {'−' for _ in re.findall(r'(?<=[\s\d)])-(?=[\s\d(])', t)}    # a minus sign, not a hyphen ("x-terms")
+    ops |= {'÷' for _ in re.findall(r'(?<=[\d)])/|/(?=[\d(])', t)}        # a division, not a unit ("km/h", "N/cm")
+    ops = {{'\\times': '×', '\\div': '÷', '\\sqrt': '√', '\\frac': '÷', '\\dfrac': '÷'}.get(o, o) for o in ops}
+    letters = set()
+    for seg in re.findall(r'\\\((.*?)\\\)', t):           # every letter of a LaTeX term (\(at\) gives a and t)
+        letters |= set(re.findall(r'[A-Za-z]', re.sub(r'\\[A-Za-z]+', ' ', seg)))
+    t = re.sub(r'\\[A-Za-z]+', ' ', t).replace('\\(', ' ').replace('\\)', ' ')
+    numbers = set(re.findall(r'\d+(?:\.\d+)?', t))
+    letters |= set(re.findall(r'(?<![A-Za-z])[A-Za-z](?![A-Za-z])', t))
+    letters -= {'a', 'A', 'I'}                                # the article and the pronoun, not variables
+    points = {w for w in re.findall(r'\b[A-Z]{2,4}\b', t) if w not in _NOT_POINTS}
+    return numbers, letters, points, ops
+
+
+def adds_nothing(first, bigger, *, specific=True, question=''):
+    """True when ``bigger`` says nothing that ``first`` has not said: the same line, a near copy or a piece of it, or
+    (when ``first`` is the question's own hint, ``specific``) only words, numbers and symbols ``first`` already has,
+    or (given the ``question``) nothing concrete that ``first`` lacks (see ``_concrete``). A general line (a slip
+    message or a topic nudge) can offer several facts, so a step that picks the one that applies ("The angles add up to
+    180°." after "Some pairs of angles are equal, and others add up to 180°.") is kept. The page shows no "Show a
+    bigger hint" button when rung 2 is dropped."""
+    if not first or not bigger:
+        return False
+    f = re.sub(r'[^a-z0-9]+', '', str(first).lower())
+    b = re.sub(r'[^a-z0-9]+', '', str(bigger).lower())
+    if len(b) >= 4 and (b in f or difflib.SequenceMatcher(None, f, b).ratio() >= 0.9):
+        return True
+    if not specific:
+        return False
+    tokens = _repeat_tokens(bigger)
+    if tokens and tokens <= _repeat_tokens(first):
+        return True
+    if not question:
+        return False
+    n1, l1, p1, o1 = _concrete(first)
+    n2, l2, p2, o2 = _concrete(bigger)
+    _, lq, pq, _ = _concrete(question)
+    return not (n2 - n1 or o2 - o1 or (l2 & lq) - l1 or (p2 & pq) - p1)
+
+
 def nudge_line(problem, family, topic, correct_raw):
     """Rung 1 when no slip is recognised: a family line, else the problem's own hint (if it is short and does not
     show the answer), else the topic line, else the plain default."""
@@ -1971,12 +2062,12 @@ def nudge_line(problem, family, topic, correct_raw):
     return NUDGES.get(topic) or NUDGE_DEFAULT
 
 
-def build_ladder(problem, *, topic, correct_raw, slip=None):
+def build_ladder(problem, *, topic, correct_raw, slip=None, slip_text=''):
     """The ``hint`` object for a wrong answer on the practice page.
 
-    ``slip`` is the recognised rule id (its message is already the ``feedback`` line), else None. Returns
-    ``{'kind', 'rung': 1, 'text'?, 'bigger'}``; ``bigger`` is '' when no step of the solution can be shown, and the
-    page then offers to open Show answer straight away.
+    ``slip`` is the recognised rule id (its message ``slip_text`` is already the ``feedback`` line), else None. Returns
+    ``{'kind', 'rung': 1, 'text'?, 'bigger'}``; ``bigger`` is '' when no step of the solution can be shown, or when the
+    step only repeats the first line (``adds_nothing``), and the page then shows no "Show a bigger hint" button.
     """
     raw = str((problem or {}).get('correct_answer_raw') or correct_raw or '')
     record = (problem or {}).get('answer_record')
@@ -1986,7 +2077,12 @@ def build_ladder(problem, *, topic, correct_raw, slip=None):
         ladder['id'] = slip
     else:
         ladder['text'] = nudge_line(problem, family, topic, raw)
-    ladder['bigger'] = solution_step(problem, raw)
+    bigger = solution_step(problem, raw)
+    first = slip_text if slip else ladder['text']
+    own = (problem or {}).get('hint')
+    specific = not slip and isinstance(own, str) and first == plain_line(own)
+    question = plain_line((problem or {}).get('question'))
+    ladder['bigger'] = '' if adds_nothing(first, bigger, specific=specific, question=question) else bigger
     return ladder
 
 

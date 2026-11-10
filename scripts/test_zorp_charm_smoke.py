@@ -31,7 +31,7 @@ JS_DIR = ROOT / 'static' / 'js'
 CSS_DIR = ROOT / 'static' / 'css'
 STATIC = ROOT / 'static'
 DOC = ROOT / 'docs' / 'ZORP_CHARM.md'
-LESSON_ONLY_CSS = {'lesson-pages.css', 'lesson-assist.css'}  # same split as test_u8_a11y_smoke.py
+LESSON_ONLY_CSS = {'lesson-pages.css', 'lesson-assist.css', 'stage.css', 'coach.css', 'badge-stage.css', 'moments.css', 'tour.css', 'wardrobe.css', 'around.css', 'story.css'}  # 2026-11-08: E10 phase 6b wardrobe.css is on demand (profile only); 2026-11-08: E10 phase 5 moments.css is on demand too; same split as test_u8_a11y_smoke.py (2026-11-08: E10 stage.css is on demand, not core)
 
 # Measured 2026-10-04 on main 43e387e (nothing in static/ changed in Phase 0). Bytes unless noted.
 BASELINE = {
@@ -66,7 +66,7 @@ INSTANCE_MAX_ELEMENTS = 70
 PAGE_MASCOT_MAX_BYTES = 36_000
 PAGE_MASCOT_MAX_GZIP = 6_000
 MOTION_CSS_BUDGET_BYTES = 12_000     # E9 adds about 450 B (talk and ride pivots, .zorp-sr, belly origin)
-CSS_BUDGET_BYTES = 246_000           # unchanged: core headroom 4_071 B covers the about 600 B E9 needs
+CSS_BUDGET_BYTES = 273_700 # 2026-11-08: E10 phase 8 RAISED 268_900 -> 273_700 (+4_800) for the on-demand story.css (own cap 4_800 in test_story_chapters_smoke.py; tree 273,520). 2026-11-08: E10 phase 7 RAISED 265_300 -> 268_900 (+3_600) for the on-demand around.css (own cap 4_000 in test_zorp_around_smoke.py; tree 268,821). 2026-11-08: E10 phase 6b RAISED 262_500 -> 265_300 (+2_800) for the on-demand wardrobe.css (profile page only; own cap 2_800 in test_wardrobe_smoke.py; tree 264,949).  2026-11-08: E10 phase 5 added the on-demand moments.css inside this budget (no raise; tree 260,077).  2026-11-08: E10 phase 4 +5_500 for the on-demand badge-stage.css (own cap in test_badge_stage_smoke.py). Was           # E9 unchanged (core headroom covered it). RAISED 246_000 -> 256_000 on 2026-11-08 (E10): the on-demand stage.css, own cap 10_000 in test_zorp_stage_smoke.py  # 2026-11-08: E10 phase 6 RAISED 261_500 -> 262_500 (+1_000) for the on-demand tour.css (own cap 2_800 in test_zorp_tour_smoke.py; tree 262,304).
 CSS_CORE_BUDGET_BYTES = 216_000
 
 CAPS = {
@@ -240,7 +240,7 @@ def test_talk_loaded_under_runtime_guard_after_poses():
 def test_talk_precached():
     sw = _read(JS_DIR / 'sw.js')
     assert "'/static/js/zorp-talk.js'" in sw, 'unversioned, like the other runtime files (the offline fallback ignores ?v=)'
-    assert "CACHE_VERSION = 'pb-v109'" in sw
+    assert "CACHE_VERSION = 'pb-v123'" in sw   # 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115, phase 5); 2026-11-08: E10 phase 5 bump (was pb-v114, phase 4; pb-v113 phase 3); 2026-11-08: E10 review fixes bump (was pb-v118)
 
 
 def test_talk_mouths_not_in_presets():
@@ -338,10 +338,12 @@ def test_runtime_hooks_for_talk():
 
 def test_talk_pins():
     base = _read(TEMPLATES / 'base.html')
-    for needle in ("zorp-motion.js') }}?v=14", "css/motion.css') }}?v=9", "study-buddy.js') }}?v=29", "guide.js') }}?v=19", "zorp-poses.js') }}?v=6",
-                   "sound.js') }}?v=4", "celebrate.js') }}?v=11"):
+    # 2026-11-08: E10 phase 8 guide.js v25 -> v26 (the story chapters loader)
+    for needle in ("zorp-motion.js') }}?v=14", "css/motion.css') }}?v=9", "study-buddy.js') }}?v=30", "guide.js') }}?v=27", "zorp-poses.js') }}?v=6",
+                   "sound.js') }}?v=4", "celebrate.js') }}?v=15"):
         assert needle.replace("css/", "") in base or needle in base, needle
-    assert "welcome.js') }}?v=5" in _read(TEMPLATES / 'welcome.html')
+    # 2026-11-08: E10 guide.js v19 -> v20 (the stage loader) and welcome.js v5 -> v6 (the arrival film)
+    assert "welcome.js') }}?v=6" in _read(TEMPLATES / 'welcome.html')
     assert "styleguide.js') }}?v=13" in _read(TEMPLATES / 'styleguide.html')
 
 
@@ -580,7 +582,8 @@ def test_phase5_docs():
         assert name in sec10, name
     handoff = _read(DOCS / 'AI_HANDOFF.md')
     rule17 = [line for line in handoff.splitlines() if line.startswith('17. ')][0]
-    assert 'Talk and cues only at E9 moments' in rule17 and 'text first' in rule17 and 'sound off by default and tap-gated' in rule17
+    # 2026-11-08: E10 (answer 7) turned sound on for NEW accounts, so rule 17 now says that instead of "off by default"; tap-gated is unchanged
+    assert 'Talk and cues only at E9 moments' in rule17 and 'text first' in rule17 and 'on for new accounts' in rule17 and 'tap-gated' in rule17
     assert 'E9 Phase 5 built 2026-10-06' in handoff and 'E9 built; evaluation pending' in handoff
     dpia = _read(DOCS / 'DPIA.md')
     row = [line for line in dpia.splitlines() if line.startswith('| 2026-10-06 | E9 Phase 5')]

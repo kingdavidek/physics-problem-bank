@@ -4,8 +4,15 @@
   var correctStreak = 0;
   var lastBurstAt = 0;
   var STREAK_ROUNDS = { 7: 1, 30: 1, 100: 1 };
-  var LS_MILESTONE = 'pb-u74-ms-';
-  var LS_STREAK = 'pb-u74-streak-';
+  // E11 Phase 0 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 1.2): "already celebrated" flags belong to one pupil (the account's storage
+  // name, meta pb-store), so a second pupil on the same browser is never silenced by the first one's badges. The old shared flags
+  // ('pb-u74-ms-<key>', 'pb-u74-streak-<n>') are not read any more.
+  var STORE_NS = (function () {
+    var m = document.querySelector('meta[name="pb-store"]');
+    return (m && m.getAttribute('content')) || 'anon';
+  })();
+  var LS_MILESTONE = 'pb-ms:' + STORE_NS + ':';
+  var LS_STREAK = 'pb-streak:' + STORE_NS + ':';
   var CHECK_MARK_SVG =
     '<circle class="answer-check-mark-ring" cx="12" cy="12" r="10"/>' +
     '<path class="answer-check-mark-tick" d="M7 12.5l3.2 3.2L17 8.8"/>';
@@ -43,23 +50,27 @@
     return target;
   }
 
+  // E10 phase 5, honest XP: a number is shown only when it is what was really recorded (points > 0, passed by the caller from the
+  // server: models/gamification.py EFFORT_WEIGHTS). A check records no effort points, so a correct answer shows the sparkle alone.
   function showXpFloat(anchor, points) {
-    var label = '+' + points + ' XP';
+    var label = points > 0 ? '+' + points + ' XP' : '';
     if (anchor && anchor.appendChild) {
-      var prev = anchor.querySelector('.answer-xp-float');
-      if (prev) prev.remove();
       anchor.classList.add('is-celebrate-host');
-      var floatEl = document.createElement('span');
-      floatEl.className = 'answer-xp-float';
-      floatEl.setAttribute('aria-hidden', 'true');
-      floatEl.textContent = label;
-      anchor.appendChild(floatEl);
+      if (label) {
+        var prev = anchor.querySelector('.answer-xp-float');
+        if (prev) prev.remove();
+        var floatEl = document.createElement('span');
+        floatEl.className = 'answer-xp-float';
+        floatEl.setAttribute('aria-hidden', 'true');
+        floatEl.textContent = label;
+        anchor.appendChild(floatEl);
+        window.setTimeout(function () { floatEl.remove(); }, prefersReducedMotion() ? 900 : 1300);
+      }
       if (!prefersReducedMotion()) burstSparkle(anchor);
-      window.setTimeout(function () { floatEl.remove(); }, prefersReducedMotion() ? 900 : 1300);
       return;
     }
     var host = toastHost();
-    if (!host) return;
+    if (!host || !label) return;
     var el = document.createElement('div');
     el.className = 'xp-toast';
     el.textContent = label;
@@ -151,14 +162,14 @@
   function celebrateCorrect(target, points) {
     correctStreak += 1;
     var anchor = celebrateAnchor(target);
-    var xp = typeof points === 'number' ? points : 10;
+    var xp = typeof points === 'number' ? points : 0;
     if (window.pbSound && window.pbSound.correct) window.pbSound.correct();
     if (anchor && !prefersReducedMotion()) {
       anchor.classList.add('is-pop');
       window.setTimeout(function () { anchor.classList.remove('is-pop'); }, 420);
     }
     drawCheckmark(anchor);
-    // points === 0 means "no per-step XP" (lesson-quiz steps); skip the float, not the rest.
+    // points === 0 means "no per-step XP" (lesson-quiz steps): nothing at all; no points given: the sparkle without a number.
     if (points !== 0) showXpFloat(anchor, xp);
     var openedFirst = false;
     if (window.pbGuide && typeof window.pbGuide.reward === 'function') {
@@ -194,13 +205,20 @@
     }
   }
 
-  function celebrateMilestone(key) {
-    var token = String(key || 'badge').replace(/\s+/g, '_');
+  // E10 phase 4: a badge arrives as a key or as the display data the server sends ({key, title, blurb, family, emoji, tier, next_title, next_how}).
+  // pbGuide.reward answers 'stage' when the badge stage will play it (full screen, with its own burst), so no confetti behind it.
+  function celebrateMilestone(item) {
+    var data = item && typeof item === 'object' ? item : null;
+    var token = String((data ? data.key : item) || 'badge').replace(/\s+/g, '_');
     if (window.pbGuide && typeof window.pbGuide.reward === 'function') {
-      var opened = window.pbGuide.reward({ type: 'milestone', key: token });
-      if (opened !== false) {
+      var spec = { type: 'milestone', key: token };
+      if (data) spec.badge = data;
+      var opened = window.pbGuide.reward(spec);
+      if (opened !== false && opened !== 'stage') {
         burstConfetti();
         reactMascot('milestone');
+      }
+      if (opened !== false) {
         try { window.localStorage.setItem(LS_MILESTONE + token, '1'); } catch (err) {}
       }
       return opened !== false;
@@ -216,9 +234,11 @@
     if (!STREAK_ROUNDS[n]) return false;
     if (window.pbGuide && typeof window.pbGuide.reward === 'function') {
       var opened = window.pbGuide.reward({ type: 'streak', days: n });
-      if (opened !== false) {
+      if (opened !== false && opened !== 'stage') {
         burstConfetti();
         reactMascot('streak');
+      }
+      if (opened !== false) {
         try { window.localStorage.setItem(LS_STREAK + n, '1'); } catch (err) {}
       }
       return opened !== false;
@@ -229,13 +249,19 @@
     return true;
   }
 
+  // E10 phase 5: moments (level-up, perfect quiz, toasts, micro reactions) go to guide.js, which loads moments.js when one is due.
+  function handOver(list) {
+    if (Array.isArray(list) && list.length && window.pbGuide && window.pbGuide.moments) window.pbGuide.moments(list);
+  }
+
   function fromPayload(data) {
     if (!data) return;
     var keys = data.new_milestones || data.awarded_milestones;
     if (Array.isArray(keys)) {
-      keys.forEach(function (key) { celebrateMilestone(key); });
+      keys.forEach(function (item) { celebrateMilestone(item); });
     }
     if (data.milestone_key) celebrateMilestone(data.milestone_key);
+    handOver(data.new_moments);
     var streak = data.study_streak;
     if (streak && typeof streak === 'object') {
       celebrateStreakRound(streak.current);
@@ -253,12 +279,16 @@
     // Milestones now surface via the notifications bell + this JSON island rather
     // than the corner buddy bubble, so this no longer depends on the buddy root
     // being visible (it can be hidden entirely, e.g. during a quiz).
-    var milestoneEl = document.getElementById('pb-new-milestone');
+    var milestoneEl = document.getElementById('pb-new-milestones');
     if (milestoneEl) {
       try {
-        var key = JSON.parse(milestoneEl.textContent || 'null');
-        if (key) celebrateMilestone(key);
+        var list = JSON.parse(milestoneEl.textContent || 'null');
+        if (Array.isArray(list)) list.forEach(function (item) { if (item) celebrateMilestone(item); });
       } catch (err) {}
+    }
+    var momentEl = document.getElementById('pb-new-moments');
+    if (momentEl) {
+      try { handOver(JSON.parse(momentEl.textContent || 'null')); } catch (err) {}
     }
     var ring = document.querySelector('[data-streak-current]');
     if (ring) celebrateStreakRound(ring.getAttribute('data-streak-current'));
@@ -273,17 +303,66 @@
     milestone: celebrateMilestone,
     streakRound: celebrateStreakRound,
     fromPayload: fromPayload,
+    xp: function (points) { showXpFloat(null, points); },   // E10 phase 5: the real points as a corner float (moments.js, set work)
     fromBuddy: fromBuddyPrompt,
-    lessonComplete: function () {
-      showXpFloat(null, 25);
-      burstConfetti();
+    // E10 phase 5: every finished lesson is a stage moment (info: level, subject, topic, name, quiz); no fixed XP float any more, because
+    // finishing a lesson records no points of its own. Without the stage (offline, blocked file) the older confetti and dialog remain.
+    lessonComplete: function (info) {
       correctStreak = 0;
+      var opened = false;
       if (window.pbGuide && typeof window.pbGuide.reward === 'function') {
-        window.pbGuide.reward({ type: 'lesson_complete' });
+        opened = window.pbGuide.reward(Object.assign({ type: 'lesson_complete' }, info || {}));
       }
-      reactMascot('lesson_complete');
+      if (opened !== 'stage') {
+        burstConfetti();
+        reactMascot('lesson_complete');
+      }
     },
   };
+
+  // E10 phase 4: any fetch whose JSON answer carries badges (the server sets X-PB-Milestones) plays them, whoever made the call.
+  if (window.fetch && !window.fetch.pbMilestones) {
+    var plainFetch = window.fetch;
+    // E10 review fix 3: a quiz question page is quiet, so a same-origin call made from one says so (X-PB-Quiz) and the server keeps
+    // any badge or moment for the results page instead of sending it in an answer that would be dropped.
+    var fromQuestionPage = function (input) {
+      var body = document.body;
+      if (!body || !body.hasAttribute('data-guide-quiz') || body.hasAttribute('data-guide-quiz-results')) return false;
+      var url = typeof input === 'string' ? input : (input && input.url) || '';
+      return (url.charAt(0) === '/' && url.charAt(1) !== '/') || url.indexOf(location.origin + '/') === 0;
+    };
+    var watchedFetch = function (input, init) {
+      var args = arguments;
+      try {
+        if (fromQuestionPage(input)) {
+          var headers = new Headers((init && init.headers) || (input && input.headers) || undefined);
+          headers.set('X-PB-Quiz', '1');
+          args = (typeof Request !== 'undefined' && input instanceof Request && !init)
+            ? [new Request(input, { headers: headers })]
+            : [input, Object.assign({}, init, { headers: headers })];
+        }
+      } catch (err) { args = arguments; }
+      return plainFetch.apply(this, args).then(function (res) {
+        try {
+          if (res && res.headers && res.headers.get('X-PB-Milestones')) {
+            res.clone().json().then(fromPayload, function () {});
+          }
+        } catch (err) { /* the answer itself is untouched */ }
+        return res;
+      });
+    };
+    watchedFetch.pbMilestones = true;
+    window.fetch = watchedFetch;
+  }
+
+  // E10 phase 5: "Got there with a hint." when a right answer follows a hint (events from site.js; the line itself is in moments.js)
+  var hinted = false;
+  document.addEventListener('pb-hint-shown', function () { hinted = true; });
+  document.addEventListener('pb-answer-checked', function (e) {
+    if (!(e.detail && e.detail.correct && hinted)) return;
+    hinted = false;
+    handOver([{ type: 'micro', id: 'micro:hint', kind: 'hint' }]);
+  });
 
   scanPageTriggers();
 })();

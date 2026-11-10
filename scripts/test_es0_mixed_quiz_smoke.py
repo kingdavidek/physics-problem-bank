@@ -281,6 +281,16 @@ def test_mixed_quiz_api_web_retry_security():
         assert body['finished'] is True
         assert body['score'] == 10
 
+        # The saved attempt (profile review) shows every question as right too (2026-11-07: a lesson-quiz row stores
+        # bare answers, and the review page used to show each one as wrong).
+        review = client.get(body['attempt_url'], headers=auth)
+        assert review.status_code == 200, review.data[:300]
+        review_html = review.data.decode()
+        assert review_html.count('✓ Correct') == 10 and '✗ Incorrect' not in review_html, 'saved attempt marks right answers wrong'
+        detail = client.get(f"/api/v1/me/quiz-attempts/{body['attempt_id']}", headers=auth)
+        assert detail.status_code == 200, detail.data[:300]
+        assert all(q['correct'] for q in detail.get_json()['quiz_attempt']['questions']), 'attempt API marks right answers wrong'
+
         results = client.get(f'/api/v1/lesson-quiz/{session_id}/results', headers=auth)
         assert results.status_code == 200, results.data
         payload = results.get_json()

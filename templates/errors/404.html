@@ -1,15 +1,18 @@
 {% extends "base.html" %}
-{% from "partials/spot.html" import spot %}
+{% from "partials/buddy.html" import buddy_mascot %}
 {% block title %}Page not found – Problem Bank{% endblock %}
 
 {% block content %}
 <div class="page-shell error-page">
     <div class="empty-state">
-        <div class="empty-state-icon" aria-hidden="true">{{ spot('search') }}</div>
-        <h1>Page not found</h1>
-        <p>That link doesn’t match anything on Problem Bank. It may have moved or been mistyped.</p>
-        <a href="{{ url_for('index') }}" class="btn btn-primary">Go to generator</a>
-        <p style="margin-top: var(--space-4);"><a href="{{ url_for('topics_index') }}">Browse topics</a></p>
+        {# E10 phase 7: a friendly Zorp shrugs (a static pose, so it also shows to a signed-out visitor and offline) #}
+        <span class="study-buddy-face around-zorp--lg" id="error-zorp" data-buddy-face data-face="soft-smile" data-zorp-autoplay="shrug" aria-hidden="true">{{ buddy_mascot(face='soft-smile', pose='shrug') }}</span>
+        <h1 data-zorp-voice="system:heading">Page not found</h1>
+        <p data-zorp-voice="zorp:guide_line">This page drifted off into the maths belt.</p>
+        <p data-zorp-voice="system:system_empty_state">The link may have moved or been mistyped.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary" data-zorp-voice="system:button_label">Go home</a>
+        <p style="margin-top: var(--space-4);"><a href="{{ url_for('topics_index') }}" data-zorp-voice="system:button_label">Browse topics</a></p>
     </div>
 </div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/around.css') }}?v=1">
 {% endblock %}

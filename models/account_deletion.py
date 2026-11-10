@@ -10,6 +10,7 @@ HANDLE_RESERVE_DAYS = 90
 USER_SCOPED_CHECKS = (
     ('saved_problems', 'user_id'),
     ('lesson_progress', 'user_id'),
+    ('lesson_step_awards', 'user_id'),   # 2026-11-08 (E10 review fix 5)
     ('quiz_attempts', 'user_id'),
     ('generator_mcq_attempts', 'user_id'),
     ('user_profile_settings', 'user_id'),

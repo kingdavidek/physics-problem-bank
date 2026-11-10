@@ -88,8 +88,28 @@ def _subject_title(level, subject):
     )
 
 
+REWARD_LINE_MAX = 80   # docs/ZORP_CHARM.md 3.3: a reward line is at most 80 characters
+
+
+def _fit(text, fallback):
+    """The line with the topic's name in it when it fits a reward line, else the name-free fallback."""
+    return text if len(text) <= REWARD_LINE_MAX else fallback
+
+
+_NEXT_KIND = {'completed': 'ninja', 'ninja': 'master', 'master': None}
+_FAMILY = {
+    'completed': 'topic_completed',
+    'ninja': 'topic_ninja',
+    'master': 'topic_master',
+}
+
+
 def topic_badge_meta(key):
-    """Display metadata for per-topic / aggregate keys not in the static catalog."""
+    """Display metadata for per-topic / aggregate keys not in the static catalog.
+
+    E10 phase 4: also `blurb` (what you did), `how` (how to earn), `next` (the next badge key in the line, if any) and
+    `family` (the badge stage's choreography). Texts are Zorp's voice, so they stay short (reward lines, 80 characters).
+    """
     if not key:
         return None
     if key.startswith('topic_'):
@@ -109,11 +129,26 @@ def topic_badge_meta(key):
             'ninja': f'Complete the {name} lesson and score 10/10 on its quiz',
             'master': f'Reach {name} ninja, then two consecutive 10/10 quizzes',
         }
+        blurbs = {
+            'completed': _fit(f'You finished every lesson step on {name}.', 'You finished every lesson step on this topic.'),
+            'ninja': _fit(f'You finished the lesson and aced the {name} quiz.', 'You finished the lesson and aced its quiz.'),
+            'master': _fit(f'You scored 10 out of 10 twice in a row on {name}.', 'You scored 10 out of 10 twice in a row on it.'),
+        }
+        hows = {
+            'completed': _fit(f'Finish every lesson step on {name}.', 'Finish every lesson step on this topic.'),
+            'ninja': 'Finish the lesson, then score 10 out of 10 on its quiz.',
+            'master': 'Reach ninja, then score 10 out of 10 on two quizzes in a row.',
+        }
         if kind not in titles:
             return None
+        nxt = _NEXT_KIND.get(kind)
         return {
             'title': titles[kind],
             'description': descriptions[kind],
+            'blurb': blurbs[kind],
+            'how': hows[kind],
+            'next': topic_badge_key(nxt, level, subject, topic) if nxt else None,
+            'family': _FAMILY[kind],
             'emoji': _KIND_EMOJI.get(kind, '★'),
             'tier': _KIND_TIER.get(kind, 'bronze'),
         }
@@ -131,13 +166,37 @@ def topic_badge_meta(key):
         }
         if kind not in titles:
             return None
-        return {
-            'title': titles[kind],
-            'description': f'Reach {kind} on every {title} topic',
-            'emoji': '🎓',
-            'tier': 'gold',
-        }
+        return _subject_entry(kind, level, subject, title)
     return None
+
+
+_SUBJECT_COPY = {
+    'completed': ('You finished the lessons on every {t} topic.', 'Finish the lessons on every {t} topic.'),
+    'ninja': ('You reached ninja on every {t} topic.', 'Reach ninja on every {t} topic.'),
+    'master': ('You reached master on every {t} topic.', 'Reach master on every {t} topic.'),
+}
+
+
+def _subject_entry(kind, level, subject, title):
+    blurb, how = _SUBJECT_COPY[kind]
+    nxt = _NEXT_KIND.get(kind)
+    return {
+        'title': f'{title} {kind}' if kind != 'completed' else f'{title} complete',
+        'description': f'Reach {kind} on every {title} topic',
+        'blurb': blurb.format(t=title),
+        'how': how.format(t=title),
+        'next': subject_badge_key(nxt, level, subject) if nxt else None,
+        'family': 'subject',
+        'emoji': '🎓',
+        'tier': 'gold',
+    }
+
+
+_AGG_COPY = {
+    'completed': ('You finished the lessons on {n} topics.', 'Finish the lessons on {n} topics.'),
+    'ninja': ('You reached ninja on {n} topics.', 'Reach ninja on {n} topics.'),
+    'master': ('You reached master on {n} topics.', 'Reach master on {n} topics.'),
+}
 
 
 def catalog_extra_entries():
@@ -149,10 +208,16 @@ def catalog_extra_entries():
         'master': 'topic masters',
     }
     for kind, label in labels.items():
-        for count in STATUS_TIERS:
+        for i, count in enumerate(STATUS_TIERS):
+            blurb, how = _AGG_COPY[kind]
+            nxt_count = STATUS_TIERS[i + 1] if i + 1 < len(STATUS_TIERS) else None
             entries[aggregate_badge_key(kind, count)] = {
                 'title': f'{count} {label}',
                 'description': f'Reach {kind} status on {count} topics',
+                'blurb': blurb.format(n=count),
+                'how': how.format(n=count),
+                'next': aggregate_badge_key(kind, nxt_count) if nxt_count else None,
+                'family': _FAMILY[kind],
                 'emoji': _TIER_EMOJI.get(count, '★'),
                 'tier': _TIER_TIER.get(count, 'bronze'),
             }
@@ -165,12 +230,7 @@ def catalog_extra_entries():
                 continue
             title = _subject_title(level, subject)
             for kind in ('completed', 'ninja', 'master'):
-                entries[subject_badge_key(kind, level, subject)] = {
-                    'title': f'{title} {kind}' if kind != 'completed' else f'{title} complete',
-                    'description': f'Reach {kind} on every {title} topic',
-                    'emoji': '🎓',
-                    'tier': 'gold',
-                }
+                entries[subject_badge_key(kind, level, subject)] = _subject_entry(kind, level, subject, title)
     return entries
 
 
@@ -308,7 +368,7 @@ def topic_status_map(conn, user_id, now=None):
         '''
         SELECT level, subject, topic, score, total, created_at
         FROM quiz_attempts
-        WHERE user_id = ?
+        WHERE user_id = ? AND is_retry = 0
         ORDER BY created_at ASC, id ASC
         ''',
         (user_id,),

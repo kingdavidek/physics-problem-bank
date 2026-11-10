@@ -206,7 +206,7 @@ LONG_WORD_ALLOW = frozenset({
     'accuracy',  # the name of a leaderboard tab in the UI ("Effort" and "Accuracy"), so the line must say it
 })
 # Dismissal labels (3.3.3): neutral, never confirmshaming. A new label needs a deliberate edit here.
-DISMISS_APPROVED = frozenset({'Not now', 'Skip intro', 'Keep learning', 'Skip for now'})
+DISMISS_APPROVED = frozenset({'Not now', 'Skip intro', 'Keep learning', 'Skip for now', 'Skip tour', 'Skip story', 'Later'})   # 2026-11-08: E10 phase 6, the app tour's always-there way out; 2026-11-08: E10 phase 8, the story chapters' Skip story and the offer's Later
 SHAMING = (r"\bno thanks\b", r"^no\b", r"\bi don't\b", r"\bi'd rather\b", r"\bnever mind\b",
            r"\bnot interested\b", r"\bgive up\b", r"\bi'll pass\b", r"\bnot for me\b")
 
@@ -540,6 +540,139 @@ def extract_guide_catalog(path='static/js/guide-catalog.js'):
     if blocks_seen != lines_tokens:
         errors.append(f'{path}: parsed {blocks_seen} of {lines_tokens} lines arrays')
     return items, errors
+
+
+def extract_stage_catalog(path='static/js/stage-catalog.js'):
+    """E10: the stage scenes (the arrival film). Same shape as the guide catalog (id, lines arrays, heading, primary,
+    skipLabel), so the same line scan reads it; with no origin/tours/rewards section every line is a guide line."""
+    return extract_guide_catalog(path)
+
+
+def extract_coach_catalog(path='static/js/zorp-coach.js'):
+    """E10 phase 3: the coach callouts. Same line scan as the guide catalog (id, lines arrays, primary, skipLabel)."""
+    return extract_guide_catalog(path)
+
+
+def extract_tour_catalog(path='static/js/zorp-tour.js'):
+    """E10 phase 6: the app tour steps, the end scene and the spotlights. Same line scan as the guide catalog."""
+    return extract_guide_catalog(path)
+
+
+def extract_badge_copy(path='static/js/badge-stage.js'):
+    """E10 phase 4: every badge text Zorp's stage shows. The catalog (models/gamification.py MILESTONE_CATALOG: title, blurb, how),
+    samples of the generated topic, subject and aggregate badges (models/topic_status.py: a short topic name stands in, and the
+    real names are length-checked by scripts/test_badge_stage_smoke.py), and the stage's own copy (the COPY block of badge-stage.js).
+    Blurbs and how-to-earn lines are reward lines (80 characters); titles are headings."""
+    from models.gamification import MILESTONE_CATALOG
+    from models.topic_status import topic_badge_meta
+    items, errors = [], []
+    seen = set()
+
+    def add_badge(src, key, meta):
+        for field, surface, kind in (('title', 'heading', 'label'), ('blurb', 'reward_line', 'line'), ('how', 'reward_line', 'line')):
+            text = (meta or {}).get(field) or ''
+            if not text:
+                errors.append(f'{src}: badge {key} has no {field}')
+                continue
+            items.append(Item(src, 0, 'zorp', surface, kind, text, where=f'{key} {field}'))
+
+    for key, meta in MILESTONE_CATALOG.items():
+        if key.startswith(('topics_', 'subject_')):
+            if key.split(':')[0] in seen:
+                continue
+            seen.add(key.split(':')[0])
+            add_badge('models/topic_status.py', key, meta)
+        else:
+            add_badge('models/gamification.py', key, meta)
+    for kind in ('completed', 'ninja', 'master'):
+        key = f'topic_{kind}:gcse:maths:algebra'
+        add_badge('models/topic_status.py', key, topic_badge_meta(key))
+    src = _read(path)
+    a, b = src.find('// BEGIN COPY'), src.find('// END COPY')
+    if a < 0 or b < a:
+        return items, errors + [f'{path}: the COPY block moved']
+    surfaces = {'kicker': 'heading', 'streakTitle': 'heading', 'primary': 'button_label', 'profile': 'button_label',
+                'earned': 'reward_line', 'streakBlurb': 'reward_line', 'big': 'reward_line', 'streakNext': 'reward_line',
+                'wardrobe': 'reward_line', 'tryOn': 'button_label'}   # 2026-11-08: E10 phase 6b
+    block = src[a:b]
+    for m in re.finditer(r"^\s*(\w+):\s*'((?:[^'\\]|\\.)*)',?\s*$", block, re.M):
+        if m.group(1) in surfaces:
+            n = block[:m.start()].count('\n') + src[:a].count('\n') + 1
+            surface = surfaces[m.group(1)]
+            items.append(Item(path, n, 'zorp', surface, kind_of(surface), js_unescape(m.group(2)).replace('{n}', '7').replace('{item}', 'the long antennae'), where=m.group(1)))
+    for m in re.finditer(r"(\d+):\s*'((?:[^'\\]|\\.)*)'", block):
+        n = block[:m.start()].count('\n') + src[:a].count('\n') + 1
+        items.append(Item(path, n, 'zorp', 'reward_line', 'line', js_unescape(m.group(2)), where=f'streakNext {m.group(1)}'))
+    if not any(i.path == path for i in items):
+        errors.append(f'{path}: no copy extracted')
+    return items, errors
+
+
+def extract_moment_copy(path='static/js/moments.js'):
+    """E10 phase 5: every line the moments say (stages, toasts, micro): the COPY block of moments.js. Lines are reward lines
+    (80 characters), headings and buttons follow their own limits. {n}, {score}, {total} and {wrong} are filled with samples."""
+    src = _read(path)
+    a, b = src.find('// BEGIN COPY'), src.find('// END COPY')
+    if a < 0 or b < a:
+        return [], [f'{path}: the COPY block moved']
+    surfaces = {'primary': 'button_label', 'profile': 'button_label', 'quiz': 'button_label', 'retry': 'button_label',
+                'levelHead': 'heading', 'levelCap': 'heading', 'perfectHead': 'heading', 'lessonHead': 'heading'}
+    sample = {'n': '4', 'score': '7', 'total': '10', 'wrong': '3'}
+    items, errors = [], []
+    block = src[a:b]
+    for m in re.finditer(r"^\s*(\w+):\s*'((?:[^'\\]|\\.)*)',?\s*$", block, re.M):
+        surface = surfaces.get(m.group(1), 'reward_line')
+        text = re.sub(r'\{(\w+)\}', lambda k: sample.get(k.group(1), k.group(0)), js_unescape(m.group(2)))
+        n = block[:m.start()].count('\n') + src[:a].count('\n') + 1
+        items.append(Item(path, n, 'zorp', surface, kind_of(surface), text, where=m.group(1)))
+    if not items:
+        errors.append(f'{path}: no copy extracted')
+    return items, errors
+
+
+def extract_story_copy(path='static/js/story-chapters.js'):
+    """E10 phase 8: Zorp's story chapters. The scenes (id, heading, lines arrays, primary, skipLabel) are read by the guide-catalog line
+    scan; the COPY block of story-chapters.js holds the offer toast ("Zorp has a new story for you", Watch, Later: Later is a dismissal
+    label); models/story.py holds the chapter titles (Zorp headings) and the shelf's unlock sentences (system voice)."""
+    items, errors = extract_guide_catalog(path)
+    src = _read(path)
+    a, b = src.find('// BEGIN COPY'), src.find('// END COPY')
+    if a < 0 or b < a:
+        return items, errors + [f'{path}: the COPY block moved']
+    surfaces = {'offer': 'reward_line', 'watch': 'button_label', 'later': 'button_label'}
+    block = src[a:b]
+    for m in re.finditer(r"^\s*(\w+):\s*'((?:[^'\\]|\\.)*)',?\s*$", block, re.M):
+        surface = surfaces.get(m.group(1), 'reward_line')
+        n = block[:m.start()].count('\n') + src[:a].count('\n') + 1
+        items.append(Item(path, n, 'zorp', surface, kind_of(surface), js_unescape(m.group(2)), where=m.group(1), dismiss=m.group(1) == 'later'))
+    from models import story
+    for chapter in story.CHAPTERS:
+        items.append(Item('models/story.py', 0, 'zorp', 'heading', 'label', chapter['title'], where=f"chapter {chapter['n']}"))
+        items.append(Item('models/story.py', 0, 'system', 'detail_label', 'label', story.unlock_label(chapter), where=f"chapter {chapter['n']} unlock"))
+        if chapter.get('alt'):
+            items.append(Item('models/story.py', 0, 'system', 'system_empty_state', 'line', chapter['alt'], where=f"chapter {chapter['n']} alt"))
+    items.append(Item('models/story.py', 0, 'zorp', 'heading', 'label', story.ARRIVAL_TITLE, where='chapter 0'))
+    return items, errors
+
+
+def extract_wardrobe_copy(path='static/js/wardrobe.js'):
+    """E10 phase 6b: the wardrobe's script copy (the COPY block of wardrobe.js: status lines, reward-line limit) and the catalogue's item
+    names (models/zorp_wardrobe.py; button-sized labels, since each sits on a swatch)."""
+    from models.zorp_wardrobe import ITEMS
+    src = _read(path)
+    a, b = src.find('// BEGIN COPY'), src.find('// END COPY')
+    if a < 0 or b < a:
+        return [], [f'{path}: the COPY block moved']
+    items = []
+    block = src[a:b]
+    for m in re.finditer(r"^\s*(\w+):\s*'((?:[^'\\]|\\.)*)',?\s*$", block, re.M):
+        n = block[:m.start()].count('\n') + src[:a].count('\n') + 1
+        items.append(Item(path, n, 'zorp', 'reward_line', 'line', js_unescape(m.group(2)), where=m.group(1)))
+    for it in ITEMS:
+        items.append(Item('models/zorp_wardrobe.py', 0, 'zorp', 'button_label', 'label', it['name'], where=it['id']))
+    if not items:
+        return [], [f'{path}: no copy extracted']
+    return items, []
 
 
 def _js_concat(expr, env):
@@ -975,6 +1108,13 @@ def _extract_hint_dicts(path, dicts, allow_empty=False):
 
 EXTRACTORS = (
     extract_guide_catalog,
+    extract_stage_catalog,
+    extract_coach_catalog,
+    extract_tour_catalog,
+    extract_badge_copy,
+    extract_moment_copy,
+    extract_story_copy,
+    extract_wardrobe_copy,
     extract_guide_js,
     extract_study_buddy_js,
     extract_buddy,

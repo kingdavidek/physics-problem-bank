@@ -1,0 +1,53 @@
+/* Badge stage and badge sheet (E10 phase 4). Loaded on demand by static/js/badge-stage.js (with stage.css) and on the profile page for the
+   detail sheet. Transform and opacity only; WAAPI owns the medal, prop and confetti transforms. */
+.bd-medal {
+  --bd-a: #f2b27c; --bd-b: #9a4a1c; position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 1; border-radius: 50%;
+  container-type: inline-size; color: #fff;
+  background: radial-gradient(circle at 34% 26%, rgba(255,255,255,.6), transparent 40%), linear-gradient(160deg, var(--bd-a), var(--bd-b));
+  box-shadow: 0 0 0 4px rgba(255,255,255,.3), inset 0 -8px 14px rgba(0,0,0,.25), 0 14px 30px rgba(0,0,0,.4);
+}
+.bd-medal::after { content: ""; position: absolute; inset: 9%; border-radius: 50%; border: 2px dashed rgba(255,255,255,.55); }
+.bd-medal-glyph { font-size: 2.4rem; font-size: 42cqw; line-height: 1; filter: drop-shadow(0 2px 2px rgba(0,0,0,.3)); }
+.bd-medal--silver { --bd-a: #f8fafc; --bd-b: #93a3bb; }
+.bd-medal--gold { --bd-a: #fde68a; --bd-b: #c9830a; }
+.bd-medal--violet { --bd-a: #c4b5fd; --bd-b: #6d28d9; }
+.bd-medal--streak { --bd-a: #fdba74; --bd-b: #dc2626; }
+.bd-medal.is-locked { filter: grayscale(1); opacity: .75; }
+
+.badge-medallion-btn { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); width: 100%; min-height: 44px; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: center; cursor: pointer; }
+.badge-medallion-btn:focus-visible { outline: 3px solid var(--brand-500); outline-offset: 4px; border-radius: var(--radius-md); }
+.badge-count { margin: 0 0 var(--space-4); display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); align-items: baseline; }
+.badge-next-link { padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--brand-600); text-decoration: underline; cursor: pointer; min-height: 24px; }
+.badge-date { display: block; margin-top: 2px; font-size: .8em; }
+.badge-sheet { margin: auto; max-height: calc(100% - 32px); overflow-y: auto; width: min(420px, calc(100% - 32px)); padding: var(--space-6); border: 1px solid var(--border-soft); border-radius: var(--radius-lg); background: var(--surface); color: var(--text); text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,.4); }
+.badge-sheet::backdrop { background: rgba(5, 10, 31, .72); }
+.badge-sheet .bd-medal { width: 104px; margin: 0 auto var(--space-4); }
+.badge-sheet-title { margin: 0 0 var(--space-2); font-size: 1.3rem; }
+.badge-sheet p { margin: 0 0 var(--space-3); line-height: 1.45; }
+.badge-sheet-date, .badge-sheet-next { color: var(--text-muted); font-size: .95rem; }
+.badge-sheet p:empty { display: none; }
+
+/* The stage: Zorp on the left, the medal and its props on the right */
+.pb-stage[data-layout=badge] .pb-st-horizon { display: none; }
+[data-layout=badge] .pb-st-actor { left: 30%; }
+[data-layout=badge] .pb-st-dots { display: none; }
+[data-layout=badge] .pb-st-heading { font-size: 1.35rem; letter-spacing: 0; text-transform: none; color: var(--text); }
+[data-layout=badge] .pb-st-line { white-space: pre-line; }
+.bd-kicker { margin: 0; font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--brand-600); }
+.bd-count { font-size: .9rem; color: var(--text-muted); white-space: nowrap; }
+.bd-layer { position: absolute; inset: 0; }
+.bd-box { position: absolute; left: 60%; top: 8%; width: min(44vw, 420px); aspect-ratio: 240 / 180; transform: translateX(-50%); }
+.bd-box > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.bd-medal-wrap { position: absolute; left: 32%; top: 23%; width: 36%; }
+.bd-conf { position: absolute; top: -20px; width: 9px; height: 13px; }
+.bd-conf svg { display: block; width: 100%; height: 100%; }
+.bp-flick, .bp-rise, .bp-strip, .bp-card, .bp-rings, .bp-mini, .bp-trail { transform-box: view-box; }
+.bp-card { transform-origin: 120px 190px; }
+.bp-flick { transform-origin: 120px 150px; }
+.bp-rise, .bp-strip, .bp-mini, .bp-rings { transform-origin: 120px 90px; }
+.bp-star, .bp-pin, .bp-dot, .bp-sw, .bp-board { transform-box: fill-box; transform-origin: center; }
+
+@media (max-width: 640px) {
+  [data-layout=badge] .pb-st-actor { left: 27%; }
+  .bd-box { left: 50%; top: 7%; width: 76vw; }
+}

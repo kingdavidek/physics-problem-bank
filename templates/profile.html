@@ -35,7 +35,7 @@
                 </a>
                 {% endif %}
                 <a class="profile-hero-chip profile-hero-chip--badges" href="#milestones">
-                    {{ badges_earned }} / {{ milestones|length }} badges
+                    {{ badges_earned }} badge{{ '' if badges_earned == 1 else 's' }}
                 </a>
             </div>
             <p class="profile-dashboard-links">
@@ -366,7 +366,11 @@
             {% endfor %}
         </ul>
         {% else %}
-        <p class="profile-empty">No weak topics in this subject yet — complete quizzes or practice questions first, then refresh your plan.</p>
+        {# E10 phase 7: Zorp thinks it over (static pose, no script) #}
+        <div class="empty-state empty-state--compact around-empty">
+            <span class="study-buddy-face pb-zorp-small" data-buddy-face data-face="thinking" aria-hidden="true">{{ buddy_mascot(face='thinking', pose='think-chin') }}</span>
+            <p data-zorp-voice="system:system_empty_state">Nothing to schedule yet. Your plan fills in as quizzes and practice questions show what to revise.</p>
+        </div>
         {% endif %}
         <form method="POST" action="{{ url_for('profile_revision_plan_save') }}" class="profile-inline-form" onsubmit="return confirm('Clear your exam revision plan?');">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -462,19 +466,45 @@
         <a href="{{ url_for('profile_settings') }}" class="profile-section-link">Sharing settings</a>
     </div>
     <div class="section-panel-body">
+        <p class="badge-count">
+            <strong>{{ badges_earned }} badge{{ '' if badges_earned == 1 else 's' }}</strong>
+            {% if next_up %}<span class="badge-next-up">Next up: <button type="button" class="badge-next-link" data-badge-open="{{ next_up.key }}">{{ next_up.title }}</button>. {{ next_up.how }}</span>{% endif %}
+        </p>
         <ul class="badge-grid">
             {% for item in milestones %}
             <li class="badge-medallion badge-medallion--{{ item.tier }}{% if not item.earned %} is-locked{% endif %}">
-                {{ zorp_badge_face(item, size=36, variant='medallion') }}
-                <strong>{{ item.title }}</strong>
-                <span class="profile-list-meta">
-                    {% if item.earned %}{{ item.earned_at[:10] }}{% else %}{{ item.description }}{% endif %}
-                </span>
+                <button type="button" class="badge-medallion-btn" data-badge-id="{{ item.key }}"
+                        data-title="{{ item.title }}" data-blurb="{{ item.blurb }}" data-how="{{ item.how }}"
+                        data-family="{{ item.family }}" data-emoji="{{ item.emoji }}" data-tier="{{ item.tier }}"
+                        data-earned="{{ 1 if item.earned else 0 }}" data-date="{{ item.earned_at[:10] if item.earned else '' }}"
+                        data-next-title="{{ item.next_title }}" data-next-how="{{ item.next_how }}"
+                        aria-haspopup="dialog"{% if not item.earned %} aria-label="{{ item.title }}, not earned yet. {{ item.how }}"{% endif %}>
+                    {% if item.is_new %}<span class="badge-new-ribbon" data-zorp-voice="system:detail_label">New</span>{% endif %}
+                    {{ zorp_badge_face(item, size=36, variant='medallion') }}
+                    <strong>{{ item.title }}</strong>
+                    <span class="profile-list-meta">
+                        {% if item.earned %}{{ item.blurb }} <span class="badge-date">{{ item.earned_at[:10] }}</span>{% else %}{{ item.how }}{% endif %}
+                    </span>
+                </button>
             </li>
             {% endfor %}
         </ul>
+        {# E10 phase 8: Zorp's story, the chapters the badges open #}
+        {% include "partials/story_shelf.html" %}
     </div>
+    {# E10 phase 4: the badge detail sheet. A native modal dialog (focus trapped, Esc closes, focus goes back to the badge); static/js/badge-sheet.js fills it from the data-* attributes above. #}
+    <dialog id="badge-sheet" class="badge-sheet" aria-labelledby="badge-sheet-title" aria-describedby="badge-sheet-blurb">
+        <div class="bd-medal bd-medal--bronze" id="badge-sheet-medal" aria-hidden="true"><span class="bd-medal-glyph"></span></div>
+        <h3 id="badge-sheet-title" class="badge-sheet-title"></h3>
+        <p id="badge-sheet-blurb" class="badge-sheet-blurb"></p>
+        <p id="badge-sheet-date" class="badge-sheet-date"></p>
+        <p id="badge-sheet-next" class="badge-sheet-next"></p>
+        <button type="button" class="btn btn-primary" id="badge-sheet-close">Close</button>
+    </dialog>
 </section>
+
+{# E10 phase 6b: Zorp's wardrobe, beside the badges that unlock it #}
+{% include "partials/wardrobe.html" %}
 
 </div>
 
@@ -693,7 +723,11 @@
         </ul>
         <button type="button" class="btn btn-ghost btn-sm" data-collapsible-toggle hidden>Show more</button>
         {% else %}
-        <p class="profile-empty">Complete a lesson quiz or quick test to see scores here.</p>
+        {# E10 phase 7: Zorp sits and waits, with a kind line (static pose, no script) #}
+        <div class="empty-state empty-state--compact around-empty">
+            <span class="study-buddy-face pb-zorp-small" data-buddy-face data-face="happy" aria-hidden="true">{{ buddy_mascot(face='happy', pose='sit') }}</span>
+            <p data-zorp-voice="system:system_empty_state">Your quiz scores will appear here after your first lesson quiz or Quick Test.</p>
+        </div>
         {% endif %}
     </div>
 </section>
@@ -711,4 +745,16 @@
 </div>
 
 </div>
+{# E10 phase 4: the badge sheet's own style and script, on this page only (the same medal styles the badge stage uses) #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/badge-stage.css') }}?v=1">
+<script src="{{ url_for('static', filename='js/badge-sheet.js') }}?v=1" defer></script>
+{# E10 phase 6b: the wardrobe's own style and script, on this page only (not precached) #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/wardrobe.css') }}?v=1">
+<script src="{{ url_for('static', filename='js/wardrobe.js') }}?v=1" defer></script>
+{# E10 phase 8: the story shelf's own style and script, on this page only (not precached); the chapter scenes load only when Watch is pressed #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/story.css') }}?v=1">
+<script src="{{ url_for('static', filename='js/story-shelf.js') }}?v=1" defer></script>
+{# E10 phase 7: the level ring fills once per visit and the "New" ribbons (around.css, zorp-around.js; not precached) #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/around.css') }}?v=1">
+<script src="{{ url_for('static', filename='js/zorp-around.js') }}?v=1" defer></script>
 {% endblock %}

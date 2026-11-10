@@ -49,13 +49,17 @@ SITE_JS_BASE_BYTES = 207_046        # before Phase 3
 SITE_JS_PHASE3_MAX_ADD = 2_500      # the plan's budget
 SITE_JS_PHASE4_MAX_ADD = 900        # 2026-10-26: Phase 4 (MCQ distractor notes) budget, docs/GCSE_MATHS_HINTS.md section 19
 SITE_JS_CARD_MAX_ADD = 1_250        # 2026-11-04: hint card and greyed Show answer (docs/GCSE_MATHS_HINTS.md, 'Hint card and Show answer change')
-SITE_JS_MAX_BYTES = SITE_JS_BASE_BYTES + SITE_JS_PHASE3_MAX_ADD + SITE_JS_PHASE4_MAX_ADD + SITE_JS_CARD_MAX_ADD      # 211,696; raise only with a dated ledger line
+SITE_JS_NOTE_MAX_ADD = 800         # 2026-11-07: the wrong-answer note folded behind an "Add a note" toggle (docs/GCSE_MATHS_HINTS.md, 'Folded wrong-answer note')
+SITE_JS_COACH_MAX_ADD = 300        # 2026-11-08: E10 phase 3 coach events (pb-answer-checked, pb-answer-unlocked, pb-hint-shown, pb-hint-bigger), +269 B
+SITE_JS_MAX_BYTES = (SITE_JS_BASE_BYTES + SITE_JS_PHASE3_MAX_ADD + SITE_JS_PHASE4_MAX_ADD + SITE_JS_CARD_MAX_ADD
+                     + SITE_JS_NOTE_MAX_ADD + SITE_JS_COACH_MAX_ADD)      # 212,796; raise only with a dated ledger line
 PRACTICE_CSS_BASE_BYTES = 31_381
 PRACTICE_CSS_PHASE3_MAX_ADD = 600
 PRACTICE_CSS_CARD_MAX_ADD = 900     # 2026-11-04: hint card and locked Show answer styles (the old ladder lines went)
+PRACTICE_CSS_NOTE_MAX_ADD = 900     # 2026-11-07: the "Add a note" toggle and the smaller note chips
 CORE_CSS_CAP = 216_000              # as test_u8_a11y_smoke and test_zorp_charm_smoke
-TOTAL_CSS_CAP = 246_000
-SERVICE_WORKER_CACHE = 'pb-v109'
+TOTAL_CSS_CAP = 273_700 # 2026-11-08: E10 phase 8 RAISED 268_900 -> 273_700 (+4_800) for the on-demand story.css (own cap 4_800 in test_story_chapters_smoke.py; tree 273,520). 2026-11-08: E10 phase 7 RAISED 265_300 -> 268_900 (+3_600) for the on-demand around.css (own cap 4_000 in test_zorp_around_smoke.py; tree 268,821). 2026-11-08: E10 phase 6b RAISED 262_500 -> 265_300 (+2_800) for the on-demand wardrobe.css (profile page only; own cap 2_800 in test_wardrobe_smoke.py; tree 264,949).  2026-11-08: E10 phase 5 added moments.css inside this cap (no raise; tree 260,077).  2026-11-08: E10 phase 4 +5_500 for badge-stage.css (on demand, own cap in test_badge_stage_smoke.py); was 256_000             # 2026-11-08: E10 +10_000 for stage.css (on demand, own cap in test_zorp_stage_smoke.py)  # 2026-11-08: E10 phase 6 RAISED 261_500 -> 262_500 (+1_000) for the on-demand tour.css (own cap 2_800 in test_zorp_tour_smoke.py; tree 262,304).
+SERVICE_WORKER_CACHE = 'pb-v123'   # 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 (the app tour) bumped the cache (was pb-v115, phase 5); 2026-11-08: E10 phase 5 (moments) bumped the cache (was pb-v114, phase 4 badges; pb-v113 phase 3); 2026-11-08: E10 review fixes bump (was pb-v118)
 
 ISSUES = collections.defaultdict(list)
 HDR = {'Accept': 'application/json'}
@@ -515,8 +519,8 @@ CASES = (
     ('a word key is hidden as a word only', 'The answer is not a word like answer.<br>SW is the direction.<br>Look again.', 'Use the compass.', 'sw', 'bearings',
      'The answer is not a word like answer.', 'Use the compass.'),
     ('an algebraic key is hidden', 'Expand the bracket.<br>x = 2x + 1', 'Collect like terms.', '2x+1', 'algebra', 'Expand the bracket.', 'Collect like terms.'),
-    ('multi-part keys: every part is hidden', 'Find the first angle.<br>x = 30 and y = 150', 'Use angles on a line.', '30\x1e150', 'geometry_angles',
-     'Find the first angle.', 'Use angles on a line.'),
+    ('multi-part keys: every part is hidden', 'Find the first angle.<br>x = 30 and y = 150', 'Look for parallel lines.', '30\x1e150', 'geometry_angles',
+     'Find the first angle.', 'Look for parallel lines.'),
 )
 
 
@@ -531,6 +535,45 @@ def check_ladder_cases():
                'a rung shows the key')
     got = M.build_ladder({'solution': 'Step one.', 'hint': 'h', 'correct_answer_raw': '5'}, topic='x', correct_raw='5', slip='gen.sign')
     expect('ladder', 'slip', got == {'kind': 'misconception', 'rung': 1, 'id': 'gen.sign', 'bigger': 'Step one.'}, f'slip ladder {got}')
+    # rung 2 that only repeats rung 1 is dropped, so the page shows no "Show a bigger hint" (2026-11-07)
+    bidmas = {'question': 'Calculate 3 × 3^2', 'solution': 'Indices before multiplication.<br>3^2 = 9<br>3 × 9 = 27',
+              'hint': 'Indices (powers) come before multiplication in BIDMAS.', 'correct_answer_raw': '27', 'answer_type': 'number'}
+    got = M.build_ladder(bidmas, topic='bidmas', correct_raw='27')
+    expect('ladder', 'repeat', got.get('bigger') == '' and got.get('text') == bidmas['hint'], f'a repeated hint was kept: {got}')
+    got = M.build_ladder({'solution': 'Angles on a straight line add up to 180°.<br>x = 40', 'correct_answer_raw': '40'},
+                         topic='geometry_angles', correct_raw='40', slip='ang.line', slip_text='Angles on a straight line add up to 180°.')
+    expect('ladder', 'repeat slip', got.get('bigger') == '', f'a step repeating the slip message was kept: {got}')
+    for first, big, same in (
+        ('Indices (powers) come before multiplication in BIDMAS.', 'Indices before multiplication.', True),
+        ('The nth square number is n².', 'The \\(n\\)th square number is \\(n^2\\).', True),
+        ('Cover S in the SDT triangle: Speed = Distance ÷ Time.', 'Speed = Distance ÷ Time', True),
+        ('Use a multiplier.', 'Multiplier = 1 + 20/100', False),
+        ('Reflection in y = x: swap the two coordinates.', 'Reflection in \\(y = x\\): \\((x, y) \\to (y, x)\\).', False),
+        ('Rearrange to make x the subject.', '\\(x = y/k\\)', False),
+        ('Collect like terms.', 'Expand the bracket.', False),
+    ):
+        expect('ladder', 'repeat rule', M.adds_nothing(first, big) is same, f'adds_nothing({first!r}, {big!r}) should be {same}')
+    # after the question's own hint, rung 2 must bring something concrete: a number, an operation, or a letter, term or
+    # point from the question (2026-11-07: the function machine pair said the same thing in other words)
+    for first, big, question, same in (
+        ('Reverse the machine: undo the last operation first, then undo the first operation.',
+         'Work backwards, undoing each step in reverse order.', 'A machine multiplies by 4 then adds 4. The output is 16. Find the input.', True),
+        ('Multiply the probability by the number of trials to predict how many successes to expect.',
+         'Expected frequency = probability × number of trials', 'P(red) = 0.3. The spinner is spun 50 times.', True),
+        ('Subtract the smaller bearing from the larger.', 'Angle between = larger − smaller', 'Bearings 040° and 125°.', True),
+        ('Rotation 90° clockwise about the origin: (x, y) → (y, −x).', 'Rotation 90° CW about origin: \\((x, y) \\to (y, -x)\\).',
+         'Rotate (3, 5) by 90° clockwise about the origin.', True),
+        ('Treat P = 2l + 2w like a normal equation.', 'Subtract \\(2w\\) from both sides: \\(P - 2w = 2l\\)',
+         'Make \\(l\\) the subject of \\(P = 2l + 2w\\).', False),
+        ('Move the unwanted terms to the opposite side.', 'Subtract \\(at\\) from both sides.', 'Make \\(u\\) the subject of \\(v = u + at\\).', False),
+        ('Work on all three parts simultaneously: subtract then divide.', 'Subtract 5 from all three parts.', 'Solve 11 < 2x + 5 < 19.', False),
+        ('Divide the known area by the area scale factor (LSF²) to find the smaller area.', 'Area scale factor = 2²',
+         'Two similar shapes have lengths in the ratio 1 : 2. The larger has area 48 cm².', False),
+        ('Use the pair you know (a and A) together with the unknown pair (b and B).', 'Sine rule: \\(\\dfrac{a}{\\sin A} = \\dfrac{b}{\\sin B}\\)',
+         'In triangle ABC, a = 8, A = 40° and B = 65°. Find b.', False),
+    ):
+        expect('ladder', 'concrete rule', M.adds_nothing(first, big, question=question) is same,
+               f'adds_nothing({first!r}, {big!r}, question=...) should be {same}')
     # unsafe markup and bad input never raise
     for bad in (None, {}, {'solution': 5}, {'solution': '<svg></svg>', 'hint': '$x$'}):
         got = M.build_ladder(bad, topic='bidmas', correct_raw='5')
@@ -691,7 +734,7 @@ def check_ladder_slots():
     """Every practice slot, LADDER_RUNS questions each: neither rung shows the key; rung 2 is a method step (review,
     Phase 3). The counts are for run 0 of each slot."""
     slots = [s for s in harness.enumerate_slots() if s.mode == 'standard']
-    n = with_big = from_hint = trimmed = 0
+    n = with_big = from_hint = trimmed = repeats = 0
     tail = re.compile(r'=\s*[£$€]?\s*[-\u2212]?(\d[\d,]*(?:\.\d+)?)\s*(?:\\\))?\s*(?:[a-zA-Z]{1,4}[²³]?|°|%)?\s*(?:\\\))?\s*[.;]?$')
     for slot, run in ((s, r) for s in slots for r in range(LADDER_RUNS)):
         problem, _ = harness.generate(slot, run, record=False)
@@ -714,8 +757,13 @@ def check_ladder_slots():
             expect('ladder', where, not shows_key(text, raw, question, at), f'rung 1 shows the key {raw!r}: {text!r}')
         if problem.get('answer_type') == 'proof_steps':
             expect('ladder', where, big == '', f'an ordering proof must have no rung 2 (any step is part of the answer): {big!r}')
+        if not big and M.solution_step(problem, str(raw)):
+            repeats += first        # a step that only repeats rung 1 is dropped (2026-11-07)
         if big:
             with_big += first
+            own = isinstance(problem.get('hint'), str) and text == M.plain_line(problem['hint'])
+            expect('ladder', where, not M.adds_nothing(text, big, specific=own, question=question),
+                   f'rung 2 only repeats rung 1: {text!r} / {big!r}')
             expect('ladder', where, not shows_key(big, raw, question, at), f'rung 2 shows the key {raw!r}: {big!r}')
             expect('ladder', where, not _trivial_step(big, raw, at, question), f'rung 2 leaves only a trivial move to {raw!r}: {big!r}')
             steps = [M.plain_line(x) for x in re.split(r'<br\s*/?>|\n', problem['solution']) if M.plain_line(x)]
@@ -740,8 +788,9 @@ def check_ladder_slots():
             expect('ladder', where, len(big) <= M.STEP_MAX_LEN, 'rung 2 is long')
             expect('ladder', where, re.sub(r'\s+', '', big) not in re.sub(r'\s+', '', question), f'rung 2 repeats the question: {big!r}')
     expect('ladder', 'coverage', n >= 600, f'only {n} typed practice slots were checked')
-    expect('ladder', 'coverage', with_big / max(n, 1) >= 0.5, f'only {with_big} of {n} slots have a rung 2 step (floor 50%)')
-    return n, with_big, from_hint
+    expect('ladder', 'coverage', (with_big + repeats) / max(n, 1) >= 0.5,
+           f'only {with_big} of {n} slots have a rung 2 step, and {repeats} more only repeat rung 1 (floor 50%)')
+    return n, with_big, from_hint, repeats
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -880,19 +929,19 @@ def check_client():
     expect('client', 'site.js', n <= SITE_JS_MAX_BYTES, f'site.js is {n} B, cap {SITE_JS_MAX_BYTES} (baseline {SITE_JS_BASE_BYTES} plus {SITE_JS_PHASE3_MAX_ADD}, {SITE_JS_PHASE4_MAX_ADD}, {SITE_JS_CARD_MAX_ADD})')
     css = ROOT / 'static/css/practice.css'
     c = css.stat().st_size
-    expect('client', 'practice.css', c <= PRACTICE_CSS_BASE_BYTES + PRACTICE_CSS_PHASE3_MAX_ADD + PRACTICE_CSS_CARD_MAX_ADD,
-           f'practice.css is {c} B, cap {PRACTICE_CSS_BASE_BYTES + PRACTICE_CSS_PHASE3_MAX_ADD + PRACTICE_CSS_CARD_MAX_ADD}')
+    css_cap = PRACTICE_CSS_BASE_BYTES + PRACTICE_CSS_PHASE3_MAX_ADD + PRACTICE_CSS_CARD_MAX_ADD + PRACTICE_CSS_NOTE_MAX_ADD
+    expect('client', 'practice.css', c <= css_cap, f'practice.css is {c} B, cap {css_cap}')
     sheets = sorted((ROOT / 'static/css').glob('*.css'))
     total = sum(p.stat().st_size for p in sheets)
-    lesson_only = {'lesson-pages.css', 'lesson-assist.css'}      # as test_u8_a11y_smoke.LESSON_ONLY
+    lesson_only = {'lesson-pages.css', 'lesson-assist.css', 'stage.css', 'coach.css', 'badge-stage.css', 'moments.css', 'tour.css', 'wardrobe.css', 'around.css', 'story.css'}  # 2026-11-08: E10 phase 6b wardrobe.css is on demand;      # as test_u8_a11y_smoke.LESSON_ONLY (2026-11-08: E10 stage.css is on demand)
     core = sum(p.stat().st_size for p in sheets if p.name not in lesson_only)
     expect('client', 'css total', total <= TOTAL_CSS_CAP, f'total CSS {total} B, cap {TOTAL_CSS_CAP}')
     expect('client', 'css core', core <= CORE_CSS_CAP, f'core CSS {core} B, cap {CORE_CSS_CAP}')
     # cache pins
     base = read('templates/base.html')
-    expect('client', 'pins', "js/site.js') }}?v=38" in base, 'site.js must be ?v=38')
-    expect('client', 'pins', "css/practice.css') }}?v=31" in base, 'practice.css must be ?v=31')
-    expect('client', 'pins', "css/pages.css') }}?v=58" in base, 'pages.css must be ?v=58')
+    expect('client', 'pins', "js/site.js') }}?v=40" in base, 'site.js must be ?v=40')
+    expect('client', 'pins', "css/practice.css') }}?v=32" in base, 'practice.css must be ?v=32')
+    expect('client', 'pins', "css/pages.css') }}?v=59" in base, 'pages.css must be ?v=59 (2026-11-08: E10 phase 7 fixed the results ring token)')
     expect('client', 'pins', f"CACHE_VERSION = '{SERVICE_WORKER_CACHE}'" in read('static/js/sw.js'), f'sw.js must be {SERVICE_WORKER_CACHE}')
     # review A6: a failed check (stale tab, lost session, network) must unlock Show answer in every check catch
     js_lines = read('static/js/site.js').split('\n')
@@ -953,16 +1002,16 @@ def main():
     check_route(app)
     check_ladder_cases()
     check_ladder_review_cases()
-    n, with_big, from_hint = check_ladder_slots()
+    n, with_big, from_hint, repeats = check_ladder_slots()
     check_graded(app)
     check_client()
     elapsed = time.time() - START
     print(f'GCSE maths hint ladder (Phase 3): {n} typed practice slots checked, {with_big} have a rung 2 step '
-          f'({with_big / max(n, 1):.0%}), {from_hint} use the problem hint as rung 1, {elapsed:.1f}s (budget {BUDGET_SECONDS:g}s)')
+          f'({with_big / max(n, 1):.0%}; {repeats} more dropped as repeats of rung 1), {from_hint} use the problem hint as rung 1, {elapsed:.1f}s (budget {BUDGET_SECONDS:g}s)')
     js = (ROOT / 'static/js/site.js').stat().st_size
     css = (ROOT / 'static/css/practice.css').stat().st_size
     print(f'  site.js {js} B (+{js - SITE_JS_BASE_BYTES}, cap {SITE_JS_MAX_BYTES}); practice.css {css} B (+{css - PRACTICE_CSS_BASE_BYTES}, '
-          f'cap +{PRACTICE_CSS_PHASE3_MAX_ADD + PRACTICE_CSS_CARD_MAX_ADD})')
+          f'cap +{PRACTICE_CSS_PHASE3_MAX_ADD + PRACTICE_CSS_CARD_MAX_ADD + PRACTICE_CSS_NOTE_MAX_ADD})')
     if ISSUES:
         for check, lines in ISSUES.items():
             print(f'FAIL {check}: {len(lines)}')

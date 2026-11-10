@@ -37,7 +37,13 @@
   var faceEl = root.querySelector('[data-buddy-face]');
   if (!cardEl || !messageEl || !actionEl || !dismissEl) return;
 
-  var QUIET_KEY = 'pb-buddy-quiet';
+  // E11 Phase 0 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 1.2): one pupil's "be quiet for a while" (the account's storage name), so the
+  // next pupil on a shared browser is not kept quiet by the last one's dismiss. The old shared key is removed unread.
+  var QUIET_KEY = 'pb-buddy-quiet:' + (function () {
+    var m = document.querySelector('meta[name="pb-store"]');
+    return (m && m.getAttribute('content')) || 'anon';
+  })();
+  try { window.localStorage.removeItem('pb-buddy-quiet'); } catch (e) {}
   var QUIET_MS_ACTED = 10 * 60 * 1000;
   var QUIET_MS_DISMISSED = 30 * 60 * 1000;
 

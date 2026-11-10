@@ -4,6 +4,28 @@
 {% from "partials/buddy.html" import buddy_mascot %}
 {% block title %}Welcome – Problem Bank{% endblock %}
 
+{#
+  E10 (docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md A1): with JavaScript, welcome.js plays the arrival film on the stage over this page
+  (scenes 1 to 5 on the hello step) and shows the real forms below as scene 6: the nodes marked data-arrival-slot (in their
+  number order) move into the stage and come back if it closes. The forms still POST to welcome_step, so saving is unchanged.
+  Without JavaScript the four plain screens work as before (E7).
+#}
+{% macro level_screen(hidden=false) %}
+    <div class="welcome-screen" id="welcome-screen-level" data-arrival-slot="1"{% if hidden %} hidden{% endif %}>
+        <h1 class="welcome-title" data-zorp-voice="zorp:welcome_line">What do you want to practise?</h1>
+        <form method="POST" action="{{ url_for('welcome_step') }}" class="welcome-card-grid" id="welcome-level-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="step" value="level">
+            {% for t in tracks %}
+            <button type="submit" name="level" value="{{ t.key }}" class="welcome-card">
+                <span class="welcome-card-icon" aria-hidden="true">{{ icon(t.icon, size=28) }}</span>
+                <span class="welcome-card-label">{{ t.label }}</span>
+            </button>
+            {% endfor %}
+        </form>
+    </div>
+{% endmacro %}
+
 {% block content %}
 {% set steps = ['hello', 'level', 'topic', 'ready'] %}
 {% set step_index = steps.index(step) + 1 %}
@@ -34,7 +56,9 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="step" value="hello">
     </form>
-    <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-skip-form-hello">
+    {# the film's scene 6: the level choice, shown only inside the stage #}
+    {{ level_screen(hidden=true) }}
+    <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-skip-form-hello" data-arrival-slot="3">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="step" value="skip">
         <button type="submit" class="btn btn-outline welcome-skip" id="welcome-skip" data-zorp-voice="zorp:button_label:dismiss">Skip for now</button>
@@ -42,20 +66,8 @@
     {% endif %}
 
     {% if step == 'level' %}
-    <div class="welcome-screen" id="welcome-screen-level">
-        <h1 class="welcome-title" data-zorp-voice="zorp:welcome_line">What do you want to practise?</h1>
-        <form method="POST" action="{{ url_for('welcome_step') }}" class="welcome-card-grid">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="step" value="level">
-            {% for t in tracks %}
-            <button type="submit" name="level" value="{{ t.key }}" class="welcome-card">
-                <span class="welcome-card-icon" aria-hidden="true">{{ icon(t.icon, size=28) }}</span>
-                <span class="welcome-card-label">{{ t.label }}</span>
-            </button>
-            {% endfor %}
-        </form>
-    </div>
-    <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-skip-form-level">
+    {{ level_screen() }}
+    <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-skip-form-level" data-arrival-slot="3">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="step" value="skip">
         <button type="submit" class="btn btn-outline welcome-skip" id="welcome-skip" data-zorp-voice="zorp:button_label:dismiss">Skip for now</button>
@@ -63,7 +75,7 @@
     {% endif %}
 
     {% if step == 'topic' %}
-    <div class="welcome-screen" id="welcome-screen-topic">
+    <div class="welcome-screen" id="welcome-screen-topic" data-arrival-slot="1">
         <h1 class="welcome-title" data-zorp-voice="zorp:welcome_line">Pick a first topic</h1>
         {% if track %}<p class="welcome-copy">{{ track.label }}</p>{% endif %}
         <form method="POST" action="{{ url_for('welcome_step') }}" class="welcome-card-grid" id="welcome-topic-form">
@@ -82,7 +94,7 @@
             </button>
         </form>
     </div>
-    <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-skip-form-topic">
+    <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-skip-form-topic" data-arrival-slot="3">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="step" value="skip">
         <button type="submit" class="btn btn-outline welcome-skip" id="welcome-skip" data-zorp-voice="zorp:button_label:dismiss">Skip for now</button>
@@ -90,12 +102,13 @@
     {% endif %}
 
     {% if step == 'ready' %}
-    <div class="welcome-screen" id="welcome-screen-ready">
+    <div class="welcome-screen" id="welcome-screen-ready" data-arrival-slot="1">
         <h1 class="welcome-title" data-zorp-voice="zorp:welcome_line">{% if chosen_topic %}{{ chosen_topic_label }}{% else %}You’re ready{% endif %}</h1>
         {% if track %}<p class="welcome-copy">{{ track.label }}</p>{% endif %}
+        <p class="welcome-copy" data-zorp-voice="zorp:welcome_line">Good choice. Your first question is ready.</p>
         <p class="welcome-copy" data-zorp-voice="zorp:welcome_line">Get one right and I’ll cheer. Finish a lesson and I’ll dance.</p>
     </div>
-    <form method="POST" action="{{ url_for('index') }}" id="welcome-ready-form">
+    <form method="POST" action="{{ url_for('index') }}" id="welcome-ready-form" data-arrival-slot="2">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="level" value="{{ track.level if track else '' }}">
         <input type="hidden" name="subject" value="{{ track.subject if track else '' }}">
@@ -103,8 +116,9 @@
         <input type="hidden" name="mode" value="standard">
         <input type="hidden" name="difficulty" value="foundational">
         <input type="hidden" name="action" value="start">
+        <input type="hidden" name="coach" value="1">
     </form>
-    <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-skip-form-ready">
+    <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-skip-form-ready" data-arrival-slot="4">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="step" value="skip">
         <button type="submit" class="btn btn-outline welcome-skip" id="welcome-skip" data-zorp-voice="zorp:button_label:dismiss">Skip for now</button>
@@ -113,7 +127,7 @@
 
 </section>
 
-<script src="{{ url_for('static', filename='js/welcome.js') }}?v=5" defer></script>
+<script src="{{ url_for('static', filename='js/welcome.js') }}?v=6" defer></script>
 {% endblock %}
 
 {% block sticky_footer %}
@@ -122,7 +136,7 @@
     <button type="submit" form="welcome-hello-form" class="btn btn-primary btn-lg welcome-primary-btn" id="welcome-hello-btn">Let’s go</button>
 </div>
 {% elif step == 'ready' %}
-<div class="welcome-sticky-bar">
+<div class="welcome-sticky-bar" id="welcome-ready-bar" data-arrival-slot="3">
     <button type="submit" form="welcome-ready-form" class="btn btn-primary btn-lg welcome-primary-btn" id="welcome-ready-btn">Start</button>
 </div>
 {% endif %}

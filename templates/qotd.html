@@ -76,6 +76,20 @@
     </div>
 </section>
 
+{# E10 phase 7: the viewer's own Daily week. Today's dot fills with a small pop on the page that follows an answer (around.css; no script). #}
+<section class="qotd-week" aria-labelledby="qotd-week-title">
+    <h2 class="qotd-week-title" id="qotd-week-title" data-zorp-voice="system:heading">Your Daily week</h2>
+    <ol class="streak-dots qotd-week-dots">
+        {% for dot in week_dots %}
+        <li class="streak-dot is-{{ dot.state }}{% if dot.is_today %} is-today{% endif %}{% if dot.is_today and pop_today %} is-pop{% endif %}">
+            <span class="streak-dot-mark" aria-hidden="true">{% if dot.state == 'studied' %}●{% else %}○{% endif %}</span>
+            <span class="streak-dot-day">{{ dot.label }}</span>
+            <span class="around-sr">{{ dot.date }}: {% if dot.state == 'studied' %}answered{% else %}not answered{% endif %}</span>
+        </li>
+        {% endfor %}
+    </ol>
+</section>
+
 <section class="section-panel" id="qotd-board">
   {% if board == 'week' %}
     <div class="section-panel-header">Friends — this week</div>
@@ -97,9 +111,9 @@
         </ol>
         {% else %}
         <div class="empty-state">
-            <span class="study-buddy-face pb-zorp-small" id="qotd-empty-zorp" data-buddy-face data-face="nudge" data-zorp-autoplay="think-chin" aria-hidden="true">{{ buddy_mascot() }}</span>
+            <span class="study-buddy-face pb-zorp-small" id="qotd-empty-zorp" data-buddy-face data-face="happy" data-zorp-autoplay="wave" aria-hidden="true">{{ buddy_mascot(face='happy', pose='wave') }}</span>
             <h3 data-zorp-voice="system:system_empty_state">No friends on the board yet</h3>
-            <p data-zorp-voice="system:system_empty_state">Follow classmates to compare daily answers.</p>
+            <p data-zorp-voice="system:system_empty_state">Search for a handle, open their profile and press Follow.</p>
             <a href="{{ url_for('site_search') }}" class="btn btn-primary" data-zorp-voice="system:button_label">Find friends</a>
         </div>
         {% endif %}
@@ -132,4 +146,5 @@
 </section>
 
 </div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/around.css') }}?v=1">
 {% endblock %}

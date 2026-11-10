@@ -442,7 +442,7 @@
             {% endfor %}
             <button type="button" class="btn btn-outline btn-sm" data-zorp-slow aria-pressed="false">Slow 0.25x: off</button>
         </div>
-        <p class="profile-empty" style="margin-top: var(--space-4);"><strong>Sound (E9 Phase 4, <code>docs/ZORP_CHARM.md</code> section 3.4).</strong> Zorp's cues are synthesised in the browser (no audio files), off by default, and a pupil only hears them with <em>Zorp's sounds: Celebrations</em> in Settings, after a tap, at full motion and outside a quiz. These buttons are the preview: they pass <code>force</code>, which skips only the setting and the one-sequence-per-7-seconds limit, so a tap is still needed and a second button pressed within 400 ms of the first stays silent. The blips (D7) are built but are not offered to pupils. Peak gains: cues 0.06, blips 0.03, all quieter than the answer tones (0.08 to 0.14). Use headphones or a low volume.</p>
+        <p class="profile-empty" style="margin-top: var(--space-4);"><strong>Sound (E9 Phase 4, <code>docs/ZORP_CHARM.md</code> section 3.4).</strong> Zorp's cues are synthesised in the browser (no audio files), on for new accounts since E10 (off for older ones unless chosen), and a pupil only hears them with <em>Zorp's sounds: Celebrations</em> in Settings, after a tap, at full motion and outside a quiz. These buttons are the preview: they pass <code>force</code>, which skips only the setting and the one-sequence-per-7-seconds limit, so a tap is still needed and a second button pressed within 400 ms of the first stays silent. The blips (D7) are built but are not offered to pupils. Peak gains: cues 0.06, blips 0.03, all quieter than the answer tones (0.08 to 0.14). Use headphones or a low volume.</p>
         <div class="sg-row" style="margin-top: var(--space-2); flex-wrap: wrap;">
             {% for cue, label in (('jump', 'jump: glide 330 to 660 Hz, 160 ms'), ('land', 'land: 180 to 120 Hz, 90 ms'), ('tada', 'tada: 523, 659, 784 Hz, 300 ms'), ('sequence', 'jump then land')) %}
             <button type="button" class="btn btn-outline btn-sm" data-zorp-cue="{{ cue }}">{{ label }}</button>
@@ -540,7 +540,7 @@
 <section class="section-panel" id="motion">
     <div class="section-panel-header">Motion (U7)</div>
     <div class="section-panel-body">
-        <p class="profile-empty">Correct-answer celebration: scale-pop, drawn checkmark, local <code>+XP</code> float. Confetti (40 CSS particles, self-cleaning) also fires once per new badge/milestone and on streak round-numbers 7 / 30 / 100. All of it is gated on <code>prefers-reduced-motion</code>.</p>
+        <p class="profile-empty">Correct-answer celebration: scale-pop, drawn checkmark, a sparkle. A <code>+N XP</code> float shows only where effort points were really recorded (E10 phase 5), so a plain check shows none. Confetti (40 CSS particles, self-cleaning) also fires once per new badge/milestone and on streak round-numbers 7 / 30 / 100. All of it is gated on <code>prefers-reduced-motion</code>.</p>
         <div class="sg-row" style="margin-top:var(--space-4);">
             <button type="button" class="btn mcq-btn" id="sg-celebrate-correct" data-letter="A"><span class="mcq-letter" aria-hidden="true">A</span>Correct option</button>
             <button type="button" class="btn btn-outline" id="sg-celebrate-confetti">Confetti burst</button>
@@ -606,7 +606,7 @@
                 <div><strong>Week warrior</strong><div class="profile-list-meta">Studied seven days in a row</div></div>
             </li>
             <li class="milestone-item">
-                <span class="milestone-badge">🥇</span>
+                <span class="milestone-badge">🎯</span>
                 <div><strong>Top of class</strong><div class="profile-list-meta">90%+ across ten quizzes</div></div>
             </li>
         </ul>
@@ -739,7 +739,7 @@
         <ul class="badge-grid" style="margin-top:var(--space-5);">
             <li class="badge-medallion badge-medallion--gold"><span class="badge-medallion-face badge-medallion-face--zorp">{{ zorp_kit.pose('jump', size=36) }}</span><strong>Week warrior</strong><span class="profile-list-meta">Earned</span></li>
             <li class="badge-medallion badge-medallion--bronze is-locked"><span class="badge-medallion-face">📝</span><strong>First quiz</strong><span class="profile-list-meta">Complete a lesson quiz</span></li>
-            <li class="badge-medallion badge-medallion--violet"><span class="badge-medallion-face">🥇</span><strong>Top of the class</strong><span class="profile-list-meta">Rare</span></li>
+            <li class="badge-medallion badge-medallion--violet"><span class="badge-medallion-face">🎯</span><strong>Sharp week</strong><span class="profile-list-meta">Rare</span></li>
         </ul>
     </div>
 </section>
@@ -827,7 +827,7 @@
         pointer-events: auto;
     }
 </style>
-{% if not current_user.is_authenticated %}<script src="{{ url_for('static', filename='js/guide-catalog.js') }}?v=12" defer></script>
+{% if not current_user.is_authenticated %}<script src="{{ url_for('static', filename='js/guide-catalog.js') }}?v=13" defer></script>
 {% endif %}
 <script src="{{ url_for('static', filename='js/styleguide.js') }}?v=13" defer></script>
 {% endblock %}

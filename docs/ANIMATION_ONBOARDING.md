@@ -224,6 +224,8 @@ Primary last step: **Let’s go**. Skip intro on every origin step.
 | `compete` | `friend_leaderboard_page` (not challenge_detail) | — |
 | `profile` | `profile` only — **not** `profile_settings` | — |
 
+**E10 phase 6 (2026-11-08) changed how tours work.** The per-tab tours above are now the fallback. The main tour is the cross-page **app tour** (`static/js/zorp-tour.js`, loaded only when due): it starts when the arrival coach ends, can be offered once to an older account on Practice, and replays from Settings. Its progress is `guide_json` `run` ({id, step}); once `tours.app` is set the per-tab tours stay quiet. Settings is part of the app tour (the tour may visit it); the never-tour list still stops the per-tab tours there. Nine just-in-time spotlights (`sp_<id>` flags) show the first time a pupil meets a feature. See `docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md` section 11.9.
+
 **Never tour:** `profile_settings`, `legal_privacy`, `legal_privacy_simple`, `legal_terms`, `login`, `register`, `forgot_password`, `offline`, quiz runner endpoints (`_QUIZ_RUNNER_ENDPOINTS`).
 
 **A3 ships three:** `practice`, `profile`, `daily`. **A3b** (optional same PR or follow-up): `learn`, `compete`.
@@ -262,7 +264,11 @@ Primary last step: **Let’s go**. Skip intro on every origin step.
 |-----------|---------|--------|
 | `milestone:<key>` | `pbCelebrate.milestone` / buddy prompt type `milestone` / `fromPayload` new_milestones | Large badge emoji from catalog + title + “You earned this.” Confetti if motion OK |
 | `streak:7` / `30` / `100` | `celebrateStreakRound` | Flame / ring fill; copy “7-day streak” etc. No shame if they later drop |
-| `lesson_complete` | `pbCelebrate.lessonComplete` | **A4:** short reward modal once; later lessons stay confetti-only |
+| `lesson_complete` | `pbCelebrate.lessonComplete` | **A4:** short reward modal once; later lessons stay confetti-only. *Superseded (E10 phase 5, 2026-11-08): every finished lesson is a stage moment (id `lesson:<level>:<subject>:<topic>`), full the first time and smaller after; it plays only when the last quick check is answered live; no "+25 XP".* |
+
+*E10 phase 4 note (2026-11-08):* `milestone:<key>` and `streak:7/30/100` now play on the badge stage (`static/js/badge-stage.js`) instead of the large emoji and confetti; see `docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md` 11.7.
+
+*E10 phase 5 note (2026-11-08):* the correct-answer "+10 XP" float is gone (a check records no points); `celebrate.correct(target, points)` floats a number only when given a real, positive recorded value, otherwise just the pop, tick and sparkle. New stage and toast moments: `docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md` 11.8.
 
 Do not add a reward for every correct answer (U7.3 already pops check + XP). **first_correct** is A4, once, localStorage.
 
@@ -342,7 +348,7 @@ Same pattern. Compete copy: friends-only.
 
 ### A4 — Extra celebration polish
 
-**Shipped:** `first_correct` once, and `lesson_complete` once (later lessons stay confetti-only). Streak flame CSS is A6 (reward-only, not every tab change).
+**Shipped:** `first_correct` once, and `lesson_complete` once (later lessons stay confetti-only; since E10 phase 5, 2026-11-08, every lesson has its own stage moment, see 5.3). Streak flame CSS is A6 (reward-only, not every tab change).
 
 ### A5 — Persist `guide_json` + Replay intro
 

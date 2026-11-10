@@ -98,7 +98,7 @@ def class_aggregates(conn, teacher_id, class_id):
             SELECT SUM(score) AS s, SUM(total) AS t,
                    COUNT(DISTINCT user_id) AS n
             FROM quiz_attempts
-            WHERE user_id IN ({placeholders})
+            WHERE user_id IN ({placeholders}) AND is_retry = 0
             ''',
             ids,
         ).fetchone()

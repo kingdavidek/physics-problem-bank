@@ -205,7 +205,7 @@ def main():
         assert 'friend_leaderboard_page' not in catalog
         assert 'topics_index' not in catalog
         assert '#main-form' in catalog
-        assert '#milestones' in catalog
+        assert '.profile-tabs' in catalog   # 2026-11-08: E10 phase 6 rewrote the per-tab tours; the badge step (#milestones) moved into the app tour (zorp-tour.js)
         assert '.qotd-daily-card' in catalog
         assert '#topics-grid' in catalog
         assert '#leaderboard-board-tabs' in catalog
@@ -304,8 +304,11 @@ def main():
 
         r = client.get('/profile/settings')
         settings = r.data.decode()
-        assert 'id="guide-replay-intro"' in settings
-        assert 'replay_guide_intro' in settings
+        # 2026-11-08: E10 replaced "Replay intro" and "Replay welcome" with one "Replay the arrival" button. The old
+        # replay_guide_intro action is still accepted (a cached settings page) and is exercised below.
+        assert 'id="guide-replay-arrival"' in settings
+        assert 'value="replay_arrival"' in settings
+        assert 'id="guide-replay-intro"' not in settings and 'id="guide-replay-welcome"' not in settings
         assert 'onclick=' not in settings.lower()
         r = client.post(
             '/profile/settings',
@@ -334,7 +337,7 @@ def main():
         assert 'data-guide-endpoint="profile"' in profile
         assert 'id="milestones"' in profile
         assert 'id="revision-plan"' in profile
-        assert 'id="guide-replay-intro"' not in profile
+        assert 'id="guide-replay-arrival"' not in profile
 
         r = client.get('/qotd')
         assert r.status_code == 200
@@ -363,7 +366,7 @@ def main():
         settings = r.data.decode()
         assert 'data-guide-endpoint="profile_settings"' in settings
         assert 'guide.js' in settings
-        assert 'id="guide-replay-intro"' in settings
+        assert 'id="guide-replay-arrival"' in settings   # 2026-11-08: E10 (was guide-replay-intro)
 
         r = client.get('/privacy')
         assert r.status_code == 200

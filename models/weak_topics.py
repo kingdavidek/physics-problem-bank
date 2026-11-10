@@ -44,7 +44,7 @@ def _aggregate_topic_stats(conn, user_id, *, lookback_days=None):
     quiz_sql = '''
         SELECT level, subject, topic, score, total, created_at
         FROM quiz_attempts
-        WHERE user_id = ?
+        WHERE user_id = ? AND is_retry = 0
     '''
     quiz_params = [user_id]
     if since_iso:

@@ -151,10 +151,12 @@ def ladder_row(slot, problem):
     if source == 'question':
         assert text == M.plain_line(problem.get('hint')), (slot.label, text)
     steps = solution_steps(problem)
+    repeat = not ladder['bigger'] and bool(M.solution_step(problem, raw))   # dropped: it only repeated the hint
     return {
         'question': question_text(problem), 'answer': answer_text(problem), 'hint': text, 'hint_source': source,
         'bigger': ladder['bigger'], 'raw': raw, 'at': problem.get('answer_type'), 'visual': has_visual(problem),
         'q_values': M.question_values(problem), 'q_numbers': M.question_numbers(problem), 'steps': len(steps),
+        'repeat': repeat,
     }
 
 
@@ -186,7 +188,7 @@ def flags_for(d):
             out.add('bigger_shows_result')
         if len(big) > BIGGER_LONG:
             out.add('long')
-    elif d['steps'] >= 2 and d['at'] != 'proof_steps':
+    elif d['steps'] >= 2 and d['at'] != 'proof_steps' and not d.get('repeat'):
         out.add('no_bigger')
     if len(hint) > HINT_LONG:
         out.add('long')

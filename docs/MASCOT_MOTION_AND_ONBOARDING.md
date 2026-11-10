@@ -234,7 +234,7 @@ Relevant to `reactTarget()`'s "first rendered instance" scan (§2 #12/#13 area, 
 ## 6. Optional later (not in E7)
 
 * ~~Seasonal hats on Zorp via the pose kit's costume tokens~~ — superseded by the cosmetics system, §2 #13 and Phase 1.5/1.6.
-* Pupil-facing cosmetics picker (a child chooses Zorp's own look) — deferred per §2 #13 until David asks for it explicitly as its own phase: new UI, a new stored preference, a fresh Q1 feature-gate answer, a Children's Code DPIA touch.
+* Pupil-facing cosmetics picker (a child chooses Zorp's own look) — **built 2026-11-08 as E10 phase 6b (the profile wardrobe; David's answer 8; see `docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md` section 11.10)**. It was deferred per §2 #13 until David asked for it as its own phase, needing: new UI, a new stored preference, a fresh Q1 feature-gate answer, a Children's Code DPIA touch.
 * Zorp "reads" the hint: `point` at the hint panel when a pupil gets two wrong in a row on one topic (E5.1 buddy weak-topic already tracks this).
 * A lightweight "mood" that follows the streak (sleepy after 3 idle days, bouncy on a 7-day streak) — only with no guilt copy.
 * Web push (E5.7) stays blocked on M5, unchanged.

@@ -1,0 +1,32 @@
+/* Zorp's wardrobe (E10 phase 6b). Profile page only, with static/js/wardrobe.js; not precached. Native radio groups, one fieldset per slot. */
+.wd { scroll-margin-top: 190px; }
+.wd-layout { display: grid; grid-template-columns: 168px 1fr; gap: var(--space-5); align-items: start; }
+.wd-preview { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); text-align: center; }
+.wd-zorp, .wd-zorp .buddy-mascot { width: 140px; height: 140px; }
+.wd-note { margin: 0; font-size: .9rem; color: var(--text-muted); }
+.wd-slots { display: grid; gap: var(--space-4); min-width: 0; }
+.wd-slot { margin: 0; padding: 0; border: 0; min-width: 0; }
+.wd-slot legend { padding: 0; margin-bottom: var(--space-2); font-weight: 700; }
+.wd-items { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.wd-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 88px; min-height: 44px; padding: var(--space-2); border: 2px solid var(--border); border-radius: var(--radius-md); background: var(--surface); text-align: center; cursor: pointer; text-transform: none; letter-spacing: 0; }
+.wd-item input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.wd-item:has(input:checked) { border-color: var(--brand-500); box-shadow: 0 0 0 2px var(--brand-500); }
+.wd-item:has(input:focus-visible) { outline: 3px solid var(--brand-500); outline-offset: 2px; }
+.wd-item.is-locked { cursor: default; background: var(--surface-sunken); }
+.wd-item.is-locked input { cursor: default; }
+.wd-item.is-locked .wd-swatch, .wd-item.is-locked .wd-name { opacity: .55; }
+.wd-swatch { display: grid; place-items: center; width: 40px; height: 32px; color: var(--ink-700); }
+.wd-swatch svg { width: 100%; height: 100%; overflow: visible; }
+.wd-dot { width: 24px; height: 24px; border-radius: 50%; background: var(--brand-500); box-shadow: inset 0 0 0 2px rgba(255,255,255,.5); }
+.wd-dot[data-wd-colour=sunny] { background: var(--streak-500); }
+.wd-dot[data-wd-colour=mint] { background: var(--chem-500); }
+.wd-dot[data-wd-colour=violet] { background: var(--xp-500); }
+.wd-name { font-size: .9rem; font-weight: 600; }
+.wd-why { position: relative; z-index: 1; max-width: 120px; font-size: .78rem; line-height: 1.3; color: var(--text-muted); text-align: center; }
+button.wd-why { min-height: 24px; text-decoration: underline; color: var(--brand-600); }
+.wd-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-top: var(--space-4); }
+.wd-status { margin: 0; flex: 1 1 200px; font-size: .95rem; }
+@media (max-width: 640px) {
+  .wd-layout { grid-template-columns: 1fr; }
+  .wd-item { min-width: 80px; }
+}

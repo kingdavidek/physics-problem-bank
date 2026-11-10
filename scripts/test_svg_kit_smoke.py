@@ -220,7 +220,8 @@ def test_u57_brand_assets():
 
         missing = client.get('/this-route-does-not-exist-u57')
         assert missing.status_code == 404
-        assert 'empty-spot--search' in missing.data.decode()
+        # 2026-11-08: E10 phase 7 replaced the 404 search spot with Zorp's shrug (static pose, shown to everyone)
+        assert 'id="error-zorp"' in missing.data.decode() and 'data-pose="shrug"' in missing.data.decode()
 
         styleguide = client.get('/styleguide')
         assert styleguide.status_code == 200

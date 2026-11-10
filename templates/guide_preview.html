@@ -20,6 +20,57 @@
         </div>
     </section>
 
+    <section class="section-panel" id="guide-preview-stage">
+        <div class="section-panel-header">Stage (E10)</div>
+        <div class="section-panel-body">
+            <p class="profile-empty">The full-screen stage that plays the arrival film. Play it whole, as the story alone (what an account that never saw the old origin story gets), or one scene at a time. Open one on load with <code>?stage=</code> and a scene id (for example <code>?stage=arrival.novara</code>), <code>?stage=arrival</code> or <code>?stage=story</code>. Continue, Skip intro and Escape work as on /welcome; preview saves nothing.</p>
+            <div class="sg-row" style="margin-top: var(--space-4);">
+                <button type="button" class="btn btn-primary" data-stage-play="arrival">Play the arrival</button>
+                <button type="button" class="btn btn-outline" data-stage-play="story">Play the story only</button>
+            </div>
+            <div class="sg-row" style="margin-top: var(--space-4);">
+                {% for id, label in [('arrival.land', '1 Arrival'), ('arrival.novara', '2 Novara'), ('arrival.mission', '3 The mission'), ('arrival.crew', '4 The crew'), ('arrival.help', '5 How I help'), ('arrival.choose', '6 Your turn')] %}
+                <button type="button" class="btn btn-outline" data-stage-play="{{ id }}">{{ label }}</button>
+                {% endfor %}
+            </div>
+            {# scene 6 demo: stands in for the welcome page's real forms #}
+            <div class="welcome-screen" data-stage-demo hidden>
+                <h1 class="welcome-title">What do you want to practise?</h1>
+                <div class="welcome-card-grid">
+                    <button type="button" class="welcome-card" data-stage-demo-pick><span class="welcome-card-label">European School S1</span></button>
+                    <button type="button" class="welcome-card" data-stage-demo-pick><span class="welcome-card-label">GCSE Maths</span></button>
+                    <button type="button" class="welcome-card" data-stage-demo-pick><span class="welcome-card-label">GCSE Computer Science</span></button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-panel" id="guide-preview-story">
+        <div class="section-panel-header">Zorp's story (E10 phase 8)</div>
+        <div class="section-panel-body">
+            <p class="profile-empty">The six story chapters and the arrival (chapter 0), straight on the stage with no unlock check. Open one on load with <code>?story=</code> and a number from 0 to 6 (for example <code>?story=4</code>), or the offer toast with <code>?story=offer3</code>. Next, Skip story and Escape work as in the app; preview saves nothing.</p>
+            <div class="sg-row" style="margin-top: var(--space-4);">
+                {% for n, label in [(0, '0 Arrival'), (1, '1 The maths belt'), (2, '2 Meet the crew'), (3, '3 Puzzle doors'), (4, '4 Home'), (5, '5 The logbook'), (6, '6 A postcard from Novara')] %}
+                <button type="button" class="btn btn-outline" data-story-chapter="{{ n }}">{{ label }}</button>
+                {% endfor %}
+                <button type="button" class="btn btn-primary" data-story-offer="3">Show the offer toast</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-panel" id="guide-preview-badge-stage">
+        <div class="section-panel-header">Badge stage (E10 phase 4)</div>
+        <div class="section-panel-body">
+            <p class="profile-empty">The full-screen badge moment, one button per family. Open one on load with <code>?badge=</code> and a family (for example <code>?badge=streak</code>), <code>?badge=multi</code> (three at once) or <code>?badge=streak100</code>. Continue, See my milestones and Escape work as on a real page; preview saves nothing.</p>
+            <div class="sg-row" style="margin-top: var(--space-4);">
+                {% for id, label in [('streak', 'Streak'), ('daily', 'Daily'), ('practice', 'Practice'), ('explorer', 'Explorer'), ('learning', 'Learning'), ('topic_completed', 'Topic completed'), ('topic_ninja', 'Topic ninja'), ('topic_master', 'Topic master'), ('subject', 'Subject complete'), ('accuracy', 'Sharp week'), ('streak100', '100-day streak'), ('multi', 'Three at once')] %}
+                <button type="button" class="btn btn-outline" data-badge-play="{{ id }}">{{ label }}</button>
+                {% endfor %}
+            </div>
+            <script type="application/json" id="guide-preview-badges">{{ preview_badges|tojson }}</script>
+        </div>
+    </section>
+
     <section class="section-panel">
         <div class="section-panel-header">Badge &amp; streak</div>
         <div class="section-panel-body">
@@ -105,5 +156,5 @@
         </div>
     </section>
 </div>
-<script src="{{ url_for('static', filename='js/guide-preview.js') }}?v=7" defer></script>
+<script src="{{ url_for('static', filename='js/guide-preview.js') }}?v=10" defer></script>
 {% endblock %}

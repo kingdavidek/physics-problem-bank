@@ -7,6 +7,7 @@ from models.social import (
     ACTIVITY_LESSON_STEP_COMPLETED,
     ACTIVITY_QUESTION_GENERATED,
     ACTIVITY_QUIZ_COMPLETED,
+    ACTIVITY_SET_WORK_ANSWERED,
     ACTIVITY_TOPIC_OPENED,
 )
 from models.notifications import NOTIFICATION_MILESTONE, create_notification
@@ -33,17 +34,42 @@ MILESTONE_QOTD_FIRST = 'qotd_first'
 MILESTONE_QOTD_7 = 'qotd_7'
 MILESTONE_QUESTIONS_50 = 'questions_50'
 MILESTONE_ACCURACY_TOP_FRIEND = 'accuracy_top_friend'
+# E10 phase 6: finishing Zorp's tour of the site (the "Explorer" badge of the plan, section 10 answer 10). The existing badge
+# topics_10 is already titled "Broad explorer" and uses the `explorer` family (a map with pins), so this one has its own title
+# (Pathfinder), its own family (`tour`: a signpost, Zorp bows) and its own key. It is never computed from activity: the
+# server awards it once, from POST /api/v1/me/tour/complete, after the tour has been finished (see app.py).
+MILESTONE_TOUR = 'app_tour'
+
+# E10 phase 4 (docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md B3, section 10): every badge carries
+#   blurb  what you did, past tense and specific (shown once earned and on the badge stage)
+#   how    how to earn it (shown while locked)
+#   next   the key of the next badge in the same line, if there is one
+#   family which choreography the badge stage plays (BADGE_FAMILIES)
+# `description` stays as the older "how" wording for API consumers. The copy is Zorp's voice (docs/ZORP_CHARM.md 3.3:
+# reward lines of 80 characters at most, plain English, British spelling); scripts/test_zorp_voice_smoke.py reads it.
+BADGE_FAMILIES = (
+    'streak', 'daily', 'practice', 'explorer', 'learning',
+    'topic_completed', 'topic_ninja', 'topic_master', 'subject', 'accuracy', 'tour',
+)
 
 MILESTONE_CATALOG = {
     MILESTONE_FIRST_QUIZ: {
         'title': 'First quiz',
-        'description': 'Complete your first lesson quiz',
+        'description': 'Finish a quiz',
+        'blurb': 'You finished your first quiz.',
+        'how': 'Finish a quiz.',
+        'next': None,
+        'family': 'learning',
         'emoji': '📝',
         'tier': 'bronze',
     },
     MILESTONE_FIRST_LESSON: {
         'title': 'Lesson learner',
         'description': 'Complete a lesson quick check',
+        'blurb': 'You finished your first lesson step.',
+        'how': 'Finish a lesson step, such as a quick check.',
+        'next': MILESTONE_FIRST_QUIZ,
+        'family': 'learning',
         'emoji': '📖',
         'tier': 'bronze',
         'pose': 'scholar',
@@ -51,12 +77,30 @@ MILESTONE_CATALOG = {
     MILESTONE_TOPICS_10: {
         'title': 'Broad explorer',
         'description': 'Practise 10 different topics',
+        'blurb': 'You practised 10 different topics.',
+        'how': 'Practise 10 different topics.',
+        'next': None,
+        'family': 'explorer',
         'emoji': '🧭',
         'tier': 'silver',
+    },
+    MILESTONE_TOUR: {
+        'title': 'Pathfinder',
+        'description': 'Take Zorp’s tour of the site',
+        'blurb': 'You took the tour and found your way around.',
+        'how': 'Take Zorp’s tour of the site. You can replay it from Settings.',
+        'next': None,
+        'family': 'tour',
+        'emoji': '🚩',
+        'tier': 'bronze',
     },
     MILESTONE_STREAK_7: {
         'title': 'Week warrior',
         'description': 'Reach a 7-day study streak',
+        'blurb': 'You studied on 7 days in a row.',
+        'how': 'Study on 7 days in a row.',
+        'next': MILESTONE_STREAK_30,
+        'family': 'streak',
         'emoji': '🔥',
         'tier': 'gold',
         'pose': 'jump',
@@ -64,18 +108,30 @@ MILESTONE_CATALOG = {
     MILESTONE_STREAK_30: {
         'title': 'Dedicated',
         'description': 'Reach a 30-day study streak',
+        'blurb': 'You studied on 30 days in a row.',
+        'how': 'Study on 30 days in a row.',
+        'next': None,
+        'family': 'streak',
         'emoji': '💪',
         'tier': 'gold',
     },
     MILESTONE_QUESTIONS_25: {
         'title': 'Practice regular',
         'description': 'Generate 25 practice questions',
+        'blurb': 'You started 25 practice questions.',
+        'how': 'Start 25 practice questions.',
+        'next': MILESTONE_QUESTIONS_50,
+        'family': 'practice',
         'emoji': '✏️',
         'tier': 'silver',
     },
     MILESTONE_QOTD_FIRST: {
         'title': 'Daily starter',
         'description': 'Answer the question of the day',
+        'blurb': 'You answered the question of the day.',
+        'how': 'Answer the question of the day.',
+        'next': MILESTONE_QOTD_7,
+        'family': 'daily',
         'emoji': '☀️',
         'tier': 'bronze',
         'pose': 'wave',
@@ -83,19 +139,34 @@ MILESTONE_CATALOG = {
     MILESTONE_QOTD_7: {
         'title': 'Seven days of questions',
         'description': 'Answer the question of the day on 7 different days',
+        'blurb': 'You answered the question of the day on 7 different days.',
+        'how': 'Answer the question of the day on 7 different days.',
+        'next': None,
+        'family': 'daily',
         'emoji': '📅',
         'tier': 'silver',
     },
     MILESTONE_QUESTIONS_50: {
         'title': 'Practice veteran',
         'description': 'Generate 50 practice questions',
+        'blurb': 'You started 50 practice questions.',
+        'how': 'Start 50 practice questions.',
+        'next': None,
+        'family': 'practice',
         'emoji': '🏅',
         'tier': 'gold',
     },
+    # Renamed from "Top of the class" (owner's answer 9, 2026-11-08). The id is kept: stored rows use it. The award rule is
+    # unchanged (rank 1 on the friends' weekly accuracy board); the words celebrate the pupil's own accuracy and the `how`
+    # states the rule plainly. Nothing Zorp says about it compares.
     MILESTONE_ACCURACY_TOP_FRIEND: {
-        'title': 'Top of the class',
-        'description': 'Rank first among friends on weekly quiz accuracy',
-        'emoji': '🥇',
+        'title': 'Sharp week',
+        'description': 'Highest quiz accuracy among your friends in a week',
+        'blurb': 'Your quiz answers were very accurate this week.',
+        'how': 'Have the highest quiz accuracy of your friends in a week (10 answers or more).',
+        'next': None,
+        'family': 'accuracy',
+        'emoji': '🎯',
         'tier': 'violet',
     },
 }
@@ -107,6 +178,7 @@ EFFORT_EVENT_TYPES = (
     ACTIVITY_QUESTION_GENERATED,
     ACTIVITY_QUIZ_COMPLETED,
     ACTIVITY_LESSON_STEP_COMPLETED,
+    ACTIVITY_SET_WORK_ANSWERED,
 )
 
 EFFORT_WEIGHTS = {
@@ -114,6 +186,7 @@ EFFORT_WEIGHTS = {
     ACTIVITY_QUESTION_GENERATED: 1,
     ACTIVITY_QUIZ_COMPLETED: 3,
     ACTIVITY_LESSON_STEP_COMPLETED: 2,
+    ACTIVITY_SET_WORK_ANSWERED: 1,   # E10 phase 4: one point per set-work question answered for the first time
 }
 
 
@@ -329,6 +402,13 @@ def _award_milestone(conn, user_id, milestone_key):
     return True
 
 
+def award_tour_badge(conn, user_id):
+    """E10 phase 6: award the tour badge (Pathfinder) once. True only the first time."""
+    awarded = _award_milestone(conn, user_id, MILESTONE_TOUR)
+    conn.commit()
+    return awarded
+
+
 def milestone_meta(key):
     """Catalog or dynamically generated topic-status badge metadata."""
     meta = MILESTONE_CATALOG.get(key)
@@ -337,8 +417,35 @@ def milestone_meta(key):
     return topic_badge_meta(key) or {
         'title': str(key).replace('_', ' ').replace(':', ' · '),
         'description': '',
+        'blurb': '',
+        'how': '',
+        'next': None,
+        'family': 'learning',
         'emoji': '★',
         'tier': 'bronze',
+    }
+
+
+def badge_display(key, earned_at=None):
+    """Everything a badge screen needs, as plain JSON-safe data (profile sheet, badge stage, `new_milestones`).
+
+    `next_title` / `next_how` describe the next badge in the same line, or are empty when there is none.
+    """
+    meta = milestone_meta(key)
+    nxt = meta.get('next')
+    nxt_meta = milestone_meta(nxt) if nxt else None
+    return {
+        'key': key,
+        'title': meta.get('title', key),
+        'blurb': meta.get('blurb', ''),
+        'how': meta.get('how', ''),
+        'family': meta.get('family') or 'learning',
+        'emoji': meta.get('emoji', '★'),
+        'tier': meta.get('tier', 'bronze'),
+        'next': nxt or '',
+        'next_title': (nxt_meta or {}).get('title', ''),
+        'next_how': (nxt_meta or {}).get('how', ''),
+        'earned_at': earned_at,
     }
 
 
@@ -521,12 +628,18 @@ def list_user_milestones(conn, user_id):
     for row in rows:
         key = row['milestone_key']
         meta = milestone_meta(key)
+        info = badge_display(key, row['earned_at'])
         out.append({
             'key': key,
-            'title': meta.get('title', key),
+            'title': info['title'],
             'description': meta.get('description', ''),
-            'emoji': meta.get('emoji', '★'),
-            'tier': meta.get('tier', 'bronze'),
+            'blurb': info['blurb'],
+            'how': info['how'],
+            'family': info['family'],
+            'next_title': info['next_title'],
+            'next_how': info['next_how'],
+            'emoji': info['emoji'],
+            'tier': info['tier'],
             'pose': _pose_from_meta(meta),
             'earned_at': row['earned_at'],
         })
@@ -539,10 +652,16 @@ def list_milestone_shelf(conn, user_id):
     shelf = []
     for key, meta in MILESTONE_CATALOG.items():
         item = earned.get(key)
+        info = badge_display(key)
         shelf.append({
             'key': key,
             'title': meta.get('title', key),
             'description': meta.get('description', ''),
+            'blurb': info['blurb'],
+            'how': info['how'],
+            'family': info['family'],
+            'next_title': info['next_title'],
+            'next_how': info['next_how'],
             'emoji': meta.get('emoji', '★'),
             'tier': meta.get('tier', 'bronze'),
             'pose': _pose_from_meta(meta),
@@ -556,6 +675,11 @@ def list_milestone_shelf(conn, user_id):
             'key': key,
             'title': item.get('title', key),
             'description': item.get('description', ''),
+            'blurb': item.get('blurb', ''),
+            'how': item.get('how', ''),
+            'family': item.get('family', 'learning'),
+            'next_title': item.get('next_title', ''),
+            'next_how': item.get('next_how', ''),
             'emoji': item.get('emoji', '★'),
             'tier': item.get('tier', 'bronze'),
             'pose': item.get('pose'),
@@ -564,6 +688,22 @@ def list_milestone_shelf(conn, user_id):
         })
     shelf.sort(key=lambda row: (not row['earned'], row['title']))
     return shelf
+
+
+def next_up_badge(shelf):
+    """One badge to point at on the profile ("Next up"): the one that follows the newest badge earned, else the first
+    badge in the catalog that is not earned yet. The shelf is the list from list_milestone_shelf(). None when all are earned."""
+    by_key = {item['key']: item for item in shelf}
+    earned = sorted((i for i in shelf if i.get('earned')), key=lambda i: i.get('earned_at') or '', reverse=True)
+    for item in earned:
+        nxt = by_key.get((milestone_meta(item['key']) or {}).get('next') or '')
+        if nxt and not nxt.get('earned'):
+            return nxt
+    for key in MILESTONE_CATALOG:
+        item = by_key.get(key)
+        if item and not item.get('earned'):
+            return item
+    return None
 
 
 def streak_week_dots(conn, user_id, as_of=None):
@@ -692,7 +832,7 @@ def recent_accuracy_trend(conn, user_id, limit=10):
         '''
         SELECT created_at, score, total
         FROM quiz_attempts
-        WHERE user_id = ?
+        WHERE user_id = ? AND is_retry = 0
         ORDER BY created_at DESC
         LIMIT ?
         ''',
@@ -792,7 +932,7 @@ def get_weekly_recap(conn, user_id, days=7):
         '''
         SELECT level, subject, topic, score, total, created_at
         FROM quiz_attempts
-        WHERE user_id = ? AND created_at >= ?
+        WHERE user_id = ? AND created_at >= ? AND total > 0 AND is_retry = 0
         ORDER BY (1.0 * score / total) DESC, score DESC, created_at DESC
         LIMIT 1
         ''',
@@ -800,11 +940,11 @@ def get_weekly_recap(conn, user_id, days=7):
     ).fetchone()
 
     activity_total = conn.execute(
-        '''
+        f'''
         SELECT COUNT(*) AS n FROM user_activity_events
         WHERE user_id = ?
           AND created_at >= ?
-          AND event_type IN (?, ?, ?, ?)
+          AND event_type IN ({','.join('?' * len(EFFORT_EVENT_TYPES))})
         ''',
         (
             user_id,
@@ -875,6 +1015,39 @@ def xp_level_progress(xp):
         'pct': pct,
         'remaining': max(0, nxt - xp),
     }
+
+
+def effort_weight(event_type):
+    """Effort points one activity event of this type records (0 for events that earn none)."""
+    return EFFORT_WEIGHTS.get(event_type, 0) if event_type in EFFORT_EVENT_TYPES else 0
+
+
+def level_up_between(xp_before, xp_after):
+    """E10 phase 5: the level reached when effort points move from xp_before to xp_after, else None.
+    The payload is what the level-up stage needs: the new level, the ring fill inside it, and the points to the next level."""
+    before = xp_level_from_points(xp_before)
+    after = xp_level_from_points(xp_after)
+    if after <= before:
+        return None
+    prog = xp_level_progress(xp_after)
+    return {'level': after, 'pct': round(prog['pct'], 3), 'remaining': prog['remaining']}
+
+
+def personal_best_quiz(conn, user_id, level, subject, topic, score, total):
+    """E10 phase 5: True when this score (as a share of the total) beats every earlier quiz attempt on the same topic.
+    Compared only with the pupil's own past: it needs at least one earlier attempt, and a perfect score is not 'a best'
+    (the perfect moment covers it)."""
+    total = int(total or 0)
+    if total <= 0 or int(score or 0) >= total:
+        return False
+    rows = conn.execute(
+        'SELECT score, total FROM quiz_attempts WHERE user_id = ? AND level = ? AND subject = ? AND topic = ? AND total > 0 AND is_retry = 0',   # full quizzes only (E10 phase 6)
+        (user_id, level, subject, topic),
+    ).fetchall()
+    # the attempt just saved is one of the rows: it must be the only one at its share, and others must be lower
+    shares = sorted(int(r['score'] or 0) / int(r['total']) for r in rows)
+    mine = int(score or 0) / total
+    return len(shares) >= 2 and shares[-1] <= mine + 1e-9 and shares[-2] < mine - 1e-9
 
 
 def study_streak_at_risk(conn, user_id, as_of=None):
@@ -1001,6 +1174,7 @@ def _accuracy_stats_since(conn, user_ids, since_iso):
         FROM quiz_attempts
         WHERE user_id IN ({placeholders})
           AND created_at >= ?
+          AND is_retry = 0
         GROUP BY user_id
         ''',
         (*ids, since_iso),

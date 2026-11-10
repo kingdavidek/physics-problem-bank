@@ -17,10 +17,14 @@
     return headers;
   }
 
+  function pbEv(n, d) { document.dispatchEvent(new CustomEvent(n, { detail: d })); }
+
   function celebrateResult(ok, target, revealTarget) {
-    if (!window.pbCelebrate) return;
-    if (ok) window.pbCelebrate.correct(target);
-    else window.pbCelebrate.wrong(target, revealTarget || null);
+    if (window.pbCelebrate) {
+      if (ok) window.pbCelebrate.correct(target);
+      else window.pbCelebrate.wrong(target, revealTarget || null);
+    }
+    pbEv('pb-answer-checked', { correct: !!ok });
   }
 
   function celebratePayload(data) {
@@ -700,6 +704,8 @@
     });
   }
 
+  var reflectionSeq = 0;
+
   function showWrongAnswerReflection(host, context, source, attemptId) {
     if (!host || !context) return;
     removeWrongAnswerReflection(host);
@@ -709,6 +715,23 @@
     panel.setAttribute('role', 'region');
     panel.setAttribute('aria-label', 'Optional reflection');
 
+    // Folded away behind one quiet "Add a note" toggle (2026-11-07): the reasons open only when the pupil asks.
+    var body = document.createElement('div');
+    body.className = 'wrong-answer-reflection-body';
+    body.id = 'war-' + (++reflectionSeq);
+    body.hidden = true;
+    var toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'wrong-answer-reflection-toggle';
+    toggle.textContent = 'Add a note';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-controls', body.id);
+    toggle.addEventListener('click', function () {
+      body.hidden = !body.hidden;
+      toggle.setAttribute('aria-expanded', String(!body.hidden));
+    });
+    panel.appendChild(toggle);
+
     var title = document.createElement('p');
     title.className = 'wrong-answer-reflection-title';
     title.textContent = 'What tripped you up?';
@@ -716,7 +739,7 @@
     optional.className = 'wrong-answer-reflection-optional';
     optional.textContent = ' (optional)';
     title.appendChild(optional);
-    panel.appendChild(title);
+    body.appendChild(title);
 
     var chips = document.createElement('div');
     chips.className = 'wrong-answer-reflection-chips';
@@ -751,9 +774,7 @@
     }
 
     function showSaved() {
-      chips.hidden = true;
-      textarea.hidden = true;
-      actions.hidden = true;
+      body.hidden = toggle.hidden = true;
       status.hidden = false;
       status.textContent = 'Thanks, noted.';
       status.style.color = 'var(--on-correct)';
@@ -789,7 +810,7 @@
     REFLECTION_CHIP_OPTIONS.forEach(function (option) {
       var chip = document.createElement('button');
       chip.type = 'button';
-      chip.className = 'btn btn-outline btn-sm wrong-answer-reflection-chip';
+      chip.className = 'wrong-answer-reflection-chip';
       chip.textContent = option.label;
       chip.setAttribute('data-prompt-type', option.type);
       chip.addEventListener('click', function () {
@@ -804,16 +825,21 @@
       });
       chips.appendChild(chip);
     });
-    panel.appendChild(chips);
-    panel.appendChild(textarea);
+    body.appendChild(chips);
+    body.appendChild(textarea);
 
     saveBtn.addEventListener('click', function () {
       persistReflection(selectedPrompt);
     });
-    skipBtn.addEventListener('click', dismissPanel);
+    skipBtn.addEventListener('click', function () {
+      body.hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.focus();
+    });
     actions.appendChild(saveBtn);
     actions.appendChild(skipBtn);
-    panel.appendChild(actions);
+    body.appendChild(actions);
+    panel.appendChild(body);
     panel.appendChild(status);
     host.appendChild(panel);
   }
@@ -855,6 +881,7 @@
     var d = document.querySelector('details.answer-reveal[data-locked]');
     if (!d) return;
     d.removeAttribute('data-locked');
+    pbEv('pb-answer-unlocked');
     d.firstElementChild.removeAttribute('aria-disabled');
     d.firstElementChild.removeAttribute('tabindex');
     var n = document.querySelector('.answer-reveal-status');
@@ -893,6 +920,7 @@
     more.dataset.big = big;
     more.hidden = !big;
     more.removeAttribute('aria-disabled');
+    if (text) pbEv('pb-hint-shown');
   }
 
   function onHintMore(event) {
@@ -905,6 +933,7 @@
     box.querySelector('.hint-card').hidden = box.querySelector('.hint-card-more').hidden = false;
     more.setAttribute('aria-disabled', 'true');
     box.closest('.free-response-inline').dataset.hintRung = '2';
+    pbEv('pb-hint-bigger');
   }
 
   function onLockedAnswerClick(event) {
@@ -1116,6 +1145,7 @@
         if (d && d.note && slot && btn.classList.contains('is-wrong')) {
           slot.querySelector('.hint-card-text').textContent = d.note;
           slot.hidden = false;
+          pbEv('pb-hint-shown');
         }
       })
       .catch(function () {});

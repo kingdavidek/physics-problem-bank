@@ -7,6 +7,7 @@ route, `welcome.html` / `welcome.js`, the `guide_json` welcome keys, the
 register() redirect, the profile_settings() Replay welcome branch, and the
 nested-<form> fix in profile_settings.html.
 """
+import json
 import os
 import random
 import re
@@ -343,7 +344,7 @@ def main():
         # --- guide state shape unaffected (16) ---------------------------
         r = client.get('/api/v1/me/settings')
         settings = r.get_json()['settings']
-        assert set(settings['guide'].keys()) == {'v', 'origin', 'tours', 'rewards'}
+        assert set(settings['guide'].keys()) == {'v', 'origin', 'tours', 'rewards', 'run'}   # 2026-11-08: E10 phase 6 adds the tour in progress (run)
         assert 'welcome_done' not in settings
         assert 'level' not in settings
         assert 'topic' not in settings
@@ -355,7 +356,11 @@ def main():
             home, re.S,
         )
         assert gm
-        assert 'data-guide-persisted="1"' not in gm.group(1)
+        # 2026-11-08: E10 changed this on purpose. The arrival film tells the origin story, so every accepted
+        # welcome step records guide_json origin=true (set_guide_origin); from then on the server holds Guide
+        # state and the page says so (data-guide-persisted). Before E10 a welcome-only blob was not "persisted".
+        assert 'data-guide-persisted="1"' in gm.group(1)
+        assert json.loads(gm.group(2))['origin'] is True, 'the arrival marks the origin story seen'
 
         # --- PATCH cannot write welcome keys (17) ------------------------
         before = guide_json_for(handle)
@@ -385,19 +390,29 @@ def main():
 
         r = client.get('/profile/settings')
         settings_html = r.data.decode()
-        assert 'id="guide-replay-welcome"' in settings_html
-        assert 'replay_welcome' in settings_html
+        # 2026-11-08: E10 has one "Replay the arrival" button (replay_arrival) in place of Replay intro and
+        # Replay welcome; the old replay_welcome action is still accepted and does the same thing (checked below).
+        assert 'id="guide-replay-arrival"' in settings_html
+        assert 'value="replay_arrival"' in settings_html
+        assert 'id="guide-replay-welcome"' not in settings_html
         assert form_tag_max_depth(settings_html) <= 1
 
-        token = csrf_from(settings_html)
-        r = client.post(
-            '/profile/settings',
-            data={'csrf_token': token, 'action': 'replay_welcome'},
-        )
-        assert r.status_code == 302 and r.headers['Location'] == '/welcome'
-        raw = guide_json_for(handle)
-        assert '"welcome_done":false' in raw
-        assert '"level":"eursc_s1"' in raw  # level/topic kept as-is
+        for action in ('replay_arrival', 'replay_welcome'):
+            set_done = client.get('/welcome?step=ready')   # still renders for a done user with a topic
+            assert set_done.status_code == 200
+            with get_db() as conn:
+                from models.social import set_welcome_state
+                set_welcome_state(conn, User.get_by_handle(conn, handle).id, done=True)
+            token = csrf_from(client.get('/profile/settings').data.decode())
+            r = client.post(
+                '/profile/settings',
+                data={'csrf_token': token, 'action': action},
+            )
+            assert r.status_code == 302 and r.headers['Location'] == '/welcome', action
+            raw = guide_json_for(handle)
+            assert '"welcome_done":false' in raw
+            assert '"level":"eursc_s1"' in raw  # level/topic kept as-is
+            assert '"origin":true' in raw, 'replaying the arrival leaves the origin flag alone (the film is the story)'
 
         r = client.get('/api/v1/me/settings')
         assert r.get_json()['settings']['sound_enabled'] is True  # untouched by replay

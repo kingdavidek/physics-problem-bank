@@ -66,6 +66,8 @@
     if (on) {
       body.innerHTML = '<p class="lesson-assist-loading">Thinking…</p>';
     }
+    // E10 phase 7: after 400 ms a small Zorp thinks beside the wait; it nods when the answer arrives (zorp-around.js)
+    if (window.pbAround) window.pbAround[on ? 'wait' : 'done'](body);
     panel.querySelectorAll('.quiz-assist-preset, .quiz-assist-send').forEach(function (btn) {
       btn.disabled = on;
     });

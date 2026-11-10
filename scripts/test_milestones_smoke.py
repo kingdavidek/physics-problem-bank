@@ -193,8 +193,10 @@ def main():
         assert MILESTONE_QUESTIONS_50 in api_keys
         assert MILESTONE_ACCURACY_TOP_FRIEND in api_keys
         top = next(item for item in body['milestones'] if item['key'] == MILESTONE_ACCURACY_TOP_FRIEND)
-        assert top['emoji'] == '🥇'
-        assert top['title'] == 'Top of the class'
+        # 2026-11-08 (E10 phase 4, owner's answer 9): renamed and given a target medal; the id and the award rule are unchanged.
+        assert top['emoji'] == '🎯'
+        assert top['title'] == 'Sharp week'
+        assert top['blurb'] and top['how'] and top['family'] == 'accuracy'
 
         r = client.get('/profile', headers=bearer(token_a))
         assert r.status_code == 200
@@ -203,7 +205,7 @@ def main():
         assert 'Daily starter' in html
         assert 'zorp-pose--wave' in html
         assert 'Practice veteran' in html
-        assert 'Top of the class' in html
+        assert 'Sharp week' in html and 'Top of the class' not in html   # 2026-11-08: renamed (E10 phase 4)
 
         r = client.get('/api/v1/me/gamification', headers=bearer(token_c))
         assert r.status_code == 200

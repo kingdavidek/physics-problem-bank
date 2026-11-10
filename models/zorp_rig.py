@@ -169,6 +169,28 @@ SLAPSTICK_LORE_ONLY = ('confused', 'bashful')
 CONTEXT_MAP['guide'] = tuple(n for n in PRESETS if VALENCE[n] != NEGATIVE and n not in SLAPSTICK_LORE_ONLY)
 CONTEXT_MAP['guide.lore'] = CONTEXT_MAP['guide'] + SLAPSTICK_LORE_ONLY + ('sad',)
 CONTEXT_MAP['guide.thanks'] = ('bashful', 'happy', 'aww')
+# E10 (docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md 6.1): the faces a stage scene starts and ends on (static/js/stage-catalog.js
+# face and end; scripts/test_zorp_stage_smoke.py). The plain guide rule: positive or neutral, no slapstick. Clips inside a scene
+# keep their own beat faces (all non-negative), which always hand back to these. Not shipped in the island: the stage
+# runtime refuses a negative preset by valence (pbZorp.valenceOf) as its own guard.
+CONTEXT_MAP['stage'] = CONTEXT_MAP['guide']
+# E10 phase 3: the coach callouts (static/js/zorp-coach.js steps, face) follow the same plain guide rule.
+CONTEXT_MAP['coach'] = CONTEXT_MAP['guide']
+# E10 phase 6: the app tour and the spotlights (static/js/zorp-tour.js step faces) follow the same plain guide rule.
+CONTEXT_MAP['tour'] = CONTEXT_MAP['guide']
+# E10 phase 4: the badge stage (static/js/badge-stage.js FAMILIES: the face a family opens on, its face beats and the face it ends
+# on) uses only these, all positive or neutral and all inside the plain guide list. scripts/test_badge_stage_smoke.py checks both.
+CONTEXT_MAP['stage.badge'] = ('determined', 'proud', 'wow', 'aww', 'happy', 'laugh', 'curious', 'soft-smile', 'joy', 'grin')
+# E10 phase 5: the moments (static/js/moments.js SCENES and FACES: stages, toasts and the micro note) use only these, all positive
+# and inside the plain guide list. scripts/test_celebration_moments_smoke.py checks both.
+CONTEXT_MAP['stage.moment'] = ('determined', 'proud', 'joy', 'grin', 'happy', 'soft-smile')
+# E10 phase 7 (Zorp around the site): the faces a results page shows by score band (static/js/zorp-around.js reads them from
+# data-around-face, templates/partials/around.html writes them) are always positive or neutral, never sad: high joy, middle
+# determined, low soft-smile (with a line about trying again). 'nudge' is the plain face when there is nothing to score.
+# scripts/test_zorp_around_smoke.py checks the template against this list.
+CONTEXT_MAP['around.results'] = ('joy', 'determined', 'soft-smile', 'nudge')
+# The empty states and the error pages draw a pose with its own face (templates/partials/around.html, errors/*.html).
+CONTEXT_MAP['around.empty'] = ('thinking', 'curious', 'nudge', 'happy', 'soft-smile')
 CONTEXT_MAP['styleguide'] = tuple(PRESETS)
 GUIDE_LORE_STEPS = ('origin.home',)  # step ids in static/js/guide-catalog.js that may use a negative face (Phase 5 copy, for David's review)
 # Contexts where a negative preset is never allowed (docs/ZORP_EXPRESSIVENESS.md §5).

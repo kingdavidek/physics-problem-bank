@@ -1,0 +1,18 @@
+/* App tour and spotlights (E10 phase 6). Loaded by guide.js only when a tour step or a spotlight is due, with zorp-tour.js.
+   Tokens only, so light and dark follow the page. The card is fixed and placed by the script beside (never over) what it points at;
+   the target gets an outline. Motion is the Web Animations in the script (opacity, and transform at full motion): none here. */
+.pb-tour { position: fixed; z-index: 120; display: flex; align-items: center; gap: 10px; box-sizing: border-box; max-width: calc(100vw - 16px); padding: 8px 12px; background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); border-left: 4px solid var(--on-streak); border-radius: var(--radius-sm); box-shadow: 0 6px 20px rgba(15, 23, 42, 0.2); }
+.pb-tour[hidden], .pb-tour-zorp[hidden], .pb-tour-kicker[hidden], .pb-tour-skip[hidden] { display: none; }
+.pb-tour-zorp.study-buddy-face, .pb-tour-zorp .buddy-mascot, .pb-tour-hopper .study-buddy-face, .pb-tour-hopper .buddy-mascot { width: 44px; height: 44px; }
+.pb-tour-zorp { flex: 0 0 auto; }
+.pb-tour-body { flex: 1 1 auto; min-width: 0; }
+.pb-tour-kicker { margin: 0; font-size: var(--text-xs); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); }
+.pb-tour-line { max-width: none; margin: 2px 0 0; font-size: var(--text-sm); font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
+.pb-tour-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0 14px; margin-top: 4px; }
+.pb-tour-actions .btn { min-height: 44px; }
+.pb-tour-actions .btn-link { display: inline-flex; align-items: center; min-height: 44px; font-size: var(--text-sm); color: var(--text-muted); font-weight: 400; }
+.pb-tour-target { outline: 3px solid var(--on-streak); outline-offset: 3px; border-radius: var(--radius-sm); }
+.pb-tour-hopper { position: fixed; left: 0; top: 0; z-index: 125; width: 44px; height: 44px; pointer-events: none; }
+.pb-tour-live { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* the corner Zorp rests while the tour runs, so two Zorps are never on the page at once */
+body.pb-tour-on .study-buddy { visibility: hidden; }

@@ -1201,6 +1201,9 @@ body:has(.practice-new-question-bar) .study-buddy {
 
 body.guide-open:not(.guide-tour-open) { overflow: hidden; }
 body.guide-open .study-buddy { visibility: hidden; }
+/* E10 phase 4: on a phone the corner Zorp rests while the first-question coach runs (two Zorps must never stack). It lives here, not in the
+   lazily loaded coach.css, because that sheet arrives a quarter of a second after the first paint and the corner Zorp showed until then. */
+@media (max-width: 640px) { body.pb-coach-on .study-buddy, body[data-guide-coach="1"]:not(.pb-coach-done) .study-buddy { visibility: hidden; } }
 .guide-overlay {
     position: fixed;
     inset: 0;
@@ -1222,7 +1225,7 @@ body.guide-open .study-buddy { visibility: hidden; }
     pointer-events: none;
     border-radius: var(--radius);
     box-shadow: 0 0 0 9999px rgba(15, 23, 36, 0.55);
-    outline: 2px solid var(--primary);
+    outline: 3px solid var(--on-streak);  /* 2026-11-09: Zorp's highlights in amber so they stand out from the blue UI */
 }
 .guide-panel {
     position: relative;

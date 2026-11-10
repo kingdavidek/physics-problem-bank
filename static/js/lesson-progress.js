@@ -15,8 +15,20 @@
   var isLoggedIn = wrapper.dataset.userLoggedIn === '1';
   var csrfMeta = document.querySelector('meta[name="csrf-token"]');
   var csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
-  var storageKey = 'lesson-progress:' + level + ':' + subject + ':' + topic;
+  // E11 Phase 0 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 1.2): the browser copy of a pupil's ticks is that pupil's own. The keys carry
+  // the account's storage name (meta pb-store), so pupils who share a computer never see each other's ticks (a ticked step ignores a
+  // right answer, so a borrowed tick used to block the pupil's own progress). Signed out uses its own 'anon' keys, which a signed-in
+  // pupil never reads (David's answer 9). The old keys, shared by everyone on the browser, are removed unread.
+  var storeMeta = document.querySelector('meta[name="pb-store"]');
+  var storeNs = (storeMeta && storeMeta.getAttribute('content')) || '';
+  var lessonId = level + ':' + subject + ':' + topic;
+  var useLocal = !isLoggedIn || !!storeNs;   // signed in without a storage name: keep nothing in the browser, the server holds it all
+  var storageKey = 'lesson-progress:' + (isLoggedIn ? storeNs : 'anon') + ':' + lessonId;
   var celebrateKey = storageKey + ':celebrated';
+  try {
+    window.localStorage.removeItem('lesson-progress:' + lessonId);
+    window.localStorage.removeItem('lesson-progress:' + lessonId + ':celebrated');
+  } catch (err) {}
 
   var contentRoot;
   var topbarEl;
@@ -28,6 +40,7 @@
   var topbarHideTimer;
   var quizCtaBar;
   var celebrated = false;
+  var finishingLive = false;
   var TOPBAR_SHOW_MS = 2800;
   var TOPBAR_FADE_MS = 420;
 
@@ -226,23 +239,35 @@
     if (pulse) showMobileTopbarPulse();
   }
 
-  function maybeCelebrateAllComplete(steps) {
+  // E10 phase 5: finishing a lesson is a stage moment, once per lesson (pbGuide's seen-state lesson:<level>:<subject>:<topic> and the
+  // local flag). It plays only when the last quick check is answered on this page (live), never because a lesson that was
+  // already finished loads, so older lessons and other devices are not celebrated again.
+  function maybeCelebrateAllComplete(steps, live, badge) {
     if (!steps.length || celebrated) return;
+    if (!live && finishingLive) return;   // the last quick check's own celebration is waiting for its save
     var allDone = steps.every(function (step) { return step.completed; });
     if (!allDone) return;
     celebrated = true;
     try {
-      window.localStorage.setItem(celebrateKey, '1');
+      if (useLocal) window.localStorage.setItem(celebrateKey, '1');
     } catch (err) {}
     if (quizCtaBar) quizCtaBar.classList.add('is-complete');
-    if (window.pbCelebrate && window.pbCelebrate.lessonComplete) {
-      window.pbCelebrate.lessonComplete();
+    if (live && window.pbCelebrate && window.pbCelebrate.lessonComplete) {
+      var heading = document.querySelector('h1');
+      window.pbCelebrate.lessonComplete({
+        level: level,
+        subject: subject,
+        topic: topic,
+        name: heading ? (heading.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 60) : '',
+        quiz: wrapper.dataset.lessonQuizUrl || '',
+        badge: badge || null,
+      });
     }
   }
 
   function readCelebratedFlag() {
     try {
-      return window.localStorage.getItem(celebrateKey) === '1';
+      return useLocal && window.localStorage.getItem(celebrateKey) === '1';
     } catch (err) {
       return false;
     }
@@ -333,6 +358,7 @@
   }
 
   function readLocalProgress() {
+    if (!useLocal) return [];
     try {
       var raw = window.localStorage.getItem(storageKey);
       if (!raw) return [];
@@ -345,6 +371,7 @@
   }
 
   function writeLocalProgress(keys) {
+    if (!useLocal) return;
     try {
       window.localStorage.setItem(
         storageKey,
@@ -409,7 +436,7 @@
     });
     updateRail();
     updateMobileTopbar(steps);
-    maybeCelebrateAllComplete(steps);
+    maybeCelebrateAllComplete(steps, false);
   }
 
   function markStepComplete(step) {
@@ -420,8 +447,27 @@
     updateSectionStatus(step);
     updateRail();
     updateMobileTopbar(steps, true);
-    persistProgress(step);
-    maybeCelebrateAllComplete(steps);
+    var finishing = !celebrated && steps.every(function (s) { return s.completed; });
+    if (!finishing) {
+      persistProgress(step);
+      return;
+    }
+    // E11 Phase 0 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 1.3.2): the last quick check saves at once, and the lesson stage waits for
+    // the answer (at most 2.5 s), so it can name the lesson badge that save earns: one stage, not a lesson stage then a badge stage.
+    var keys = completedKeys(steps);
+    writeLocalProgress(keys);
+    clearTimeout(saveTimer);
+    finishingLive = true;
+    var done = false;
+    var finish = function (data) {
+      if (done) return;
+      done = true;
+      maybeCelebrateAllComplete(steps, true, lessonBadge(data));
+    };
+    var saving = persistSnapshot(keys);
+    if (!saving) { finish(null); return; }
+    saving.then(finish, function () { finish(null); });
+    setTimeout(function () { finish(null); }, 2500);
   }
 
   function wireMcqCompletion(step) {
@@ -504,11 +550,13 @@
     layoutTimer = setTimeout(updateRail, 50);
   }
 
+  // resolves with the server's answer (its JSON, which carries any badges the save earned), or null; null straight away when
+  // nothing is sent
   function persistSnapshot(keys) {
-    if (!isLoggedIn || !csrfToken || !steps.length || !keys.length) return;
+    if (!isLoggedIn || !csrfToken || !steps.length || !keys.length) return null;
     var lastKey = keys[keys.length - 1];
     var step = steps.filter(function (item) { return item.key === lastKey; })[0] || steps[0];
-    fetch('/api/lesson-progress', {
+    return fetch('/api/lesson-progress', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -522,7 +570,18 @@
         step_total: steps.length,
       }),
       credentials: 'same-origin',
-    }).catch(function () {});
+    }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+  }
+
+  // the lesson's own badge in a save's answer (topic_completed:<level>:<subject>:<topic>), for the lesson stage to name
+  function lessonBadge(data) {
+    var want = 'topic_completed:' + lessonId;
+    var list = (data && data.new_milestones) || [];
+    for (var i = 0; i < list.length; i += 1) {
+      var b = list[i];
+      if (b && b.key === want) return { key: b.key, title: b.title || '' };
+    }
+    return null;
   }
 
   function persistProgress(step) {
@@ -559,8 +618,11 @@
     )
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        if (!data || !data.progress) return;
-        var serverKeys = (data.progress.completed_keys || []).map(normalizeStepKey);
+        if (!data || !data.ok) return;
+        // E11 Phase 0: the local copy is this pupil's own now, so steps it has and the server lacks (answered offline, or a save
+        // that failed) are saved even when the server holds nothing yet for this lesson; before, a lesson with no server row never
+        // saved from here.
+        var serverKeys = ((data.progress && data.progress.completed_keys) || []).map(normalizeStepKey);
         var localKeys = readLocalProgress();
         var merged = {};
         localKeys.concat(serverKeys).forEach(function (key) {
@@ -569,6 +631,8 @@
         var keys = Object.keys(merged);
         writeLocalProgress(keys);
         applyCompletedKeys(keys);
+        var missing = keys.some(function (key) { return serverKeys.indexOf(key) < 0; });
+        if (!data.progress && !missing) return;
         persistSnapshot(keys);
       })
       .catch(function () {});

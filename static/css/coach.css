@@ -1,0 +1,17 @@
+/* Coach callouts (E10 phase 3). Loaded by guide.js only on the first question, with zorp-coach.js. Tokens only, so light and
+   dark follow the page. No overlay layer: the callout sits in the page flow next to what it points at, so it can
+   never cover it. Motion is the Web Animations in the script (opacity, and transform at full motion). */
+.pb-coach { position: relative; display: flex; align-items: center; gap: 10px; box-sizing: border-box; max-width: 100%; margin: 12px 0; padding: 8px 12px; background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); border-left: 4px solid var(--on-streak); border-radius: var(--radius-sm); box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1); }
+.pb-coach[hidden], .pb-coach-zorp[hidden], .pb-coach-got[hidden] { display: none; }
+.pb-coach::after { content: ''; position: absolute; left: 30px; width: 10px; height: 10px; background: var(--surface); transform: rotate(45deg); }
+.pb-coach[data-pos="before"]::after { bottom: -6px; border-right: 1px solid var(--border-strong); border-bottom: 1px solid var(--border-strong); }
+.pb-coach[data-pos="after"]::after { top: -6px; border-left: 1px solid var(--border-strong); border-top: 1px solid var(--border-strong); }
+.pb-coach-zorp.study-buddy-face, .pb-coach-zorp .buddy-mascot { width: 44px; height: 44px; }
+.pb-coach-body { flex: 1 1 auto; min-width: 0; }
+.pb-coach-line { max-width: none; margin: 0; font-size: var(--text-sm); font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
+.pb-coach-actions { display: flex; flex-wrap: wrap; gap: 0 18px; }
+.pb-coach-actions .btn-link { display: inline-flex; align-items: center; min-height: 44px; font-size: var(--text-sm); }
+.pb-coach-skip { color: var(--text-muted); font-weight: 400; }
+.pb-coach-target { outline: 3px solid var(--on-streak); outline-offset: 3px; border-radius: var(--radius-sm); }
+.pb-coach-live { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* (the phone rule that rests the corner Zorp while the coach runs is in chrome.css, so it applies from the first paint) */

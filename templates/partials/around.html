@@ -1,0 +1,26 @@
+{#
+  E10 phase 7 (docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md Part C, section 11.11): Zorp around the site.
+
+  results_zorp(score, total) is the small Zorp and the one kind line under a score ring (lesson quiz results, the saved attempt
+  view and Quick Test results). The band picks the face and the line: 80 or more joy, 50 to 79 determined, below 50 soft-smile
+  with a line about trying again. Always positive or neutral, never sad (models/zorp_rig.py CONTEXT_MAP['around.results']).
+  The Zorp itself is drawn at run time by static/js/zorp-around.js, which clones the page's own rig into the empty
+  [data-around-face] host, so the page carries no extra mascot bytes; the line is plain text and works without script.
+#}
+{% macro results_zorp(score, total) -%}
+{%- if total -%}
+{%- set pct = (score / total * 100) | round(0) -%}
+<div class="around-results" data-around-results>
+  {%- if pct >= 80 %}
+  <span class="study-buddy-face around-face" data-around-face="joy" data-buddy-face aria-hidden="true"></span>
+  <p class="around-results-line" data-zorp-voice="zorp:guide_line">That went really well. Lovely work.</p>
+  {%- elif pct >= 50 %}
+  <span class="study-buddy-face around-face" data-around-face="determined" data-buddy-face aria-hidden="true"></span>
+  <p class="around-results-line" data-zorp-voice="zorp:guide_line">A good go. The review shows what to look at next.</p>
+  {%- else %}
+  <span class="study-buddy-face around-face" data-around-face="soft-smile" data-buddy-face aria-hidden="true"></span>
+  <p class="around-results-line" data-zorp-voice="zorp:guide_line">Every go teaches something. Try the tricky ones again when you like.</p>
+  {%- endif %}
+</div>
+{%- endif -%}
+{%- endmacro %}

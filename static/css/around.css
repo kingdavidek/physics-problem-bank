@@ -1,0 +1,41 @@
+/* Zorp around the site (E10 phase 7). Loaded on demand by the pages that use it (results, Daily, profile, practice, error pages).
+   Transform and opacity only; base.css already shortens every animation at reduced or off. Cap 3,200 B in test_zorp_around_smoke.py. */
+.around-sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* empty states: Zorp peeks out of an empty box; compact rows put Zorp beside the line */
+.around-box { position: relative; display: block; width: 72px; height: 66px; margin: 0 auto var(--space-2); }
+.around-box .study-buddy-face { position: absolute; left: 8px; top: 0; }
+.around-box-front { position: absolute; left: 0; bottom: 0; width: 72px; height: 32px; overflow: visible; }
+.around-box-body { fill: var(--brand-200); stroke: var(--brand-600); stroke-width: 1.5; stroke-linejoin: round; }
+.around-box-lip { fill: var(--brand-300); stroke: var(--brand-600); stroke-width: 1.5; }
+.around-empty { display: flex; align-items: center; gap: var(--space-3); text-align: left; }
+.around-empty p { margin: 0; }
+.around-zorp--lg, .around-zorp--lg .buddy-mascot { width: 96px; height: 96px; }
+.error-page .around-zorp--lg { margin-bottom: var(--space-3); }
+/* results: a small Zorp and one line under the score ring */
+.around-results { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-3); }
+.around-face, .around-face .buddy-mascot { width: 44px; height: 44px; }
+.around-results .around-face { border-radius: 50%; background: rgba(255, 255, 255, .18); }
+.around-results-line { flex: 1 1 0; min-width: 0; }
+.around-qt-hero { margin-bottom: var(--space-4); }
+.around-qt-hero h2 { margin: 0 0 var(--space-2); font-size: var(--text-xl); }
+/* the ring starts empty only when script can fill it (zorp-around.js adds .is-set) */
+@media (scripting: enabled) { .quiz-results-ring[data-around-ring]:not(.is-set) { --quiz-pct: 0 !important; } }
+/* thinking beside a slow AI answer */
+.around-wait { display: flex; align-items: center; gap: var(--space-2); }
+.around-wait .study-buddy-face, .around-wait .buddy-mascot { width: 44px; height: 44px; }
+/* Show answer: a small sparkle as it opens after the first try (ladder pages only: the locked note is in the summary) */
+.answer-reveal:not([data-locked]):has(> summary > .answer-reveal-note) > summary { position: relative; }
+.answer-reveal:not([data-locked]):has(> summary > .answer-reveal-note) > summary::after {
+    content: ""; position: absolute; right: 16px; top: 50%; width: 16px; height: 16px; margin-top: -8px; pointer-events: none;
+    background: var(--streak-400); clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+    animation: around-spark 900ms var(--ease-out) 1 both;
+}
+@keyframes around-spark { 0% { transform: scale(.2) rotate(0); opacity: 0; } 40% { transform: scale(1.25) rotate(45deg); opacity: 1; } 100% { transform: scale(.6) rotate(90deg); opacity: 0; } }
+/* Daily: the week strip, and today's dot pops once after an answer */
+.qotd-week { margin: 0 0 var(--space-4); }
+.qotd-week-title { margin: 0; font-size: var(--text-sm); color: var(--text-muted); }
+.streak-dot.is-pop .streak-dot-mark { animation: around-pop 520ms var(--ease-out) 1 both; }
+@keyframes around-pop { 0% { transform: scale(.4); opacity: .3; } 55% { transform: scale(1.6); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+/* profile: badges earned in the last 7 days */
+.badge-medallion-btn { position: relative; }
+.badge-new-ribbon { position: absolute; top: 0; right: 0; padding: 1px 7px; border: 1px solid var(--streak-400); border-radius: 999px; background: var(--streak-100); color: var(--on-streak); font-size: .7rem; font-weight: 800; line-height: 1.4; letter-spacing: .02em; }

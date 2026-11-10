@@ -36,7 +36,29 @@ GUIDE_JSON_MAX = 4096
 _GUIDE_TOUR_KEY = re.compile(r'^[a-z][a-z0-9_]{0,31}$')
 _GUIDE_REWARD_KEY = re.compile(r'^[a-z0-9_:]{1,64}$')
 _GUIDE_FLAG_LIMIT = 40
-_GUIDE_OWN_KEYS = ('v', 'origin', 'tours', 'rewards')
+_GUIDE_OWN_KEYS = ('v', 'origin', 'tours', 'rewards', 'run', 'recent')
+
+# 2026-11-08 (E10 phase 6, fixing the phase 5 "seen-state overflow"). The guide state is one 4,096 byte blob, and phase 4 and 5
+# put one flag per badge, level and lesson into it, so an active pupil could fill it, an over-large merge was refused, and the
+# tour, coach and spotlight flags stopped saving. It is now split into regions, each with its own byte budget, so one kind of
+# flag can never crowd out another:
+#   tours     (tours, coach, app tour, spotlights)     <= GUIDE_TOURS_BYTES, never evicted
+#   rewards   (streak:*, first_correct, lesson_complete) <= GUIDE_REWARDS_BYTES, a handful of flags in all
+#   recent    (level:*, lesson:*, milestone:*)         a ring, oldest evicted first, <= GUIDE_RECENT_BYTES and GUIDE_RECENT_MAX entries
+#   run       the tour in progress {id, step}
+# The ring is safe to forget: badges, levels and perfect quizzes are emitted once by the server when they happen, so the
+# flag only guards against showing one twice in a page view; a forgotten lesson flag can at worst replay the small finished
+# lesson scene. The client still sees one `rewards` dict (durable flags, then the ring in order), so guide.js is unchanged
+# for them. The total (about 4,000 bytes at the very most, a few hundred for a real pupil) is always under GUIDE_JSON_MAX.
+GUIDE_TOURS_BYTES = 1400
+GUIDE_REWARDS_BYTES = 800
+GUIDE_RECENT_BYTES = 1400
+GUIDE_RECENT_MAX = 80
+GUIDE_INCOMING_MAX = 16384      # transport limit for one PATCH; the stored state is always trimmed to the budgets above
+_GUIDE_VOLATILE_PREFIXES = ('level:', 'lesson:', 'milestone:')
+_GUIDE_INCOMING_TOURS = 80
+_GUIDE_INCOMING_REWARDS = 400
+GUIDE_RUN_MAX_STEP = 60
 
 # E7 Phase 3: welcome state lives in the same guide_json blob (§2 of
 # docs/MASCOT_MOTION_AND_ONBOARDING.md) but is a distinct namespace from the
@@ -45,7 +67,7 @@ _WELCOME_TOKEN_RE = re.compile(r'^[a-z0-9_]{1,40}$')
 
 
 def empty_guide_state():
-    return {'v': 1, 'origin': False, 'tours': {}, 'rewards': {}}
+    return {'v': 1, 'origin': False, 'tours': {}, 'rewards': {}, 'run': None}
 
 
 def guide_json_is_stored(raw):
@@ -136,12 +158,120 @@ def set_welcome_state(conn, user_id, *, done=_UNSET, level=_UNSET, topic=_UNSET)
     conn.commit()
 
 
-def _guide_bool_flags(src, key_re):
+def set_guide_origin(conn, user_id, seen=True):
+    """E10: record the Guide origin story as seen (or not) in guide_json, keeping every other key.
+
+    The arrival film on /welcome tells the origin story, so any welcome_step POST (a choice, Skip intro then a
+    choice, or Skip for now) means the pupil has seen or skipped it: the old origin story must not play afterwards.
+    """
+    ensure_user_profile(conn, user_id)
+    row = conn.execute(
+        'SELECT guide_json FROM user_profile_settings WHERE user_id = ?',
+        (user_id,),
+    ).fetchone()
+    dumped = merge_guide_json(row['guide_json'] if row else '', {'origin': bool(seen)})
+    conn.execute(
+        'UPDATE user_profile_settings SET guide_json = ? WHERE user_id = ?',
+        (dumped, user_id),
+    )
+    conn.commit()
+
+
+def start_app_tour(conn, user_id):
+    """E10 phase 6: "Replay the tour" (Settings). The app tour is due again from its first step; the badge stays earned once."""
+    ensure_user_profile(conn, user_id)
+    row = conn.execute('SELECT guide_json FROM user_profile_settings WHERE user_id = ?', (user_id,)).fetchone()
+    dumped = merge_guide_json(
+        row['guide_json'] if row else '',
+        {'tours': {'app': False}, 'run': {'id': 'app', 'step': 0}},
+    )
+    # 2026-11-08 (E10 review fix 8): a replay must reach the end again; the server-only marker is cleared
+    try:
+        stored = json.loads(dumped)
+        if isinstance(stored, dict) and stored.pop(TOUR_FINISHED_KEY, None) is not None:
+            dumped = _guide_dump(stored)
+    except (TypeError, ValueError):
+        pass
+    conn.execute('UPDATE user_profile_settings SET guide_json = ? WHERE user_id = ?', (dumped, user_id))
+    conn.commit()
+
+
+def guide_tour_taken(conn, user_id):
+    """True when the app tour is running or has been finished or skipped."""
+    row = conn.execute('SELECT guide_json FROM user_profile_settings WHERE user_id = ?', (user_id,)).fetchone()
+    state = public_guide_state(row['guide_json'] if row else '')
+    run = state.get('run') or {}
+    return bool((state.get('tours') or {}).get('app')) or run.get('id') == 'app'
+
+
+# 2026-11-08 (E10 review fix 8). Declining the tour ("Not now") sets tours.app, which any pupil can also PATCH, so that flag
+# cannot prove the tour was walked. The Pathfinder badge now asks for a server-only marker, `tour_finished`, kept in guide_json
+# beside the welcome keys. It is written only by mark_tour_finished, never by the guide PATCH (merge_guide_json reads known keys
+# only), and only when the stored run says the pupil is on the last page of the tour (the settings page: step 16 or later; the
+# 19 steps run 0..18, or 0..17 without the Classes stop, and the settings page starts at 17 or 16).
+TOUR_FINISHED_KEY = 'tour_finished'
+TOUR_END_MIN_STEP = 16
+
+
+def mark_tour_finished(conn, user_id):
+    """Record that the app tour reached its end. True only when the stored run is the app tour at its last page."""
+    row = conn.execute('SELECT guide_json FROM user_profile_settings WHERE user_id = ?', (user_id,)).fetchone()
+    if not row:
+        return False
+    try:
+        base = json.loads(row['guide_json'] or '{}')
+    except (TypeError, ValueError):
+        return False
+    if not isinstance(base, dict):
+        return False
+    run = _guide_run(base.get('run')) or {}
+    if run.get('id') != 'app' or run.get('step', -1) < TOUR_END_MIN_STEP:
+        return False
+    base[TOUR_FINISHED_KEY] = True
+    conn.execute('UPDATE user_profile_settings SET guide_json = ? WHERE user_id = ?', (_guide_dump(base), user_id))
+    conn.commit()
+    return True
+
+
+def guide_tour_finished(conn, user_id):
+    """True when mark_tour_finished recorded the end of the app tour (the Pathfinder badge asks for this)."""
+    row = conn.execute('SELECT guide_json FROM user_profile_settings WHERE user_id = ?', (user_id,)).fetchone()
+    try:
+        base = json.loads((row['guide_json'] if row else '') or '{}')
+    except (TypeError, ValueError):
+        return False
+    return isinstance(base, dict) and base.get(TOUR_FINISHED_KEY) is True
+
+
+# E10 (answer 7 of docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md section 10): a NEW account starts with both sounds on, the
+# answer tones and Zorp's celebration cues; Settings still switches either off. Existing accounts keep what they have:
+# the stored values (sound_enabled 0/1, zorp_sound off/celebrations) cannot tell "never chose" from "chose off", so
+# nothing is migrated, and the column defaults stay 0 / 'off'. The browser rules still decide when a sound may play
+# (a tap in the last 5 s, a visible page, not in a quiz; Zorp's cues only at full motion).
+NEW_ACCOUNT_SOUND_ENABLED = True
+NEW_ACCOUNT_ZORP_SOUND = ZORP_SOUND_CELEBRATIONS
+
+
+def apply_new_account_defaults(conn, user_id):
+    """Defaults that apply to a brand-new account only (called right after the account is created)."""
+    ensure_user_profile(conn, user_id)
+    conn.execute(
+        'UPDATE user_profile_settings SET sound_enabled = ?, zorp_sound = ? WHERE user_id = ?',
+        (_bool_int(NEW_ACCOUNT_SOUND_ENABLED), normalize_zorp_sound(NEW_ACCOUNT_ZORP_SOUND), user_id),
+    )
+    conn.commit()
+
+
+def _guide_bool_flags(src, key_re, limit=_GUIDE_FLAG_LIMIT, keep_last=False):
+    """The valid boolean flags of `src`, at most `limit`: the first ones, or with keep_last the newest (the end of the dict)."""
     out = {}
     if not isinstance(src, dict):
         return out
-    for key, value in src.items():
-        if len(out) >= _GUIDE_FLAG_LIMIT:
+    items = list(src.items())
+    if keep_last and len(items) > limit:
+        items = items[-limit:]
+    for key, value in items:
+        if len(out) >= limit:
             break
         if not isinstance(key, str) or not key_re.match(key):
             continue
@@ -163,9 +293,78 @@ def public_guide_state(raw_or_dict):
     state = empty_guide_state()
     if 'origin' in data:
         state['origin'] = bool(data['origin'])
-    state['tours'] = _guide_bool_flags(data.get('tours'), _GUIDE_TOUR_KEY)
-    state['rewards'] = _guide_bool_flags(data.get('rewards'), _GUIDE_REWARD_KEY)
+    state['tours'] = _guide_bool_flags(data.get('tours'), _GUIDE_TOUR_KEY, _GUIDE_INCOMING_TOURS)
+    rewards = _guide_bool_flags(data.get('rewards'), _GUIDE_REWARD_KEY, _GUIDE_INCOMING_REWARDS)
+    # the client sees one rewards dict: the durable flags, then the ring of recent celebration flags (oldest first)
+    recent = data.get('recent')
+    if isinstance(recent, list):
+        for key in recent:
+            if isinstance(key, str) and _GUIDE_REWARD_KEY.match(key):
+                rewards[key] = True
+    state['rewards'] = rewards
+    state['run'] = _guide_run(data.get('run'))
     return state
+
+
+def _guide_run(value):
+    """The tour in progress {id, step}, or None. Shape-checked: a tour id and a small step number."""
+    if not isinstance(value, dict):
+        return None
+    tour_id = value.get('id')
+    step = value.get('step')
+    if not isinstance(tour_id, str) or not _GUIDE_TOUR_KEY.match(tour_id):
+        return None
+    if isinstance(step, bool) or not isinstance(step, int) or step < 0 or step > GUIDE_RUN_MAX_STEP:
+        return None
+    return {'id': tour_id, 'step': step}
+
+
+def _guide_dump(value):
+    return json.dumps(value, separators=(',', ':'))
+
+
+def _fit_guide_flags(flags, budget):
+    """Keep flags in order while they fit the byte budget (a flag past the budget is dropped)."""
+    out = {}
+    for key, value in flags.items():
+        out[key] = value
+        if len(_guide_dump(out)) > budget:
+            out.pop(key)
+    return out
+
+
+def _fit_guide_recent(keys):
+    keys = list(keys)[-GUIDE_RECENT_MAX:]
+    while keys and len(_guide_dump(keys)) > GUIDE_RECENT_BYTES:
+        keys.pop(0)
+    return keys
+
+
+def _settle_guide(base):
+    """Bring a stored guide dict inside the regional budgets, moving older volatile reward flags into the ring."""
+    recent = [k for k in (base.get('recent') or []) if isinstance(k, str) and _GUIDE_REWARD_KEY.match(k)] \
+        if isinstance(base.get('recent'), list) else []
+    rewards = base.get('rewards') if isinstance(base.get('rewards'), dict) else {}
+    durable = {}
+    for key, value in rewards.items():
+        if not isinstance(key, str) or not _GUIDE_REWARD_KEY.match(key) or not isinstance(value, bool):
+            continue
+        if key.startswith(_GUIDE_VOLATILE_PREFIXES):
+            if value and key not in recent:
+                recent.append(key)
+        else:
+            durable[key] = value
+    tours = base.get('tours') if isinstance(base.get('tours'), dict) else {}
+    tours = {k: v for k, v in tours.items() if isinstance(k, str) and _GUIDE_TOUR_KEY.match(k) and isinstance(v, bool)}
+    base['tours'] = _fit_guide_flags(tours, GUIDE_TOURS_BYTES)
+    base['rewards'] = _fit_guide_flags(durable, GUIDE_REWARDS_BYTES)
+    base['recent'] = _fit_guide_recent(recent)
+    run = _guide_run(base.get('run'))
+    if run:
+        base['run'] = run
+    else:
+        base.pop('run', None)
+    return base
 
 
 def validate_guide_patch(data):
@@ -177,8 +376,10 @@ def validate_guide_patch(data):
         return None, 'guide.tours must be an object'
     if 'rewards' in data and not isinstance(data['rewards'], dict):
         return None, 'guide.rewards must be an object'
+    if 'run' in data and data['run'] is not None and _guide_run(data['run']) is None:
+        return None, 'guide.run must be null or {id, step}'
     dumped = json.dumps(data, separators=(',', ':'))
-    if len(dumped) > GUIDE_JSON_MAX:
+    if len(dumped) > GUIDE_INCOMING_MAX:
         return None, 'guide is too large'
     return data, None
 
@@ -190,19 +391,39 @@ def merge_guide_json(existing_raw, incoming):
         base = {}
     if not isinstance(base, dict):
         base = {}
+    _settle_guide(base)
     if isinstance(incoming, dict):
         if 'origin' in incoming:
             base['origin'] = bool(incoming['origin'])
         if 'tours' in incoming and isinstance(incoming['tours'], dict):
             tours = base.get('tours') if isinstance(base.get('tours'), dict) else {}
-            tours.update(_guide_bool_flags(incoming['tours'], _GUIDE_TOUR_KEY))
-            base['tours'] = tours
+            tours.update(_guide_bool_flags(incoming['tours'], _GUIDE_TOUR_KEY, _GUIDE_INCOMING_TOURS))
+            base['tours'] = _fit_guide_flags(tours, GUIDE_TOURS_BYTES)
         if 'rewards' in incoming and isinstance(incoming['rewards'], dict):
             rewards = base.get('rewards') if isinstance(base.get('rewards'), dict) else {}
-            rewards.update(_guide_bool_flags(incoming['rewards'], _GUIDE_REWARD_KEY))
-            base['rewards'] = rewards
+            recent = list(base.get('recent') or [])
+            # the durable flags first (a handful), then the ring's candidates: only the newest of a very long list are looked at
+            valid = _guide_bool_flags(incoming['rewards'], _GUIDE_REWARD_KEY, 1 << 20)
+            durable_in = [kv for kv in valid.items() if not kv[0].startswith(_GUIDE_VOLATILE_PREFIXES)][:_GUIDE_INCOMING_REWARDS]
+            volatile_in = [kv for kv in valid.items() if kv[0].startswith(_GUIDE_VOLATILE_PREFIXES)][-_GUIDE_INCOMING_REWARDS:]
+            for key, value in durable_in + volatile_in:
+                if key.startswith(_GUIDE_VOLATILE_PREFIXES):
+                    if value and key not in recent:
+                        recent.append(key)
+                    elif not value and key in recent:
+                        recent.remove(key)
+                else:
+                    rewards[key] = value
+            base['rewards'] = _fit_guide_flags(rewards, GUIDE_REWARDS_BYTES)
+            base['recent'] = _fit_guide_recent(recent)
+        if 'run' in incoming:
+            run = _guide_run(incoming['run'])
+            if run:
+                base['run'] = run
+            else:
+                base.pop('run', None)
     base['v'] = 1
-    dumped = json.dumps(base, separators=(',', ':'))
+    dumped = _guide_dump(base)
     if len(dumped) > GUIDE_JSON_MAX:
         raise ValueError('guide_json too large')
     return dumped
@@ -233,6 +454,9 @@ ACTIVITY_QUIZ_COMPLETED = 'quiz_completed'
 ACTIVITY_QUESTION_SHARED = 'question_shared'
 ACTIVITY_SUGGESTION_SENT = 'suggestion_sent'
 ACTIVITY_LESSON_STEP_COMPLETED = 'lesson_step_completed'
+# E10 phase 4 (2026-11-08): a set-work question answered for the first time. Always private (never in a feed); it only adds one
+# effort point and a study day. The payload is the assignment id and nothing else.
+ACTIVITY_SET_WORK_ANSWERED = 'set_work_answered'
 
 FEED_FILTER_ALL = 'all'
 FEED_FILTER_LESSONS = 'lessons'
@@ -305,7 +529,7 @@ def get_profile_settings(conn, user_id):
                default_share_visibility, show_study_streak, show_milestones,
                email_weekly_digest, avatar_json, show_accuracy_leaderboard,
                sound_enabled, theme_preference, motion_preference, zorp_sound,
-               guide_json
+               guide_json, zorp_outfit_json
         FROM user_profile_settings
         WHERE user_id = ?
         ''',

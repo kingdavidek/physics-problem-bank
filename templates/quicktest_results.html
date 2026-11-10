@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/around.html" import results_zorp %}
 {% block title %}Quick Test – Solutions | {{ topic_name }}{% endblock %}
 {% block content %}
 <div class="page-shell">
@@ -11,6 +12,22 @@
 {% if mcq_total or graded_total %}
 <div class="section-panel" style="margin-bottom: 20px;">
     <div class="section-panel-body">
+        {# E10 phase 7: the score ring counts up once, with a small Zorp and one kind line by band (typed answers count once checked) #}
+        {% set qt_total = (mcq_total or 0) + (graded_total or 0) %}
+        {% set qt_score = (mcq_score or 0) + (graded_score or 0) %}
+        {% set qt_pct = ([(qt_score / qt_total * 100) | round(0), 100] | min) if qt_total else 0 %}
+        <div class="quiz-results-hero around-qt-hero">
+            <div class="quiz-results-ring" style="--quiz-pct: {{ qt_pct }};" data-around-ring data-around-pct="{{ qt_pct | int }}">
+                <div class="quiz-results-ring-inner">
+                    <span class="quiz-results-score">{{ qt_score }}/{{ qt_total }}</span>
+                    <span class="quiz-results-accuracy">{{ qt_pct | int }}% correct</span>
+                </div>
+            </div>
+            <div class="quiz-results-hero-copy">
+                <h2>Your score</h2>
+                {{ results_zorp([qt_score, qt_total] | min, qt_total) }}
+            </div>
+        </div>
         {% if quiz_attempt_id and current_user.is_authenticated %}
         <p style="margin: 0 0 12px;">
             Saved to your <a href="{{ url_for('profile') }}">profile</a>.
@@ -33,7 +50,7 @@
         {% if can_retry_wrong %}
         <form method="POST" action="{{ url_for('quicktest_retry_wrong') }}" class="quicktest-retry-form" style="margin-top: 16px;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-primary btn-lg">Retry wrong ones ({{ wrong_count }})</button>
+            <button type="submit" id="retry-wrong" class="btn btn-primary btn-lg">Retry wrong ones ({{ wrong_count }})</button>
         </form>
         {% endif %}
     </div>
@@ -99,4 +116,6 @@
 </div>
 
 </div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/around.css') }}?v=1">
+{% if current_user.is_authenticated and not (lesson_assist_enabled and lesson_meta) %}<script src="{{ url_for('static', filename='js/zorp-around.js') }}?v=1" defer></script>{% endif %}
 {% endblock %}

@@ -231,8 +231,10 @@ def main():
         profile_html = r.data.decode()
         # No more milestone bubble/attribute on the corner buddy.
         assert 'data-buddy-milestone-key' not in profile_html
-        # But the badge celebration island fires once via #pb-new-milestone.
-        assert 'id="pb-new-milestone"' in profile_html
+        # 2026-11-08 (E10 phase 4): the "newest badge in the last 24 hours" island (#pb-new-milestone) is gone. A badge is celebrated
+        # when the request that earns it ends (JSON body, or a short session list emitted once as #pb-new-milestones); a badge
+        # awarded straight in the database, as here, has no request to carry it, so no island, but it is on the profile.
+        assert 'id="pb-new-milestone"' not in profile_html and 'id="pb-new-milestones"' not in profile_html
         assert 'first_quiz' in profile_html
 
         # The recent-milestone celebration island clears once earned_at falls
@@ -246,7 +248,7 @@ def main():
             )
             conn.commit()
         r = client.get('/profile')
-        assert 'id="pb-new-milestone"' not in r.data.decode()
+        assert 'id="pb-new-milestone"' not in r.data.decode()   # (no 24-hour island any more; see above)
 
         with get_db() as conn:
             conn.execute('DELETE FROM user_milestones WHERE user_id = ?', (uid_a,))
@@ -405,7 +407,7 @@ def main():
         assert 'data-buddy-level="gcse"' in html_lesson
         assert 'data-buddy-subject="maths"' in html_lesson
         assert 'data-buddy-topic="algebra"' in html_lesson
-        assert 'study-buddy.js?v=29' in html_lesson
+        assert 'study-buddy.js?v=30' in html_lesson
         assert 'Problem Bank build: buddy-embed-v6' in html_lesson
         assert 'pb-buddy-embed-v6' in html_lesson
         assert 'id="pb-buddy-page"' in html_lesson

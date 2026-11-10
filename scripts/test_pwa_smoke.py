@@ -44,7 +44,7 @@ def main():
         assert r.status_code == 200, r.data
         sw = r.data.decode()
         assert 'STATIC_CACHE' in sw
-        assert 'pb-v109' in sw
+        assert 'pb-v123' in sw   # 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 tour (was pb-v115, phase 5); 2026-11-08: E10 phase 5 moments (was pb-v114, phase 4 badges; pb-v113 phase 3 coach); 2026-11-08: E10 review fixes bump (was pb-v118)
         # JS and CSS must stay network-first or ?v= cache-busts never land.
         assert 'isVersionedAsset' in sw
         assert '/static/css/tokens.css' in sw

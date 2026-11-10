@@ -18,6 +18,7 @@
     social: 'social',
     history: 'history',
     milestones: 'progress',
+    wardrobe: 'progress',
     'revision-plan': 'progress',
     reflections: 'progress',
     'study-buddy': 'overview',

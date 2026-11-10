@@ -33,7 +33,20 @@ from models import zorp_voice as voice  # noqa: E402
 # Each source must yield at least this many items, so a silently broken regex cannot pass as "no errors".
 MIN_ITEMS = {
     'static/js/guide-catalog.js': 31 + 20,   # 31 lines plus labels
+    'static/js/stage-catalog.js': 8 + 17,    # 2026-11-08: E10 arrival film, 8 lines plus headings and button labels
+    'static/js/zorp-coach.js': 7 + 2,         # 2026-11-08: E10 phase 3 coach, 7 lines plus two button labels
+    'static/js/zorp-tour.js': 29 + 23,        # 2026-11-08: E10 phase 6 tour: 19 steps, the end scene and 9 spotlights (29 lines), plus 20 headings and 3 labels
     'static/js/guide.js': 6,
+    'static/js/badge-stage.js': 11,           # 2026-11-08: E10 phase 4 badge stage copy; 9 -> 11 (the wardrobe line and the Try it on button, phase 6b)
+    'static/js/wardrobe.js': 2,               # 2026-11-08: E10 phase 6b wardrobe status lines
+    'models/zorp_wardrobe.py': 17,            # 2026-11-08: E10 phase 6b wardrobe item names (one per catalogue item)
+    'templates/partials/wardrobe.html': 7,    # 2026-11-08: E10 phase 6b wardrobe panel (intro, two notes, locked reason twice, two buttons)
+    'static/js/story-chapters.js': 55 + 14,   # 2026-11-08: E10 phase 8 story chapters: 18 scenes (about 36 lines, 18 headings, 18 buttons), the offer toast and its two buttons
+    'models/story.py': 6 + 6 + 2 + 1,         # 2026-11-08: E10 phase 8 chapter titles, unlock sentences, the two second-way-in lines, the arrival title
+    'templates/partials/story_shelf.html': 4,  # 2026-11-08: E10 phase 8 the shelf heading, its intro and the Watch / Watch again labels
+    'static/js/moments.js': 23,               # 2026-11-08: E10 phase 5 moments copy (stages, toasts, micro)
+    'models/gamification.py': 27,             # 2026-11-08: E10 phase 4 badge titles, blurbs and how-to lines
+    'models/topic_status.py': 48,            # 2026-11-08: E10 phase 4 generated topic badge copy
     'static/js/study-buddy.js': 4,
     'static/js/notifications.js': 3,
     'static/js/feed.js': 1,
@@ -51,13 +64,17 @@ MIN_ITEMS = {
     'templates/saved_problems.html': 3,
     'templates/follow_list.html': 4,
     'templates/leaderboard_friends.html': 6,
-    'templates/qotd.html': 5,
+    'templates/qotd.html': 6,                 # 2026-11-08: E10 phase 7, +1 for the Daily week heading
+    'templates/errors/404.html': 5,           # 2026-11-08: E10 phase 7 friendly 404: heading, Zorp's line, the hint, two links
+    'templates/errors/500.html': 4,           # 2026-11-08: E10 phase 7 friendly 500: heading, Zorp's line, two links
+    'templates/partials/around.html': 3,      # 2026-11-08: E10 phase 7 results lines by score band (high, middle, low)
+    'templates/profile.html': 3,              # 2026-11-08: E10 phase 7 the New ribbon and two empty-state lines (quiz history, revision plan)
 }
-MIN_LINES = {'static/js/guide-catalog.js': 31, 'models/buddy.py': 10, 'app.py': 7}
+MIN_LINES = {'static/js/story-chapters.js': 34, 'static/js/guide-catalog.js': 31, 'static/js/stage-catalog.js': 8, 'static/js/zorp-coach.js': 7, 'static/js/zorp-tour.js': 29, 'models/buddy.py': 10, 'app.py': 7}
 
 # Sources that only ever speak in one voice (section 3.3.2: Zorp never speaks in notifications or in
 # grading feedback, and the system voice has no character). Templates mix both, by attribute.
-ZORP_ONLY = ('static/js/guide-catalog.js', 'static/js/guide.js', 'static/js/study-buddy.js', 'models/buddy.py')
+ZORP_ONLY = ('static/js/guide-catalog.js', 'static/js/stage-catalog.js', 'static/js/zorp-coach.js', 'static/js/zorp-tour.js', 'static/js/guide.js', 'static/js/study-buddy.js', 'models/buddy.py', 'static/js/badge-stage.js', 'static/js/moments.js', 'static/js/story-chapters.js', 'static/js/wardrobe.js', 'models/zorp_wardrobe.py')
 SYSTEM_ONLY = ('app.py', 'static/js/site.js', 'static/js/notifications.js', 'static/js/feed.js', 'models/bot.py',
                'generators/shared/misconceptions.py')
 

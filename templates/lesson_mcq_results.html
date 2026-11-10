@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/around.html" import results_zorp %}
 {% block title %}Quiz Results — {{ topic_name }}{% endblock %}
 
 {% block content %}
@@ -7,7 +8,7 @@
 {% for problem in problems %}
   {% set ua = problem.user_answer %}
   {% set ca = problem.correct_answer %}
-  {% if problem.answered_correctly is not none %}
+  {% if problem.answered_correctly is defined and problem.answered_correctly is not none %}
     {% if not problem.answered_correctly %}{% set ns.wrong = ns.wrong + 1 %}{% endif %}
   {% elif not ua or ua != ca %}
     {% set ns.wrong = ns.wrong + 1 %}
@@ -18,7 +19,7 @@
   <a href="{{ back_url }}" class="quiz-runner-results-back">{{ back_label }}</a>
 
   <div class="quiz-results-hero">
-    <div class="quiz-results-ring" style="--quiz-pct: {{ accuracy_pct }};">
+    <div class="quiz-results-ring" style="--quiz-pct: {{ accuracy_pct }};" data-around-ring data-around-pct="{{ accuracy_pct | int }}">
       <div class="quiz-results-ring-inner">
         <span class="quiz-results-score">{{ score }}/{{ total }}</span>
         <span class="quiz-results-accuracy">{{ accuracy_pct | int }}% correct</span>
@@ -28,8 +29,11 @@
       <h1>{{ topic_name }}</h1>
       <p>{{ score }} correct out of {{ total }} questions</p>
       {% if attempt_date %}<p class="quiz-results-date">Taken on {{ attempt_date }}</p>{% endif %}
-      {% if current_user.is_authenticated and score == total %}
-      <p class="quiz-results-xp">+{{ score * 5 }} XP earned</p>
+      {# E10 phase 7: a small Zorp and one kind line by score band; the ring counts up once (static/js/zorp-around.js, around.css) #}
+      {{ results_zorp(score, total) }}
+      {% if current_user.is_authenticated and quiz_xp %}
+      {# E10 phase 5, honest XP: the effort points this quiz really recorded (EFFORT_WEIGHTS), once, right after submitting #}
+      <p class="quiz-results-xp">+{{ quiz_xp }} XP earned</p>
       {% endif %}
       {% if accuracy_trend and accuracy_trend|length > 1 %}
       <div class="quiz-results-trend progress-viz-panel">
@@ -49,7 +53,8 @@
     {% for problem in problems %}
     {% set correct = problem.correct_answer %}
     {% set user = problem.user_answer %}
-    {% set is_correct = problem.answered_correctly if problem.answered_correctly is not none else (user and user == correct) %}
+    {# "is defined" first: a missing key is Undefined, which "is not none" lets through as a falsy verdict (2026-11-07) #}
+    {% set is_correct = problem.answered_correctly if (problem.answered_correctly is defined and problem.answered_correctly is not none) else (user and user == correct) %}
     {% set explanation = quiz_explanation(problem) %}
     <article class="quiz-results-item{% if is_correct %} is-correct{% else %} is-wrong{% endif %}">
       <header class="quiz-results-item-head">
@@ -97,7 +102,7 @@
     {% if ns.wrong > 0 and can_retry_wrong %}
     <form method="POST" action="{{ url_for('lesson_mcq_retry_wrong', level=level, subject=subject, topic=topic) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="btn btn-primary btn-lg">Retry wrong ones ({{ ns.wrong }})</button>
+      <button type="submit" id="retry-wrong" class="btn btn-primary btn-lg">Retry wrong ones ({{ ns.wrong }})</button>
     </form>
     {% endif %}
     {% if quiz_attempt_id and current_user.is_authenticated %}
@@ -111,4 +116,6 @@
     <a href="{{ lesson_url }}" class="btn btn-outline">Back to lesson</a>
   </div>
 </div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/around.css') }}?v=1">
+{% if current_user.is_authenticated and not (lesson_assist_enabled and lesson_meta) %}<script src="{{ url_for('static', filename='js/zorp-around.js') }}?v=1" defer></script>{% endif %}
 {% endblock %}

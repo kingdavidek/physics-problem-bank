@@ -1,0 +1,29 @@
+{#
+  Zorp's story shelf (E10 phase 8, docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md A6 and section 11.13). Included once, inside the profile's Milestones
+  section. `story_shelf` is models/story.py shelf(): Chapter 0 (the arrival film) first, then the six chapters in order; each row has n, title,
+  unlocked, watched and, when it is still locked, the "Unlocks at N badges" sentence and the optional second way in. Which chapters are open
+  is worked out on the server from the earned badges. A Watch button needs static/js/story-shelf.js (which loads the chapter scenes only
+  when pressed); a locked chapter has no button. Lines Zorp says carry data-zorp-voice for the voice lint.
+#}
+<div class="sty-shelf" id="zorp-story" data-story-shelf>
+    <h3 class="sty-shelf-title" data-zorp-voice="zorp:heading">Zorp’s story</h3>
+    <p class="sty-shelf-intro" data-zorp-voice="system:system_empty_state">Short stories about Zorp and his crew. New ones open as you earn badges.</p>
+    <ol class="sty-list">
+        {% for ch in story_shelf %}
+        <li class="sty-item{% if not ch.unlocked %} is-locked{% endif %}" data-story-item="{{ ch.n }}">
+            <span class="sty-item-text">
+                <span class="sty-item-n">Chapter {{ ch.n }}</span>
+                <span class="sty-item-title">{{ ch.title }}</span>
+                {% if ch.unlocked %}
+                <span class="sty-item-meta" data-story-state>{% if ch.n == 0 %}The story of how Zorp arrived.{% elif ch.watched %}Watched.{% else %}New.{% endif %}</span>
+                {% else %}
+                <span class="sty-item-meta">{{ ch.unlock }}.{% if ch.alt %} {{ ch.alt }}{% endif %}</span>
+                {% endif %}
+            </span>
+            {% if ch.unlocked %}
+            <button type="button" class="btn btn-outline" data-story-play="{{ ch.n }}" aria-label="{% if ch.watched or ch.n == 0 %}Watch again{% else %}Watch{% endif %}: {{ ch.title }}"><span data-story-label data-zorp-voice="zorp:button_label">{% if ch.watched or ch.n == 0 %}Watch again{% else %}Watch{% endif %}</span></button>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ol>
+</div>

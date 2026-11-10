@@ -73,9 +73,9 @@
             </p>
             {% else %}
             <div class="empty-state">
-                <span class="study-buddy-face pb-zorp-small" id="lb-accuracy-empty-zorp" data-buddy-face data-face="nudge" data-zorp-autoplay="think-chin" aria-hidden="true">{{ buddy_mascot() }}</span>
+                <span class="study-buddy-face pb-zorp-small" id="lb-accuracy-empty-zorp" data-buddy-face data-face="happy" data-zorp-autoplay="wave" aria-hidden="true">{{ buddy_mascot(face='happy', pose='wave') }}</span>
                 <h3 data-zorp-voice="system:system_empty_state">No accuracy data yet</h3>
-                <p data-zorp-voice="system:system_empty_state">Follow people and complete quizzes to compare weekly accuracy.</p>
+                <p data-zorp-voice="system:system_empty_state">Follow a friend and do a quiz to compare weekly accuracy. Search for their handle, then press Follow.</p>
                 <a href="{{ url_for('site_search') }}" class="btn btn-primary" data-zorp-voice="system:button_label">Find friends</a>
             </div>
             {% endif %}
@@ -113,9 +113,9 @@
             </p>
             {% else %}
             <div class="empty-state">
-                <span class="study-buddy-face pb-zorp-small" id="lb-points-empty-zorp" data-buddy-face data-face="nudge" data-zorp-autoplay="think-chin" aria-hidden="true">{{ buddy_mascot() }}</span>
+                <span class="study-buddy-face pb-zorp-small" id="lb-points-empty-zorp" data-buddy-face data-face="happy" data-zorp-autoplay="wave" aria-hidden="true">{{ buddy_mascot(face='happy', pose='wave') }}</span>
                 <h3 data-zorp-voice="system:system_empty_state">Start competing with friends</h3>
-                <p data-zorp-voice="system:system_empty_state">Follow people to compare weekly effort.</p>
+                <p data-zorp-voice="system:system_empty_state">Search for a handle, open their profile and press Follow.</p>
                 <a href="{{ url_for('site_search') }}" class="btn btn-primary" data-zorp-voice="system:button_label">Find friends</a>
             </div>
             {% endif %}

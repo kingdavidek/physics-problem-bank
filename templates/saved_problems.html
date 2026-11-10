@@ -34,7 +34,11 @@
         </ul>
         {% else %}
         <div class="empty-state">
-            <span class="study-buddy-face pb-zorp-small" id="saved-empty-zorp" data-buddy-face data-face="nudge" data-zorp-autoplay="think-chin" aria-hidden="true">{{ buddy_mascot() }}</span>
+            {# E10 phase 7: Zorp peeks out of an empty box (the box is a small drawing, the pose is the static peek) #}
+            <span class="around-box" aria-hidden="true">
+                <span class="study-buddy-face pb-zorp-small" id="saved-empty-zorp" data-buddy-face data-face="nudge" data-zorp-autoplay="peek" aria-hidden="true">{{ buddy_mascot(pose='peek') }}</span>
+                <svg class="around-box-front" viewBox="0 0 72 32" focusable="false"><path class="around-box-body" d="M5 7h62l-4 24H9z"/><rect class="around-box-lip" x="2" y="2" width="68" height="9" rx="2.5"/></svg>
+            </span>
             <h3 data-zorp-voice="system:system_empty_state">No saved questions yet</h3>
             <p data-zorp-voice="system:system_empty_state">Save a question from the generator to practise it again later.</p>
             <a href="{{ url_for('index') }}" class="btn btn-primary" data-zorp-voice="system:button_label">Go to generator</a>
@@ -46,4 +50,5 @@
 <p><a href="{{ url_for('profile') }}">← Back to profile</a></p>
 
 </div>
+{% if not saved_problems %}<link rel="stylesheet" href="{{ url_for('static', filename='css/around.css') }}?v=1">{% endif %}
 {% endblock %}

@@ -1,4 +1,6 @@
-"""E9 Phase 4: Zorp's sounds, off by default (docs/ZORP_CHARM.md 3.4, 6 Phase 4, decision D6 = B).
+"""E9 Phase 4: Zorp's sounds (docs/ZORP_CHARM.md 3.4, 6 Phase 4, decision D6 = B). Off by default until E10; since
+2026-11-08 (E10, answer 7 of docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md section 10) a NEW account starts with both sounds on
+(answer tones and Zorp's celebrations) and existing accounts keep what they have.
 
 Run: python scripts/test_zorp_sound_smoke.py
 
@@ -7,7 +9,7 @@ Two halves.
   against a fake AudioContext and a virtual clock (silent by default, no context on load, the tap rule, quiz, hidden tab,
   the 400 ms arbiter, one sequence per 7 s, gains and durations against the table, blips, confetti silent when cues are on).
   Static checks pin where force, the blips and the cue calls may appear.
-* The zorp_sound setting end to end (the Flask test client): default off for new and existing users, the form and the PATCH
+* The zorp_sound setting end to end (the Flask test client): on for new accounts, unchanged (off) for existing ones, the form and the PATCH
   validator (chatter and junk rejected), the mirror on <html>, nothing leaking to other viewers, the privacy documents, and
   the known settings-switch persistence bug of docs/AI_HANDOFF.md (checked here, not assumed).
 Skips the Node half cleanly when `node` is not on PATH.
@@ -160,7 +162,9 @@ def test_constants_and_normaliser():
         assert normalize_zorp_sound(junk) == ZORP_SOUND_OFF, junk
 
 
-def test_default_off_for_new_users_and_mirrored_to_html():
+def test_default_on_for_new_accounts_and_mirrored_to_html():
+    """2026-11-08 (E10, answer 7): a new account starts with Zorp's celebrations and the answer tones on (was: off). The
+    browser rules still decide when a sound may play; logged-out pages stay silent."""
     from app import app
 
     with app.test_client() as client:
@@ -169,12 +173,45 @@ def test_default_off_for_new_users_and_mirrored_to_html():
         _register(client, 'new')
         r = client.get('/profile/settings')
         html = r.data.decode()
-        assert _checked(html, 'zorp_sound') == 'off', 'a new account has Zorp silent'
-        assert re.search(r'<html[^>]*data-zorp-sound="off"', html)
+        assert _checked(html, 'zorp_sound') == 'celebrations', 'a new account has Zorp\'s celebrations on'
+        assert re.search(r'<input type="checkbox" class="switch-input" name="sound_enabled" value="1" checked>', html), 'answer tones on'
+        assert re.search(r'<html[^>]*data-zorp-sound="celebrations"', html)
         home = client.get('/').data.decode()
-        assert re.search(r'<html[^>]*data-zorp-sound="off"', home)
+        assert re.search(r'<html[^>]*data-zorp-sound="celebrations"', home)
+        assert 'data-sound-enabled="1"' in home
         got = client.get('/api/v1/me/settings').get_json()
-        assert got['settings']['zorp_sound'] == 'off'
+        assert got['settings']['zorp_sound'] == 'celebrations' and got['settings']['sound_enabled'] is True
+    # the API registration path gives the same defaults
+    with app.test_client() as client:
+        suffix = uuid.uuid4().hex[:8]
+        r = client.post('/api/v1/auth/register', json={'email': f'zsapi_{suffix}@example.com', 'handle': f'zsapi_{suffix}',
+                                                       'password': 'password123', 'age_confirm': True})
+        assert r.status_code == 201, r.data[:300]
+        token = r.get_json()['token']
+        got = client.get('/api/v1/me/settings', headers={'Authorization': f'Bearer {token}'}).get_json()['settings']
+        assert got['zorp_sound'] == 'celebrations' and got['sound_enabled'] is True
+
+
+def test_new_account_default_is_explicit_and_existing_rows_untouched():
+    """E10: the default is written once, at account creation (apply_new_account_defaults); the column defaults stay off, so a
+    row created any other way (every existing account) is unchanged: the stored values cannot tell never-chose from chose-off."""
+    from app import app, get_db
+    from models import social
+
+    assert social.NEW_ACCOUNT_SOUND_ENABLED is True and social.NEW_ACCOUNT_ZORP_SOUND == 'celebrations'
+    src = _read(ROOT / 'app.py')
+    assert src.count('apply_new_account_defaults(conn, user.id)') == 2, 'web and API registration, nowhere else'
+    assert "('sound_enabled', 'INTEGER NOT NULL DEFAULT 0')" in src and "('zorp_sound', \"TEXT NOT NULL DEFAULT 'off'\")" in src
+    with app.test_client() as client:
+        handle = _register(client, 'ex')
+    with get_db() as conn:
+        uid = conn.execute('SELECT id FROM users WHERE handle = ?', (handle,)).fetchone()['id']
+        # an "existing" account: a row that never went through registration defaults
+        conn.execute("UPDATE user_profile_settings SET sound_enabled = 0, zorp_sound = 'off' WHERE user_id = ?", (uid,))
+        conn.commit()
+        social.ensure_user_profile(conn, uid)
+        got = social.get_profile_settings(conn, uid)
+        assert got['zorp_sound'] == 'off' and not got['sound_enabled'], 'nothing switches an existing account on'
 
 
 def test_form_round_trip_and_junk():
@@ -182,8 +219,9 @@ def test_form_round_trip_and_junk():
 
     with app.test_client() as client:
         _register(client, 'rt')
-        # cycle through the non-default value first, so a save that did nothing would fail
-        for value in ('celebrations', 'off', 'celebrations'):
+        # cycle through the non-default value first, so a save that did nothing would fail (2026-11-08: E10 made
+        # celebrations the new-account default, so off comes first now)
+        for value in ('off', 'celebrations', 'off'):
             _save(client, zorp_sound=value)
             html = client.get('/profile/settings').data.decode()
             assert _checked(html, 'zorp_sound') == value, f'{value} did not persist'
@@ -235,7 +273,8 @@ def test_patch_validation_rejects_chatter_and_junk():
             assert r.status_code == 400, f'{bad!r} gave {r.status_code}'
             body = r.get_json()
             assert body['code'] == 'invalid_zorp_sound' and 'off, celebrations' in body['error'], body
-        assert client.get('/api/v1/me/settings').get_json()['settings']['zorp_sound'] == 'off', 'a rejected value stores nothing'
+        # 2026-11-08: E10 new accounts start on celebrations, so a rejected value must leave that untouched
+        assert client.get('/api/v1/me/settings').get_json()['settings']['zorp_sound'] == 'celebrations', 'a rejected value stores nothing'
         for good in ('celebrations', 'off'):
             r = _patch(client, {'zorp_sound': good})
             assert r.status_code == 200 and r.get_json()['settings']['zorp_sound'] == good
@@ -284,6 +323,8 @@ def test_not_visible_to_other_viewers():
     a_client, b_client = app.test_client(), app.test_client()   # not `with`: a preserved request context would leak A's login into B
     a_handle = _register(a_client, 'va')
     _register(b_client, 'vb')
+    # 2026-11-08: E10 new accounts start on celebrations, so B switches off first: A's value must still never show on B's page
+    _save(b_client, zorp_sound='off')
     _save(a_client, zorp_sound='celebrations', profile_visibility='public')
     page = b_client.get(f'/u/{a_handle}')
     assert page.status_code == 200
@@ -316,7 +357,7 @@ def test_settings_page_markup_and_copy():
     assert values == ['off', 'celebrations'], f'chatter is never offered: {values}'
     assert 'chatter' not in html.lower()
     # its own panel straight after the sound switch's, which keeps covering the answer tones only
-    assert html.index('name="sound_enabled"') < html.index('name="zorp_sound"') < html.index('id="guide-replay-intro"')
+    assert html.index('name="sound_enabled"') < html.index('name="zorp_sound"') < html.index('id="guide-replay-arrival"')   # 2026-11-08: E10 button
     assert 'Play sound effects for correct and incorrect answers' in html
     # system voice, marked so the copy lint covers it
     assert section.count('data-zorp-voice="system:system_settings"') >= 3
@@ -339,7 +380,7 @@ def test_sound_switch_persists():
     assert 'inset' not in track and 'position: absolute' not in track, 'AI_HANDOFF 1.1: no overlay on the track'
     with app.test_client() as client:
         _register(client, 'sw')
-        for want in (True, False, True):
+        for want in (False, True, False):   # non-default value first (2026-11-08: E10 new accounts start with sound on)
             fields = {'sound_enabled': '1'} if want else {}
             _save(client, **fields)
             html = client.get('/profile/settings').data.decode()
@@ -368,6 +409,12 @@ def test_privacy_documents_name_zorp_sound():
     assert 'off by default' in log[0] and 'ROPA' in log[0] and 'privacy notice' in log[0].lower()
     sg = _read(ROOT / 'docs' / 'SECURITY_AND_GDPR.md')
     assert 'zorp_sound' in sg
+    # 2026-11-08: E10 changed the default for new accounts; the documents say so
+    e10 = [line for line in dpia.splitlines() if line.startswith('| 2026-11-08') and 'zorp_sound' in line]
+    assert e10 and 'new accounts' in e10[0] and 'existing' in e10[0], 'a dated DPIA row records the new-account default'
+    assert 'new accounts' in row1 and 'celebrations' in row1
+    assert 'on for new accounts' in full[full.index('<strong>Settings:</strong>'):full.index('<strong>Security:</strong>')]
+    assert 'on for new accounts' in simple
 
 
 def main():
@@ -376,7 +423,8 @@ def main():
     test_sound_js_stays_synthesised_and_loaded_everywhere()
     test_guide_welcome_and_react_pass_cue_true()
     test_constants_and_normaliser()
-    test_default_off_for_new_users_and_mirrored_to_html()
+    test_default_on_for_new_accounts_and_mirrored_to_html()
+    test_new_account_default_is_explicit_and_existing_rows_untouched()
     test_form_round_trip_and_junk()
     test_other_saves_keep_zorp_sound()
     test_patch_validation_rejects_chatter_and_junk()

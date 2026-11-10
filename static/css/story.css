@@ -1,0 +1,58 @@
+/* Zorp's story (E10 phase 8). On demand: loaded by guide.js with story-chapters.js when a chapter plays or is offered, and linked by the
+   profile page for the "Zorp's story" shelf. Props sit on the stage (static/images/story-props.svg); transform and opacity only. */
+.pb-st-prop--rock { left: calc(50% - min(17vw, 190px)); top: 2%; width: min(34vw, 380px); }
+.pb-st-prop--door { left: calc(50% - min(11vw, 120px)); top: 1%; width: min(22vw, 240px); }
+.pb-st-prop--toaster { left: calc(50% - min(14vw, 150px)); top: 8%; width: min(28vw, 300px); }
+.pb-st-prop--postcard { left: calc(50% - min(17vw, 190px)); top: 6%; width: min(34vw, 380px); }
+.sty-ok, .sty-slice, .sty-stamp, .sty-leaf, .sty-rock { transform-box: fill-box; transform-origin: center; }
+.sty-ok { opacity: 0; transform: scale(.4); transition: opacity .25s, transform .45s cubic-bezier(.34,1.56,.64,1); }
+.sty-a, .sty-q { transition: opacity .3s; }
+.sty-a, .sty-glow, .sty-mark { opacity: 0; transition: opacity .6s; }
+[data-set~=solved] .sty-ok, [data-set~=open] .sty-ok, [data-set~=pop] .sty-ok { opacity: 1; transform: none; }
+[data-set~=solved] .sty-a, [data-set~=open] .sty-a, [data-set~=open] .sty-glow, [data-set~=stamp] .sty-mark { opacity: 1; }
+[data-set~=solved] .sty-q, [data-set~=open] .sty-q { opacity: 0; }
+/* the rock whose puzzle is solved tumbles away; the door opens (the leaf folds up on its hinge); toast pops; the stamp lands */
+[data-set~=tumble] .sty-rock { transform: translate(70px, 140px) rotate(150deg); opacity: 0; transition: transform 1.7s cubic-bezier(.5,0,.85,.55), opacity 1.7s ease-in; }
+/* reduced motion and off show the still frame: the solved rock stays, with its tick, instead of an empty sky */
+html[data-motion=reduced] [data-set~=tumble] .sty-rock, html[data-motion=off] [data-set~=tumble] .sty-rock { transform: none; opacity: 1; }
+@media (prefers-reduced-motion: reduce) { html:not([data-motion=full]) [data-set~=tumble] .sty-rock { transform: none; opacity: 1; } }
+.sty-leaf { transform-origin: left center; transition: transform .9s cubic-bezier(.3,.7,.3,1) .25s; }
+[data-set~=open] .sty-leaf { transform: scaleX(.14); }
+.sty-slice { transform: translateY(28px); transition: transform .5s cubic-bezier(.34,1.56,.64,1); }
+[data-set~=pop] .sty-slice { transform: translateY(-30px); }
+.sty-stamp { opacity: 0; transform: scale(1.8) rotate(8deg); transition: opacity .2s, transform .5s cubic-bezier(.34,1.56,.64,1); }
+[data-set~=stamp] .sty-stamp { opacity: 1; transform: none; }
+.pb-st-prop--ship[data-set~=bump] { animation: sty-bump 1.2s ease-out; }
+@keyframes sty-bump {
+  20% { transform: translate(-26px, 6px) rotate(-3deg); }
+  40% { transform: translate(10px, -4px) rotate(2deg); }
+  60% { transform: translate(-8px, 2px) rotate(-1deg); }
+}
+@media (max-width: 640px) {
+  .pb-st-prop--rock { left: 17%; width: 66vw; top: 3%; }
+  .pb-st-prop--door { left: 29%; width: 42vw; top: 2%; }
+  .pb-st-prop--toaster { left: 22%; width: 56vw; top: 8%; }
+  .pb-st-prop--postcard { left: 14%; width: 72vw; top: 5%; }
+}
+
+/* The offer toast: the app toast host with a mini Zorp, a message, Watch and Later */
+.pb-stoast .app-toast-icon { width: 44px; height: 44px; background: transparent; }
+.sty-mz.study-buddy-face, .sty-mz .buddy-mascot { display: block; width: 44px; height: 44px; }
+.pb-stoast .app-toast-body { padding-top: 10px; }
+.sty-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+.sty-acts .btn { min-height: 44px; }
+.pb-stoast .app-toast-dismiss { width: 44px; height: 44px; margin: -6px -6px 0 0; font-size: 1.4rem; line-height: 1; }
+.sty-sub { margin: 2px 0 0; font-size: .85rem; color: var(--text-muted); }
+
+/* The shelf on the profile (Milestones section) */
+.sty-shelf { margin-top: var(--space-5); }
+.sty-shelf-title { margin: 0 0 var(--space-2); font-size: 1.05rem; }
+.sty-shelf-intro { margin: 0 0 var(--space-3); color: var(--text-muted); font-size: .9rem; }
+.sty-list { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.sty-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--border-soft); border-radius: var(--radius-md); background: var(--surface); }
+.sty-item.is-locked { background: var(--surface-sunken); }
+.sty-item-text { flex: 1 1 200px; min-width: 0; }
+.sty-item-n { display: block; font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+.sty-item-title { display: block; font-weight: 700; }
+.sty-item-meta { display: block; font-size: .9rem; color: var(--text-muted); }
+.sty-item .btn { min-height: 44px; }

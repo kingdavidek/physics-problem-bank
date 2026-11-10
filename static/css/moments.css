@@ -1,0 +1,54 @@
+/* Moments (E10 phase 5): the level-up, perfect-quiz and finished-lesson stages, the corner toasts and the micro notes.
+   Loaded on demand by guide.js with moments.js. Transform and opacity only; WAAPI owns the moving parts. Colours are tokens in the
+   toasts (light and dark follow the page) and fixed on the stage (a night sky in both themes). */
+[data-layout=moment] .pb-st-horizon { display: none; }
+[data-layout=moment] .pb-st-actor { left: 30%; }
+[data-layout=moment] .pb-st-dots { display: none; }
+[data-layout=moment] .pb-st-heading { font-size: 1.35rem; letter-spacing: 0; text-transform: none; color: var(--text); }
+.mo-count { font-size: .9rem; color: var(--text-muted); white-space: nowrap; }
+.mo-layer { position: absolute; inset: 0; }
+.mo-box { position: absolute; left: 60%; top: 8%; width: min(44vw, 420px); aspect-ratio: 240 / 180; transform: translateX(-50%); }
+.mo-box > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.mo-box .bp-star { transform-box: fill-box; transform-origin: center; }
+.mo-conf { position: absolute; top: -20px; width: 9px; height: 13px; }
+.mo-conf svg { display: block; width: 100%; height: 100%; }
+.mo-tick { transform-box: fill-box; transform-origin: center; }
+/* the level ring: a track, two half rings that are turned, and the number inside */
+.mo-ring-wrap { position: absolute; left: 19%; top: 0; width: 62%; }
+.mo-ring { position: relative; width: 100%; aspect-ratio: 1; border-radius: 50%; container-type: inline-size; }
+.mo-track, .mo-arc { box-sizing: border-box; border-radius: 50%; border: 5cqw solid rgba(255, 255, 255, .2); }
+.mo-track { position: absolute; inset: 0; }
+.mo-half { position: absolute; top: 0; height: 100%; width: 50%; overflow: hidden; }
+.mo-half--r { left: 50%; }
+.mo-half--l { left: 0; }
+.mo-arc { position: absolute; top: 0; width: 200%; height: 100%; border-color: transparent; border-top-color: #fde047; border-right-color: #fde047; transform: rotate(-135deg); }
+.mo-half--r .mo-arc { left: -100%; }
+.mo-half--l .mo-arc { left: 0; transform: rotate(45deg); }
+.mo-ring-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; }
+.mo-cap { font-size: 7cqw; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #fde68a; }
+.mo-nums { position: relative; width: 100%; height: 36cqw; font-size: 34cqw; line-height: 36cqw; font-weight: 800; text-align: center; }
+.mo-n { position: absolute; inset: 0; }
+.mo-n[hidden] { display: none; }
+/* the score seal */
+.mo-seal-wrap { position: absolute; left: 30%; top: 20%; width: 40%; }
+.mo-seal { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 1; border-radius: 50%; container-type: inline-size; color: #fff;
+  background: radial-gradient(circle at 34% 26%, rgba(255,255,255,.6), transparent 40%), linear-gradient(160deg, #fde68a, #c9830a);
+  box-shadow: 0 0 0 4px rgba(255,255,255,.3), inset 0 -8px 14px rgba(0,0,0,.25), 0 14px 30px rgba(0,0,0,.4); }
+.mo-seal::after { content: ""; position: absolute; inset: 9%; border-radius: 50%; border: 2px dashed rgba(255,255,255,.55); }
+.mo-seal-text { font-size: 24cqw; font-weight: 800; text-shadow: 0 2px 2px rgba(0,0,0,.3); }
+
+@media (max-width: 640px) {
+  [data-layout=moment] .pb-st-actor { left: 27%; }
+  .mo-box { left: 50%; top: 7%; width: 76vw; }
+}
+
+/* Toasts: the app toast host with a mini Zorp in place of the icon */
+.pb-mtoast .app-toast-icon { width: 44px; height: 44px; background: transparent; }
+.pb-mt-zorp.study-buddy-face, .pb-mt-zorp .buddy-mascot { display: block; width: 44px; height: 44px; }
+.pb-mt-zorp[hidden] { display: none; }
+.pb-mtoast .app-toast-body { padding-top: 10px; }
+.pb-mtoast .app-toast-action { display: inline-flex; align-items: center; min-height: 44px; margin-top: 0; }
+.pb-mtoast .app-toast-dismiss { width: 44px; height: 44px; margin: -6px -6px 0 0; }
+/* Micro: a small note under a right answer */
+.pb-micro { position: relative; display: inline-block; margin: 6px 0 0; padding: 2px 26px 2px 0; font-size: var(--text-sm); font-weight: 600; color: var(--on-correct); }
+.pb-micro-spark { position: absolute; right: 2px; top: 0; width: 18px; height: 18px; }

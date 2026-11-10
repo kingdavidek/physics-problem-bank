@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import date, timedelta
 
 from models.user import utc_now_iso
@@ -114,10 +115,10 @@ def upsert_lesson_progress(
         stored_total = existing_total
     else:
         stored_total = max(existing_total, int(step_total))
-    if stored_total <= 0:
-        canonical = lesson_step_total(level, subject, topic)
-        if canonical > 0:
-            stored_total = canonical
+    canonical = lesson_step_total(level, subject, topic)
+    if canonical > 0:
+        # 2026-11-08 (E10 review fix 5): the server's own count wins; a larger client-sent total is never stored
+        stored_total = canonical
     conn.execute(
         '''
         INSERT INTO lesson_progress (
@@ -144,6 +145,43 @@ def upsert_lesson_progress(
         ),
     )
     conn.commit()
+
+
+_STEP_KEY_RE = re.compile(r'^step-(\d+)$')
+
+
+def valid_lesson_step_keys(level, subject, topic, keys, fallback_total=0):
+    """The keys that name a real step of the lesson. 2026-11-08 (E10 review fix 5): only `step-N` with N below the lesson's own
+    step total (the server's count of its Quick Checks) is real. A lesson with no known count falls back to the stored total
+    (at most 80); with no total at all nothing is real, so a client cannot invent steps."""
+    limit = lesson_step_total(level, subject, topic)
+    if limit <= 0:
+        limit = max(0, int(fallback_total or 0))
+    found = []
+    for key in keys or []:
+        match = _STEP_KEY_RE.match(key) if isinstance(key, str) else None
+        if match and int(match.group(1)) < limit and key not in found:
+            found.append(key)
+    return found
+
+
+def award_new_lesson_steps(conn, user_id, level, subject, topic, completed_keys, fallback_total=0):
+    """Remember which steps of a lesson have earned effort points, and return how many are newly earned by this save.
+    A step earns points once, ever: clearing the bookmark and redoing the lesson earns nothing (the ledger is not cleared with
+    the progress), and a key that is not a real step of the lesson never counts."""
+    now = utc_now_iso()
+    new = 0
+    for key in valid_lesson_step_keys(level, subject, topic, completed_keys, fallback_total):
+        cursor = conn.execute(
+            '''
+            INSERT OR IGNORE INTO lesson_step_awards (user_id, level, subject, topic, step_key, awarded_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ''',
+            (user_id, level, subject, topic, key, now),
+        )
+        new += cursor.rowcount
+    conn.commit()
+    return new
 
 
 def get_lesson_progress(conn, user_id, level, subject, topic):
@@ -201,13 +239,16 @@ def clear_lesson_progress(conn, user_id, level, subject, topic):
     return cursor.rowcount > 0
 
 
-def record_quiz_attempt(conn, user_id, level, subject, topic, score, total, answers, problems):
+def record_quiz_attempt(conn, user_id, level, subject, topic, score, total, answers, problems, is_retry=False):
+    # 2026-11-08 (E10 phase 6): is_retry marks a Retry wrong ones run (a small attempt made of questions the pupil missed). Every
+    # statistic about how well a pupil did (personal best, accuracy trend, topic status, weak topics, accuracy boards, class averages)
+    # counts full quizzes only (is_retry = 0); the history list and activity counts still show the retry.
     now = utc_now_iso()
     cursor = conn.execute(
         '''
         INSERT INTO quiz_attempts (
-            user_id, level, subject, topic, score, total, answers_json, problems_json, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            user_id, level, subject, topic, score, total, answers_json, problems_json, created_at, is_retry
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''',
         (
             user_id,
@@ -219,6 +260,7 @@ def record_quiz_attempt(conn, user_id, level, subject, topic, score, total, answ
             json.dumps(answers),
             json.dumps(public_problems(problems)),
             now,
+            1 if is_retry else 0,
         ),
     )
     conn.commit()
@@ -246,6 +288,14 @@ def get_quiz_attempt(conn, user_id, attempt_id):
 
 
 def enrich_quiz_attempt_problems(problems, answers):
+    """The stored problems with each pupil answer and whether it was right.
+
+    A Quick Test row stores ``{'user_answer', 'correct', ...}``; a lesson quiz row stores the answer alone, so it is
+    graded again here, exactly as the quiz graded it (``grade_lesson_quiz_problem``). Without this the review page had
+    no verdict for a lesson quiz and showed every question as wrong (2026-11-07).
+    """
+    from generators.shared.lesson_quiz import grade_lesson_quiz_problem
+
     enriched = []
     for i, problem in enumerate(problems):
         item = dict(problem)
@@ -256,6 +306,10 @@ def enrich_quiz_attempt_problems(problems, answers):
             item['was_checked'] = ans.get('checked')
         else:
             item['user_answer'] = ans
+            try:
+                item['answered_correctly'] = bool(ans) and grade_lesson_quiz_problem(problem, ans)['correct']
+            except Exception:  # noqa: BLE001 - an old row the grader cannot read keeps the letter comparison
+                item['answered_correctly'] = None
         enriched.append(item)
     return enriched
 

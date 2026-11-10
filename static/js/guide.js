@@ -2,7 +2,15 @@
 (function () {
   'use strict';
 
-  var STORAGE_KEY = 'pb-guide-v1';
+  // E11 Phase 0 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 1.2): the browser copy of the guide's seen-state is one pupil's (the account's
+  // storage name, meta pb-store; 'anon' signed out). The old shared key 'pb-guide-v1' could hand the last pupil's seen tours and
+  // rewards to a new account before its first save, so it is removed unread. The server copy is the record once it exists.
+  var STORE_NS = (function () {
+    var m = document.querySelector('meta[name="pb-store"]');
+    return (m && m.getAttribute('content')) || 'anon';
+  })();
+  var STORAGE_KEY = 'pb-guide-v1:' + STORE_NS;
+  try { window.localStorage.removeItem('pb-guide-v1'); } catch (err) {}
   var NARROW_PX = 640;
   var ENDPOINT_TOUR = {
     index: 'practice',
@@ -55,8 +63,8 @@
   var isOpen = false;
   var lastFocus = null;
   var pendingRewards = [];
-  var emptyState = { v: 1, origin: false, tours: {}, rewards: {} };
-  var seenState = { v: 1, origin: true, tours: {}, rewards: {} };
+  var emptyState = { v: 1, origin: false, tours: {}, rewards: {}, run: null };
+  var seenState = { v: 1, origin: true, tours: {}, rewards: {}, run: null };
   var persistTimer = 0;
   var lastPersistBody = '';
   var memoryState = null;
@@ -71,6 +79,16 @@
 
   function isQuizRunner() {
     return !!(document.body && document.body.getAttribute('data-guide-quiz') === '1');
+  }
+
+  // E10 phase 4: a quiz results page (lesson quiz results, a saved attempt, Quick Test results) is part of the quiz runner for
+  // everything else, but a badge or streak moment may play there; question pages stay quiet.
+  function isQuizResults() {
+    return !!(document.body && document.body.getAttribute('data-guide-quiz-results') === '1');
+  }
+
+  function isBig(spec) {
+    return !!spec && (spec.type === 'milestone' || spec.type === 'streak');
   }
 
   function prefersReducedMotion() {
@@ -128,6 +146,8 @@
       origin: !!base.origin,
       tours: copyFlags(base.tours),
       rewards: copyFlags(base.rewards),
+      // E10 phase 6: the tour in progress, {id, step}; null when none (the server keeps it in guide_json "run")
+      run: base.run && typeof base.run.id === 'string' ? { id: base.run.id, step: parseInt(base.run.step, 10) || 0 } : null,
     };
   }
 
@@ -167,22 +187,25 @@
   }
 
   function persistNow(state) {
-    if (!canPersist() || !window.fetch) return;
+    if (!canPersist() || !window.fetch) return Promise.resolve();
     var payload = cloneState(state);
     var body = JSON.stringify({ guide: payload });
-    if (body === lastPersistBody) return;
+    if (body === lastPersistBody) return Promise.resolve();
     lastPersistBody = body;
     var headers = { Accept: 'application/json', 'Content-Type': 'application/json' };
     var token = csrfToken();
     if (token) headers['X-CSRF-Token'] = token;
     try {
-      window.fetch('/api/v1/me/settings', {
+      // keepalive: the tour saves its step just before it navigates to the next page
+      return window.fetch('/api/v1/me/settings', {
         method: 'PATCH',
         headers: headers,
         body: body,
         credentials: 'same-origin',
+        keepalive: true,
       }).catch(function () {});
     } catch (err) {}
+    return Promise.resolve();
   }
 
   function schedulePersist(state) {
@@ -503,7 +526,8 @@
       return 'streak:' + days;
     }
     if (spec.type === 'first_correct') return 'first_correct';
-    if (spec.type === 'lesson_complete') return 'lesson_complete';
+    // E10 phase 5: every lesson is its own moment (lesson:<level>:<subject>:<topic>); without a topic it is the old single reward
+    if (spec.type === 'lesson_complete') return spec.topic ? ('lesson:' + [spec.level, spec.subject, spec.topic].join(':')).toLowerCase().replace(/[^a-z0-9_:]/g, '_').slice(0, 64) : 'lesson_complete';
     return '';
   }
 
@@ -644,6 +668,7 @@
 
   function afterClose() {
     playPendingRewards();
+    runMoments();
     if (!isOpen) maybePlayTour();
   }
 
@@ -653,6 +678,11 @@
     if (finishedId === 'origin') markOriginSeen();
     else if (finishedId === 'reward' && step && step.id) {
       markRewardSeen(step.id);
+    } else if (finishedId === 'appoffer') {
+      // "Show me around" starts the tour; "Not now" (or Esc) means it is skipped, and it stays in Settings
+      if (offerAccepted) beginAppTour(true);
+      else endAppTour();
+      offerAccepted = false;
     } else if (finishedId && finishedId !== 'reward') {
       markTourSeen(finishedId);
     }
@@ -671,6 +701,8 @@
     renderStep();
   }
 
+  var offerAccepted = false;
+
   function onPrimary() {
     var step = queue[stepIndex];
     var lines = stepLines(step);
@@ -679,6 +711,7 @@
       renderStep();
       return;
     }
+    if (queueId === 'appoffer') offerAccepted = true;
     advanceStep();
   }
 
@@ -706,21 +739,362 @@
     startQueue(steps, id);
   }
 
+  // E10 (docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md 6.1): the full-screen stage lives in zorp-stage.js, stage-catalog.js and
+  // stage.css, which only load when a stage is about to play (URLs from the #pb-stage-assets island in partials/guide.html).
+  var stagePromise = null;
+  var stagePending = false;
+
+  function stageAssets() {
+    var el = document.getElementById('pb-stage-assets');
+    try {
+      var a = el ? JSON.parse(el.textContent || '{}') : null;
+      return a && a.js && a.css && a.catalog ? a : null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function addAsset(tag, attrs) {
+    return new Promise(function (resolve, reject) {
+      var node = document.createElement(tag);
+      for (var key in attrs) {
+        if (Object.prototype.hasOwnProperty.call(attrs, key)) node.setAttribute(key, attrs[key]);
+      }
+      node.onload = resolve;
+      node.onerror = reject;
+      document.head.appendChild(node);
+    });
+  }
+
+  function loadStage() {
+    if (window.pbStage && window.pbStage.play) return window.pbStage.ready();
+    if (stagePromise) return stagePromise;
+    var a = stageAssets();
+    if (!a) return Promise.reject(new Error('no stage'));
+    stagePromise = Promise.all([
+      addAsset('link', { rel: 'stylesheet', href: a.css }),
+      addAsset('script', { src: a.catalog }),
+      addAsset('script', { src: a.js }),
+    ]).then(function () {
+      if (!window.pbStage) throw new Error('no stage');
+      return window.pbStage.ready();
+    });
+    stagePromise.catch(function () { stagePromise = null; });
+    return stagePromise;
+  }
+
+  // E10 phase 3: the first question after the arrival is coached (zorp-coach.js + coach.css, loaded only then). While the coach
+  // loads or runs, no Practice tour opens; when it ends (finished, skipped or left) both are marked seen.
+  var coachState = '';
+  function coachAssets() {
+    try { return JSON.parse((document.getElementById('pb-coach-assets') || {}).textContent || 'null'); } catch (err) { return null; }
+  }
+
+  function coachDue() {
+    var body = document.body;
+    return !!(body && body.getAttribute('data-guide-coach') === '1' && !coachState && !seen('coach') && coachAssets());
+  }
+
+  function startCoach() {
+    var a = coachAssets();
+    coachState = 'loading';
+    // the corner Zorp rests on a phone from now on (chrome.css), not only once the coach files have loaded; zorp-coach.js clears the class when it ends
+    document.body.classList.add('pb-coach-on');
+    Promise.all([
+      addAsset('link', { rel: 'stylesheet', href: a.css }),
+      addAsset('script', { src: a.js }),
+    ]).then(function () {
+      if (!window.pbCoach || !window.pbCoach.start()) throw new Error('no coach');
+      coachState = 'active';
+    }).catch(function () {
+      coachState = 'done';
+      document.body.classList.remove('pb-coach-on');
+      document.body.classList.add('pb-coach-done');
+      skipTourThisLoad = false;
+      maybePlayTour();
+    });
+  }
+
+  document.addEventListener('pb-coach-ended', function (e) {
+    coachState = 'done';
+    document.body.classList.add('pb-coach-done');
+    markTourSeen('coach');
+    markTourSeen('practice');
+    flushPersist();
+    // E10 phase 6 (owner's answer 5): the app tour starts by itself when the coach is done or skipped (not when the pupil left the page)
+    if (e && e.detail && e.detail.how !== 'leave' && !seen('app')) beginAppTour(true);
+  });
+
+  // E10 review fix 2: moments in flight (loading moments.js, or playing) count as a stage, so no dialog (the tour offer, a reward) opens beside them
+  var momentsInFlight = 0;
+  function stageBusy() {
+    return stagePending || momentsInFlight > 0 || !!(window.pbStage && window.pbStage.isOpen());
+  }
+
+  // E10 phase 6: the app tour ("Show me around", across pages) and the just-in-time spotlights are zorp-tour.js and tour.css, loaded
+  // only when one is due (URLs from the #pb-tour-assets island). The tour in progress is guide state "run" ({id, step}), so it
+  // survives page loads. It starts by itself when the coached first question ends (done or skipped), is offered once to an account
+  // that never had it (the Practice page), and replays from Settings. Once it has run or been skipped, the per-tab tours stay quiet.
+  var tourPhase = '';   // '' | 'loading' | 'active' | 'done' (the app tour on this page view)
+  var tourPromise = null;
+  var spotChecked = false;
+  var APP_PAGE = { index: 1, topics_index: 1, qotd_page: 1, friend_leaderboard_page: 1, profile: 1, student_classes: 1, profile_settings: 1 };
+  // which spotlights an element-based page may show (the rest come from events: hint and bigger)
+  var SPOT_PAGE = {
+    topic_page: ['lessonquiz'], quicktest_results: ['quicktest'], lesson_mcq_results: ['aiexplain'], view_quiz_attempt: ['aiexplain'],
+    student_classes: ['setwork'], student_class_work: ['setwork'], student_class_work_detail: ['setwork'],
+    challenges_list: ['challenge'], friend_leaderboard_page: ['challenge'], profile: ['revision', 'saved'],
+  };
+  var SPOT_EVENT = { 'pb-hint-shown': 'hint', 'pb-hint-bigger': 'bigger' };
+
+  function tourAssets() {
+    try {
+      var a = JSON.parse((document.getElementById('pb-tour-assets') || {}).textContent || 'null');
+      return a && a.js && a.css ? a : null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function loadTour() {
+    if (window.pbTour) return Promise.resolve(window.pbTour);
+    if (tourPromise) return tourPromise;
+    var a = tourAssets();
+    if (!a) return Promise.reject(new Error('no tour'));
+    tourPromise = Promise.all([addAsset('link', { rel: 'stylesheet', href: a.css }), addAsset('script', { src: a.js })]).then(function () {
+      if (!window.pbTour) throw new Error('no tour');
+      return window.pbTour;
+    });
+    tourPromise.catch(function () { tourPromise = null; });
+    return tourPromise;
+  }
+
+  function appRun() {
+    var run = loadState().run;
+    return run && run.id === 'app' && !seen('app') ? run : null;
+  }
+
+  function tourOn() {
+    return tourPhase === 'loading' || tourPhase === 'active';
+  }
+
+  // fresh: a new run from the first stop (after the coach, from Settings, or after "Show me around")
+  function beginAppTour(fresh) {
+    if (tourOn() || !tourAssets() || isPreview()) return;
+    if (fresh) {
+      var state = loadState();
+      state.run = { id: 'app', step: 0 };
+      if (!state.tours) state.tours = {};
+      state.tours.app = false;
+      saveState(state);
+      flushPersist();
+    }
+    tourPhase = 'loading';
+    document.body.classList.add('pb-tour-on');
+    loadTour().then(function (tour) {
+      if (!tour.start()) throw new Error('no stop on this page');
+      tourPhase = 'active';
+    }).catch(function () {
+      tourPhase = '';
+      document.body.classList.remove('pb-tour-on');
+    });
+  }
+
+  // the tour ended (finished or skipped): the per-tab tours would only repeat it, so they count as seen
+  function endAppTour() {
+    tourPhase = 'done';
+    document.body.classList.remove('pb-tour-on');
+    var state = loadState();
+    state.run = null;
+    if (!state.tours) state.tours = {};
+    ['app', 'practice', 'learn', 'daily', 'compete', 'profile'].forEach(function (id) { state.tours[id] = true; });
+    saveState(state);
+    flushPersist();
+  }
+
+  // a spotlight (one line, the first time a pupil meets a feature): never during a tour, the coach, a dialog or a stage
+  function maybeSpot(ids) {
+    if (!tourAssets() || isPreview() || tourOn() || coachState === 'loading' || coachState === 'active') return;
+    var due = (ids || []).filter(function (id) { return !seen('sp_' + id); });
+    if (!due.length) return;
+    loadTour().then(function (tour) { tour.spot(due); }).catch(function () { /* the page works without it */ });
+  }
+
+  Object.keys(SPOT_EVENT).forEach(function (name) {
+    document.addEventListener(name, function () {
+      if (document.body.classList.contains('pb-coach-on') || document.body.getAttribute('data-guide-coach') === '1') return;   // the coached question has its own hints
+      maybeSpot([SPOT_EVENT[name]]);
+    });
+  });
+
+  // The origin story is the arrival film's scenes 1 to 5 on the stage (an account that never saw it); the dialogue-box
+  // origin in guide-catalog.js stays as the fallback when the stage cannot load (offline, an old page).
+  function playOrigin() {
+    var steps = originSteps();
+    var fallback = function () {
+      stagePending = false;
+      if (steps.length && !isOpen) startQueue(steps, 'origin');
+    };
+    if (!stageAssets()) {
+      fallback();
+      return;
+    }
+    stagePending = true;
+    loadStage().then(function (stage) {
+      stagePending = false;
+      return stage.play('arrival', { story: true }).then(function () {
+        markOriginSeen();
+        flushPersist();
+      });
+    }).catch(fallback);
+  }
+
   function play(id) {
     if (!overlay || !bubbleEl || !primaryBtn || !skipBtn) return;
     if (id === 'origin') {
-      var steps = originSteps();
-      if (steps.length < 1) return;
-      startQueue(steps, 'origin');
+      if (!stageBusy()) playOrigin();
       return;
     }
     if (id && (catalog().tours || {})[id]) playTour(id);
   }
 
+  // E10 phase 4: badges and streak moments play on the badge stage (badge-stage.js and badge-stage.css, loaded only then; URLs from
+  // the #pb-badge-assets island). Everything that arrives within a moment is one batch, so two badges (or a badge and its streak
+  // reward) are one stage after another. If the files cannot load, the older reward dialog plays instead.
+  var badgePromise = null;
+  var badgeTimer = 0;
+
+  function badgeAssets() {
+    try {
+      var a = JSON.parse((document.getElementById('pb-badge-assets') || {}).textContent || 'null');
+      return a && a.js && a.css && a.props && stageAssets() ? a : null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function loadBadgeStage() {
+    if (window.pbBadgeStage) return Promise.resolve(window.pbBadgeStage);
+    if (badgePromise) return badgePromise;
+    var a = badgeAssets();
+    if (!a) return Promise.reject(new Error('no badge stage'));
+    badgePromise = loadStage().then(function () {
+      return Promise.all([addAsset('link', { rel: 'stylesheet', href: a.css }), addAsset('script', { src: a.js })]);
+    }).then(function () {
+      if (!window.pbBadgeStage) throw new Error('no badge stage');
+      return window.pbBadgeStage;
+    });
+    badgePromise.catch(function () { badgePromise = null; });
+    return badgePromise;
+  }
+
+  function playBadges() {
+    var batch = [];
+    var rest = [];
+    pendingRewards.forEach(function (spec) {
+      if (!isBig(spec)) rest.push(spec);
+      else if (!rewardSeen(rewardId(spec))) batch.push(spec);
+    });
+    pendingRewards = rest;
+    if (!batch.length) return false;
+    stagePending = true;
+    var legacy = function () {
+      stagePending = false;
+      for (var i = 0; i < batch.length; i += 1) {
+        var step = buildRewardStep(batch[i]);
+        if (step && !isOpen) { startQueue([step], 'reward'); return; }
+      }
+    };
+    loadBadgeStage().then(function (bs) {
+      stagePending = false;
+      return bs.play(batch);
+    }).catch(legacy);
+    return true;
+  }
+
+  // E10 phase 5: moments (a level-up, a perfect quiz, a finished lesson, toasts, micro reactions) play from moments.js and
+  // moments.css, loaded only when one is due (URLs from the #pb-moment-assets island). They wait for the badge stage and any
+  // dialog, then play after it, so one stage is on screen at a time; never while quiz questions are on screen.
+  var pendingMoments = [];
+  var momentTimer = 0;
+  var momentsPromise = null;
+
+  function momentAssets() {
+    try {
+      var a = JSON.parse((document.getElementById('pb-moment-assets') || {}).textContent || 'null');
+      return a && a.js && a.css && a.props && stageAssets() ? a : null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function loadMoments() {
+    if (window.pbMoments) return Promise.resolve(window.pbMoments);
+    if (momentsPromise) return momentsPromise;
+    var a = momentAssets();
+    if (!a) return Promise.reject(new Error('no moments'));
+    momentsPromise = Promise.all([addAsset('link', { rel: 'stylesheet', href: a.css }), addAsset('script', { src: a.js })]).then(function () {
+      if (!window.pbMoments) throw new Error('no moments');
+      return window.pbMoments;
+    });
+    momentsPromise.catch(function () { momentsPromise = null; });
+    return momentsPromise;
+  }
+
+  // E10 phase 8: Zorp's story chapters (story-chapters.js and story.css, loaded only when one plays or is offered; URLs from the
+  // #pb-story-assets island). An offer ("Zorp has a new story for you", Watch or Later) rides the moments pipeline as a toast, so it
+  // appears after any badge stage; it is shown last, one at a time, and never plays by itself.
+  var storyPromise = null;
+
+  function loadStory() {
+    if (window.pbStory) return Promise.resolve(window.pbStory);
+    if (storyPromise) return storyPromise;
+    var a;
+    try { a = JSON.parse((document.getElementById('pb-story-assets') || {}).textContent || 'null'); } catch (err) { a = null; }
+    if (!a || !a.js || !a.css) return Promise.reject(new Error('no story'));
+    storyPromise = loadStage().then(function () {
+      var have = document.querySelector('link[href="' + a.css + '"]');   // the profile page links the style itself
+      return Promise.all([have ? null : addAsset('link', { rel: 'stylesheet', href: a.css }), addAsset('script', { src: a.js })]);
+    }).then(function () {
+      if (!window.pbStory) throw new Error('no story');
+      return window.pbStory;
+    });
+    storyPromise.catch(function () { storyPromise = null; });
+    return storyPromise;
+  }
+
+  function isStoryOffer(m) { return !!m && m.kind === 'story_offer'; }
+
+  function runMoments() {
+    if (!pendingMoments.length || isOpen || stageBusy() || badgeTimer || pendingRewards.some(isBig)) return;
+    var all = pendingMoments;
+    var offers = all.filter(isStoryOffer);
+    var batch = all.filter(function (m) { return !isStoryOffer(m); });
+    pendingMoments = [];
+    momentsInFlight += 1;
+    var settled = function () { momentsInFlight -= 1; window.setTimeout(afterClose, 0); };   // also on failure: whatever waited may go now
+    (batch.length ? loadMoments().then(function (m) { return m.play(batch); }) : Promise.resolve()).catch(function () { /* the page works without them */ }).then(function () {
+      return offers.length ? loadStory().then(function (st) { st.offer(offers[0]); }) : null;
+    }).then(function () { settled(); }, function () { settled(); });
+  }
+
+  function moments(list) {
+    if (!overlay || !momentAssets() || (isQuizRunner() && !isQuizResults())) return false;
+    (Array.isArray(list) ? list : []).forEach(function (m) { if (m && m.type && !(m.id && pendingMoments.some(function (x) { return x.id === m.id; }))) pendingMoments.push(m); });   // one fetch can be read twice (celebrate.js and site.js)
+    if (pendingMoments.length && !momentTimer) momentTimer = window.setTimeout(function () { momentTimer = 0; runMoments(); }, 220);
+    return pendingMoments.length > 0;
+  }
+
   function playPendingRewards() {
     if (isOpen) return;
-    if (isQuizRunner()) return;
+    if (stageBusy()) return;
     while (pendingRewards.length) {
+      var head = pendingRewards[0];
+      if (isQuizRunner() && !(isQuizResults() && isBig(head))) return;
+      if (isBig(head) && badgeAssets()) {
+        if (playBadges()) return;
+        continue;
+      }
       var spec = pendingRewards.shift();
       var id = rewardId(spec);
       if (!id || rewardSeen(id)) continue;
@@ -731,13 +1105,66 @@
     }
   }
 
+  // E11 Phase 0 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 1.3): one beat, not two.
+  // * A pupil's first right answer often earns a badge at the same moment (Lesson learner on a quick check). The first-correct
+  //   dialog waits FIRST_HOLD_MS (the confetti and Zorp's cheer do not); a badge or a stage in that time says it instead, and the
+  //   dialog is then not shown at all.
+  // * The lesson-complete stage carries the lesson's own badge (topic_completed:<level>:<subject>:<topic>, earned by the save of
+  //   the last quick check): the badge is taken out of the queue, or kept out when it arrives later, and named on the lesson stage,
+  //   which marks it seen when it plays (moments.js).
+  var FIRST_HOLD_MS = 1800;
+  var firstHold = 0;
+  var absorbed = {};
+
+  function dropFirstCorrect() {
+    if (!firstHold) return;
+    window.clearTimeout(firstHold);
+    firstHold = 0;
+    markRewardSeen('first_correct');
+  }
+
+  function holdFirstCorrect(spec) {
+    if (firstHold) return false;
+    firstHold = window.setTimeout(function () {
+      firstHold = 0;
+      if (rewardSeen('first_correct')) return;
+      if (stageBusy() || badgeTimer || pendingMoments.length || pendingRewards.some(isBig)) { markRewardSeen('first_correct'); return; }
+      pendingRewards.push(spec);
+      if (!isOpen) playPendingRewards();
+    }, FIRST_HOLD_MS);
+    return true;
+  }
+
+  function absorbLessonBadge(spec) {
+    var key = 'topic_completed:' + [spec.level, spec.subject, spec.topic].join(':');
+    var found = null;
+    pendingRewards = pendingRewards.filter(function (r) {
+      if (r && r.type === 'milestone' && r.key === key) { found = r; return false; }
+      return true;
+    });
+    if (found && !spec.badge) spec.badge = { key: key, title: (found.badge && found.badge.title) || '' };
+    absorbed[key] = true;
+  }
+
   function reward(spec) {
     if (!overlay || !bubbleEl || !primaryBtn || !skipBtn) return false;
-    if (isQuizRunner()) return false;
+    if (isQuizRunner() && !(isQuizResults() && isBig(spec))) return false;
     var id = rewardId(spec);
     if (!id) return false;
     if (rewardSeen(id)) return false;
+    if (spec.type === 'milestone' && absorbed[spec.key]) { markRewardSeen(id); return 'stage'; }
+    if (spec.type === 'first_correct') return holdFirstCorrect(spec);
+    if (isBig(spec) || spec.type === 'lesson_complete') dropFirstCorrect();
+    if (spec.type === 'lesson_complete' && spec.topic && momentAssets()) {
+      absorbLessonBadge(spec);
+      return moments([spec]) ? 'stage' : false;
+    }
     pendingRewards.push(spec);
+    if (isBig(spec) && badgeAssets()) {
+      // wait a moment for the rest of the batch (a badge and its streak reward arrive together)
+      if (!badgeTimer) badgeTimer = window.setTimeout(function () { badgeTimer = 0; playPendingRewards(); }, 120);
+      return 'stage';
+    }
     if (isOpen) return true;
     playPendingRewards();
     return isOpen && queueId === 'reward';
@@ -759,7 +1186,15 @@
 
   function maybePlayTour() {
     if (!overlay) return;
-    if (isPreview() || isQuizRunner() || isOpen) return;
+    if (isPreview() || isQuizRunner()) return;
+    if (coachState === 'loading' || coachState === 'active') return;
+    if (coachDue()) {
+      skipTourThisLoad = true;
+      startCoach();
+      return;
+    }
+    if (document.body.getAttribute('data-guide-coach') === '1') document.body.classList.add('pb-coach-done');   // no coach to wait for: the corner Zorp may show
+    if (isOpen || stageBusy()) return;
     if (skipTourThisLoad) return;
     if (pendingRewards.length) {
       playPendingRewards();
@@ -768,10 +1203,32 @@
     var body = document.body;
     if (!body) return;
     var endpoint = body.getAttribute('data-guide-endpoint') || '';
+    if (tourOn()) return;
+    // the app tour in progress continues on its next page (it is not a per-tab tour, so NEVER_TOUR does not apply)
+    if (APP_PAGE[endpoint] && appRun()) {
+      beginAppTour(false);
+      return;
+    }
     if (NEVER_TOUR[endpoint]) return;
-    var tour = tourFor(endpoint);
-    if (!tour || seen(tour)) return;
+    // an account that never had the app tour is offered it once, on Practice (in place of that page's own first-visit tour)
+    if (endpoint === 'index' && !seen('app') && !seen('appoffer') && seen('origin')) {
+      markTourSeen('appoffer');
+      play('appoffer');
+      return;
+    }
+    // once the app tour has run (or been skipped) the per-tab tours would only repeat it
+    var tour = seen('app') ? '' : tourFor(endpoint);
+    if (!tour || seen(tour)) {
+      spotPage(endpoint);
+      return;
+    }
     playTour(tour);
+  }
+
+  function spotPage(endpoint) {
+    if (spotChecked || !SPOT_PAGE[endpoint]) return;
+    spotChecked = true;
+    maybeSpot(SPOT_PAGE[endpoint]);
   }
 
   function maybeAutoplay() {
@@ -780,9 +1237,13 @@
     var body = document.body;
     if (!body) return;
     if (isPreview()) return;
-    if (isQuizRunner()) return;
     var endpoint = body.getAttribute('data-guide-endpoint') || '';
-    if (NEVER_TOUR[endpoint]) return;
+    if (isQuizRunner()) {
+      // a results page may show one spotlight (the first Quick Test, the first AI explain); question pages stay quiet
+      if (isQuizResults() && seen('origin')) window.setTimeout(function () { spotPage(endpoint); }, 0);
+      return;
+    }
+    if (NEVER_TOUR[endpoint] && !(APP_PAGE[endpoint] && appRun())) return;   // the app tour in progress also runs on Settings
     if (!seen('origin')) {
       skipTourThisLoad = true;
       play('origin');
@@ -792,7 +1253,7 @@
   }
 
   function onKeydown(event) {
-    if (!isOpen) return;
+    if (!isOpen || (window.pbStage && window.pbStage.isOpen())) return;   // E10 review fix 2: Esc on a stage is the stage's, never the dialog's
     if (event.key === 'Escape') {
       event.preventDefault();
       onSkip();
@@ -818,12 +1279,51 @@
     if (step && step.mode === 'tour')     highlightTarget(step);
   }
 
+  // E10: the arrival on /welcome marks the origin story seen when its story part ends (welcome.js).
+  function markSeen(id) {
+    if (id !== 'origin') return;
+    markOriginSeen();
+    flushPersist();
+  }
+
   window.pbGuide = {
     play: play,
     reward: reward,
     seen: seen,
     resetOrigin: resetOrigin,
     gesture: gesture,
+    markSeen: markSeen,
+    markReward: function (id) { markRewardSeen(id); flushPersist(); },   // E10 phase 4: the badge stage marks each moment it plays
+    moments: moments,   // E10 phase 5: hand over moments (a list of {type, id, ...}); they play after any badge stage
+    rewardSeen: rewardSeen,
+    rewardId: rewardId,
+    loadStage: loadStage,
+    // E10 phase 6: what zorp-tour.js needs from the guide (state, the stage, whether anything else is on screen)
+    tour: {
+      run: function () { var r = loadState().run; return r ? { id: r.id, step: r.step } : null; },
+      setRun: function (run) { var s = loadState(); s.run = run || null; saveState(s); },
+      seen: seen,
+      markSeen: function (id) { markTourSeen(id); flushPersist(); },
+      end: endAppTour,
+      commit: function () {   // save the guide state now; resolves when the server has it
+        if (persistTimer) { window.clearTimeout(persistTimer); persistTimer = 0; }
+        return persistNow(loadState());
+      },
+      busy: function () { return isOpen || stageBusy() || !!badgeTimer || pendingRewards.length > 0 || pendingMoments.length > 0; },
+      csrf: csrfToken,
+    },
+    badges: function (specs) {   // the badge stage straight, for the preview and tests (no seen-state check)
+      return loadBadgeStage().then(function (bs) { return bs.play(specs); });
+    },
+    stage: function (spec, opts) {
+      return loadStage().then(function (stage) { return stage.play(spec, opts); });
+    },
+    story: function (n, opts) {   // E10 phase 8: play chapter n (0 is the arrival) from the shelf or the preview
+      return loadStory().then(function (st) { return st.play(n, opts); });
+    },
+    offerStory: function (n) {
+      return loadStory().then(function (st) { var m = { id: 'story:' + n, chapter: n }; m.force = 1; return st.offer(m); });
+    },
   };
 
   if (primaryBtn) primaryBtn.addEventListener('click', onPrimary);
@@ -832,6 +1332,8 @@
   window.addEventListener('resize', onViewport);
   window.addEventListener('orientationchange', onViewport);
   window.addEventListener('pagehide', flushPersist);
+  // a stage just closed: anything that waited for it (a reward, a tour) may run now
+  document.addEventListener('pb-stage-closed', function () { window.setTimeout(afterClose, 0); });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', maybeAutoplay);

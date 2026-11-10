@@ -1596,7 +1596,7 @@ body.quiz-runner-active .app-tab-bar {
     width: 120px;
     height: 120px;
     border-radius: 50%;
-    background: conic-gradient(var(--correct-400) calc(var(--quiz-pct, 0) * 1%), rgba(255, 255, 255, 0.2) 0);
+    background: conic-gradient(var(--correct-300) calc(var(--quiz-pct, 0) * 1%), rgba(255, 255, 255, 0.2) 0);
     display: flex;
     align-items: center;
     justify-content: center;

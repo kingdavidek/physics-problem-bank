@@ -188,8 +188,12 @@ function clickDismiss(page) {
   page.dismissEl.dispatch('click', {});
 }
 
+// E11 Phase 0 (2026-11-10): the quiet flag belongs to one pupil. study-buddy.js keys it with the account's storage name
+// (meta pb-store); this harness page has no such meta, so the key is the signed-out one.
+const QUIET_KEY = 'pb-buddy-quiet:anon';
+
 function readQuiet(page) {
-  const raw = page.storage.getItem('pb-buddy-quiet');
+  const raw = page.storage.getItem(QUIET_KEY);
   return raw ? JSON.parse(raw) : null;
 }
 
@@ -286,7 +290,7 @@ scenario('same mark, still within the quiet window: card stays hidden', () => {
   const until = Date.now() + 5 * 60 * 1000; // 5 minutes still to go
   const page = loadPage({
     prompt: PROMPT_A,
-    storageSeed: { 'pb-buddy-quiet': JSON.stringify({ until, mark: PROMPT_A.task_mark }) },
+    storageSeed: { [QUIET_KEY]: JSON.stringify({ until, mark: PROMPT_A.task_mark }) },
   });
   assert.strictEqual(page.card.hidden, true, 'a bubble must not reappear mid-quiet-window');
   assert.strictEqual(page.root.getAttribute('data-buddy-state'), 'face');
@@ -296,7 +300,7 @@ scenario('same mark, window has passed: card stays hidden (nothing new happened)
   const until = Date.now() - 1000; // window already elapsed
   const page = loadPage({
     prompt: PROMPT_A,
-    storageSeed: { 'pb-buddy-quiet': JSON.stringify({ until, mark: PROMPT_A.task_mark }) },
+    storageSeed: { [QUIET_KEY]: JSON.stringify({ until, mark: PROMPT_A.task_mark }) },
   });
   assert.strictEqual(page.card.hidden, true,
     'an unchanged task_mark after the window must still stay quiet');
@@ -306,11 +310,21 @@ scenario('new mark, window has passed: card shows again', () => {
   const until = Date.now() - 1000;
   const page = loadPage({
     prompt: PROMPT_B,
-    storageSeed: { 'pb-buddy-quiet': JSON.stringify({ until, mark: PROMPT_A.task_mark }) },
+    storageSeed: { [QUIET_KEY]: JSON.stringify({ until, mark: PROMPT_A.task_mark }) },
   });
   assert.strictEqual(page.card.hidden, false,
     'a new task_mark after the window elapses must show again');
   assert.strictEqual(page.root.getAttribute('data-buddy-state'), 'card');
+});
+
+scenario('E11 Phase 0: the old shared quiet key (another pupil on this browser) is ignored and removed', () => {
+  const until = Date.now() + 5 * 60 * 1000;
+  const page = loadPage({
+    prompt: PROMPT_A,
+    storageSeed: { 'pb-buddy-quiet': JSON.stringify({ until, mark: PROMPT_A.task_mark }) },
+  });
+  assert.strictEqual(page.card.hidden, false, 'a quiet flag that is not this pupil\'s must not keep the card hidden');
+  assert.strictEqual(page.storage.getItem('pb-buddy-quiet'), null, 'the old shared key is removed');
 });
 
 scenario('ignored bubble keeps showing on a later load (no auto-quiet-on-display)', () => {

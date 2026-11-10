@@ -26,8 +26,84 @@
     if (off) off.addEventListener('click', function () { for (var k = 0; k < demos.length; k += 1) z.idle(false, demos[k]); });
   }
 
+  // E10: the stage. "arrival" is the whole film with the demo choices as scene 6; "story" the film alone; a scene id one scene.
+  function wireStage(scope) {
+    var g = window.pbGuide;
+    if (!scope || !g || typeof g.loadStage !== 'function') return;
+    var demo = scope.querySelector('[data-stage-demo]');
+    function run(id) {
+      g.loadStage().then(function (stage) {
+        var ids = ((window.pbStageCatalog || {}).arrival || []).slice();
+        if (id === 'arrival') stage.play(ids.concat('arrival.choose'), { slot: [demo], skipTo: ids.length });
+        else if (id === 'story') stage.play('arrival', { story: true });
+        else stage.play([id], { slot: [demo] });
+      }).catch(function () {});
+    }
+    var btns = scope.querySelectorAll('[data-stage-play]');
+    for (var i = 0; i < btns.length; i += 1) {
+      btns[i].addEventListener('click', function (event) { run(event.currentTarget.getAttribute('data-stage-play')); });
+    }
+    var picks = scope.querySelectorAll('[data-stage-demo-pick]');
+    for (var k = 0; k < picks.length; k += 1) {
+      picks[k].addEventListener('click', function () {
+        if (window.pbStage) window.pbStage.cue([{ play: 'cheer' }]);
+      });
+    }
+    var want = '';
+    try { want = new URLSearchParams(window.location.search).get('stage') || ''; } catch (err) { want = ''; }
+    if (/^[a-z.]{1,40}$/.test(want)) run(want);
+  }
+
+  // E10 phase 8: Zorp's story chapters (0 is the arrival), played straight with no unlock check; ?story=<0-6> or ?story=offer<1-6>.
+  function wireStory(scope) {
+    var g = window.pbGuide;
+    if (!scope || !g || typeof g.story !== 'function') return;
+    function run(want) {
+      var m = /^offer([1-6])$/.exec(want);
+      if (m) g.offerStory(parseInt(m[1], 10)).catch(function () {});
+      else if (/^[0-6]$/.test(want)) g.story(want).catch(function () {});
+    }
+    var btns = scope.querySelectorAll('[data-story-chapter]');
+    for (var i = 0; i < btns.length; i += 1) {
+      btns[i].addEventListener('click', function (event) { run(event.currentTarget.getAttribute('data-story-chapter')); });
+    }
+    var offer = scope.querySelector('[data-story-offer]');
+    if (offer) offer.addEventListener('click', function () { run('offer' + offer.getAttribute('data-story-offer')); });
+    var want = '';
+    try { want = new URLSearchParams(window.location.search).get('story') || ''; } catch (err) { want = ''; }
+    run(want);
+  }
+
+  // E10 phase 4: the badge stage, one family at a time, three at once, or the 100-day streak. Played straight on the stage, so a
+  // replay is never held back by the seen-state.
+  function wireBadges(scope) {
+    var g = window.pbGuide;
+    if (!scope || !g || typeof g.badges !== 'function') return;
+    var data = {};
+    try { data = JSON.parse(document.getElementById('guide-preview-badges').textContent || '{}'); } catch (err) { data = {}; }
+    function spec(name) { return { type: 'milestone', key: data[name].key, badge: data[name] }; }
+    function run(id) {
+      var specs;
+      if (id === 'streak100') specs = [{ type: 'streak', days: 100 }];
+      else if (id === 'multi') specs = [spec('learning'), spec('daily'), spec('topic_master')];
+      else if (data[id]) specs = [spec(id)];
+      else return;
+      g.badges(specs).catch(function () {});
+    }
+    var btns = scope.querySelectorAll('[data-badge-play]');
+    for (var i = 0; i < btns.length; i += 1) {
+      btns[i].addEventListener('click', function (event) { run(event.currentTarget.getAttribute('data-badge-play')); });
+    }
+    var want = '';
+    try { want = new URLSearchParams(window.location.search).get('badge') || ''; } catch (err) { want = ''; }
+    if (/^[a-z0-9_]{1,24}$/.test(want)) run(want);
+  }
+
   ready(function () {
+    wireBadges(document.getElementById('guide-preview-badge-stage'));
     wireZorpDemo(document.getElementById('guide-preview-motion-section'));
+    wireStage(document.getElementById('guide-preview-stage'));
+    wireStory(document.getElementById('guide-preview-story'));
     if (!window.pbGuide) return;
     var playBtn = document.getElementById('guide-preview-play');
     var resetBtn = document.getElementById('guide-preview-reset');

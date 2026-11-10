@@ -910,7 +910,7 @@ def test_welcome_and_empty_states_phase5():
     assert "view='side'" not in tpl  # server draws the hero front-facing
     assert "zorp.turn('side', 'r', { el: hero, instant: true })" in welcome
     # empty states use the new calm clips, all allowlisted
-    for name, clip in (('saved_problems.html', 'think-chin'), ('qotd.html', 'think-chin'), ('leaderboard_friends.html', 'think-chin'), ('follow_list.html', 'shrug')):
+    for name, clip in (('saved_problems.html', 'peek'), ('qotd.html', 'wave'), ('leaderboard_friends.html', 'wave'), ('follow_list.html', 'wave')):   # 2026-11-08: E10 phase 7 (peek into a box; wave with how to follow)
         assert f'data-zorp-autoplay="{clip}"' in (TEMPLATES / name).read_text(encoding='utf-8'), name
         assert clip in zorp_rig.AUTOPLAY_CLIPS
     # offline stays a static sleep; the PWA banner is a static soft smile (server drawn, no runtime needed)
@@ -1291,7 +1291,7 @@ def test_phase7_polish():
     base = (TEMPLATES / 'base.html').read_text(encoding='utf-8')
     assert 'Study streak at risk' not in base and 'keeps your streak going' in base
     sw = (JS_DIR / 'sw.js').read_text(encoding='utf-8')
-    assert "pb-v109" in sw and 'ignoreSearch: true' in sw
+    assert "pb-v123" in sw and 'ignoreSearch: true' in sw   # 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115); 2026-11-08: E10 phase 5 bump (was pb-v114, phase 4; pb-v113 phase 3); 2026-11-08: E10 review fixes bump (was pb-v118)
 
 
 def test_phase7_runtime_fixes_static():

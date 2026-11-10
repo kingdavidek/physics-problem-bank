@@ -1,0 +1,68 @@
+{#
+  Zorp's wardrobe (E10 phase 6b, docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md section 11.10). Included once, on the profile Progress tab
+  next to Milestones. `wardrobe` is models/zorp_wardrobe.py page_model(): slots with items (locked, reason, checked), the draft the
+  panel opens with. Each slot is a native radio group (a fieldset), so arrow keys, Tab and Space work without script; a locked
+  item is a disabled radio whose reason is visible text. static/js/wardrobe.js (lazy: this page only) changes the preview and
+  saves through PATCH /api/v1/me/settings; static/css/wardrobe.css styles it. The art comes from the shared overlay macros, so
+  the hats and shoes are the live rig's own (no new art). Lines Zorp says carry data-zorp-voice for the voice lint.
+#}
+{% from 'partials/zorp_overlays.html' import zorp_hat, zorp_shoe %}
+{% from 'partials/buddy.html' import buddy_mascot %}
+{% macro wd_icon(slot, value) -%}
+{%- if slot == 'colour' -%}
+<span class="wd-dot"{% if value %} data-wd-colour="{{ value }}"{% endif %}></span>
+{%- elif slot == 'hat' and value -%}
+<svg viewBox="-16 -20 32 26" focusable="false">{{ zorp_hat(value, 0, 0) }}</svg>
+{%- elif slot == 'shoes' and value -%}
+<svg viewBox="-9 -6 18 12" focusable="false">{{ zorp_shoe(value, 0, 0) }}</svg>
+{%- elif slot == 'antenna' -%}
+<svg viewBox="0 0 24 24" focusable="false"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">{% if value == 'long' %}<path d="M8 23L3 3M16 23l5-20"/>{% elif value == 'short' %}<path d="M8 23l-3-10M16 23l3-10"/>{% else %}<path d="M8 23L4 8M16 23l4-15"/>{% endif %}</g></svg>
+{%- elif slot == 'feet' -%}
+<svg viewBox="0 0 24 24" focusable="false"><g fill="currentColor">{% if value == 'big' %}<ellipse cx="7" cy="14" rx="6.5" ry="4.6"/><ellipse cx="17" cy="14" rx="6.5" ry="4.6"/>{% else %}<ellipse cx="7" cy="14" rx="5.4" ry="3.6"/><ellipse cx="17" cy="14" rx="5.4" ry="3.6"/>{% endif %}</g></svg>
+{%- elif slot == 'mouth' -%}
+<svg viewBox="0 0 24 24" focusable="false"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{% if value == 'grin' %}<path d="M4 9q8 6 16 0q-1 7-8 7t-8-7z"/>{% elif value == 'cat' %}<path d="M3 13q4-5 9-1q5-4 9 1"/>{% else %}<path d="M5 10q7 7 14 0"/>{% endif %}</g></svg>
+{%- else -%}
+<svg viewBox="0 0 24 24" focusable="false"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><path d="M7 17L17 7"/></g></svg>
+{%- endif -%}
+{%- endmacro %}
+<section class="section-panel wd" id="wardrobe" data-wardrobe data-wd-chose="{{ 1 if wardrobe.chose else 0 }}" data-wd-api="{{ url_for('api_v1_patch_settings') }}">
+    <div class="section-panel-header">Zorp’s wardrobe</div>
+    <div class="section-panel-body">
+        <p class="wd-intro" data-zorp-voice="zorp:reward_line">Badges unlock things for me to wear. Pick what you like, then save it.</p>
+        <div class="wd-layout">
+            <div class="wd-preview">
+                <span class="study-buddy-face wd-zorp" data-wd-zorp data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot(look=wardrobe.draft) }}</span>
+                <p class="wd-note" data-wd-note-auto data-zorp-voice="zorp:reward_line"{% if wardrobe.chose %} hidden{% endif %}>Until you save, I choose my own look.</p>
+                <p class="wd-note" data-wd-note-saved data-zorp-voice="zorp:reward_line"{% if not wardrobe.chose %} hidden{% endif %}>This is the look I wear on every page.</p>
+            </div>
+            <div class="wd-slots">
+                {% for slot in wardrobe.slots %}
+                <fieldset class="wd-slot" data-wd-slot="{{ slot.key }}">
+                    <legend>{{ slot.label }}</legend>
+                    <div class="wd-items">
+                        {% for it in slot.choices %}
+                        <label class="wd-item{% if it.locked %} is-locked{% endif %}">
+                            <input type="radio" name="wd-{{ slot.key }}" value="{{ it.value }}" data-wd-id="{{ it.id }}"{% if it.checked %} checked{% endif %}{% if it.locked %} disabled{% endif %}>
+                            <span class="wd-swatch" aria-hidden="true">{{ wd_icon(slot.key, it.value) }}</span>
+                            <span class="wd-name">{{ it.name }}</span>
+                            {% if it.locked and it.badge %}<button type="button" class="badge-next-link wd-why" data-badge-open="{{ it.badge }}" data-zorp-voice="zorp:reward_line">Earn {{ it.reason }} to unlock</button>
+                            {% elif it.locked %}<span class="wd-why" data-zorp-voice="zorp:reward_line">Earn {{ it.reason }} to unlock</span>{% endif %}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="wd-actions">
+            <button type="button" class="btn btn-primary" data-wd-save data-zorp-voice="zorp:button_label">Save outfit</button>
+            <button type="button" class="btn btn-outline" data-wd-reset data-zorp-voice="zorp:button_label">Reset to default</button>
+            <p class="wd-status" data-wd-status role="status" aria-live="polite"></p>
+        </div>
+    </div>
+    {# The live rig's own hats and shoes, cloned by wardrobe.js into the preview and the corner Zorp; inert, nothing paints. #}
+    <template data-wd-art><svg xmlns="http://www.w3.org/2000/svg">
+        {% for h in zorp_wardrobe.ITEMS if h.slot == 'hat' and h.value %}<g data-art="hat.{{ h.value }}">{{ zorp_hat(h.value, 32, 14.5) }}</g>{% endfor %}
+        {% for h in zorp_wardrobe.ITEMS if h.slot == 'shoes' and h.value %}<g data-art="shoes.{{ h.value }}.l">{{ zorp_shoe(h.value, 24, 56.5) }}</g><g data-art="shoes.{{ h.value }}.r">{{ zorp_shoe(h.value, 40, 56.5) }}</g>{% endfor %}
+    </svg></template>
+</section>

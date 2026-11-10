@@ -1731,7 +1731,8 @@ def check_no_drift(items):
         issue('no_drift', 'diagnose', 'diagnosis drew a random number')
     base_allowed = {'__future__', 'ast', 'html', 're', 'dataclasses', 'fractions', 'typing', 'generators', 'answer_checkers',
                     'math', 'decimal', 'json'}
-    for fname, extra in (('misconceptions.py', {'misconception_topics', 'misconception_cd'}), ('misconception_topics.py', set()),
+    # difflib (2026-11-07): the repeated-bigger-hint check compares two strings; deterministic, draws nothing
+    for fname, extra in (('misconceptions.py', {'misconception_topics', 'misconception_cd', 'difflib'}), ('misconception_topics.py', set()),
                          ('misconception_cd.py', {'misconception_topics', 'itertools', 'sympy', 'misconception_5b'}),
                          ('misconception_5b.py', {'misconception_topics'})):
         tree = ast.parse((ROOT / 'generators' / 'shared' / fname).read_text(encoding='utf-8'))
