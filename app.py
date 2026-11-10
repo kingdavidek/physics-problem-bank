@@ -182,6 +182,9 @@ from models.social import (
     MOTION_SYSTEM,
     normalize_motion_preference,
     ZORP_SOUND_CHOICES,
+    CELEBRATION_FULL,
+    CELEBRATION_MODES,
+    normalize_celebration_mode,
     ZORP_SOUND_OFF,
     normalize_zorp_sound,
     public_guide_state,
@@ -259,7 +262,11 @@ from models.user_data import (
 from models.gamification import (
     MILESTONE_CATALOG,
     MILESTONE_TOUR,
+    MILESTONE_PERFECT_1,
     award_tour_badge,
+    backfill_quiet_badges,
+    quiet_badges_to_announce,
+    mark_quiet_badges_announced,
     badge_display,
     effort_weight,
     evaluate_milestones,
@@ -1157,10 +1164,14 @@ def _pending_milestone_keys():
 # They travel like badges: `new_moments` in a JSON body (with the X-PB-Milestones header), the page data island, or the session
 # list `pb_mm` for the next page. The client (static/js/celebrate.js -> pbGuide.moments -> static/js/moments.js) plays them.
 _PENDING_MOMENTS_MAX = 8
-_MOMENT_KEYS = ('type', 'id', 'kind', 'level', 'pct', 'score', 'total', 'wrong', 'points', 'correct', 'url', 'days', 'chapter')
+_MOMENT_KEYS = ('type', 'id', 'kind', 'level', 'pct', 'score', 'total', 'wrong', 'points', 'correct', 'url', 'days', 'chapter',
+                'count', 'title')
 # a perfect quiz that earns one of these badges is the badge's story: the badge stage plays alone (the client drops the perfect
 # stage and its toast, see _note_quiz_finished)
 _PERFECT_BADGE_PREFIXES = ('topic_ninja:', 'topic_master:')
+# E11 Phase 1: the first 10/10 ever earns Full marks, whose badge stage is that 10/10's celebration (no second stage)
+_PERFECT_BADGE_KEYS = (MILESTONE_PERFECT_1,)
+WELCOME_BACK_DAYS = 3   # E11 Phase 1 (plan 2.2): the first study day after this many days away or more brings a Welcome back card
 _MOMENT_ID_RE = re.compile(r'^[a-z0-9_:\-]{1,64}$')
 
 
@@ -1191,6 +1202,20 @@ def _pending_moments():
             out.append(m)
     g.pb_mm_island = out
     return out
+
+
+def _quiet_badges_card(conn, moments):
+    """E11 Phase 1 (plan 2.4 rule 6): badges awarded quietly from the pupil's history (models.gamification.backfill_quiet_badges)
+    are announced once, in one corner card on the next page the pupil looks at ("You already earned ..."), never with stages."""
+    if request.endpoint == 'welcome':
+        return moments
+    keys = quiet_badges_to_announce(conn, current_user.id)
+    if not keys:
+        return moments
+    mark_quiet_badges_announced(conn, current_user.id)
+    title = str(badge_display(keys[0]).get('title') or '')[:60]
+    return moments + [{'type': 'toast', 'id': f'toast:backfill:{current_day_key()}:{len(keys)}', 'kind': 'backfill',
+                       'count': len(keys), 'title': title}]
 
 
 def _story_catchup(conn, guide_state, moments):
@@ -1291,6 +1316,8 @@ def inject_nav():
     theme_preference = THEME_SYSTEM
     motion_preference = MOTION_SYSTEM
     zorp_sound = ZORP_SOUND_OFF
+    celebration_mode = CELEBRATION_FULL
+    perfect_as_card = False
     guide_state = {'v': 1, 'origin': False, 'tours': {}, 'rewards': {}, 'run': None}
     guide_json_persisted = False
     tour_in_class = False
@@ -1319,6 +1346,8 @@ def inject_nav():
             zorp_sound = normalize_zorp_sound(
                 profile_settings.get('zorp_sound', ZORP_SOUND_OFF)
             )
+            celebration_mode = normalize_celebration_mode(profile_settings.get('celebration_mode'))
+            perfect_as_card = bool(profile_settings.get('perfect_as_card'))
             guide_state = profile_settings.get('guide') or guide_state
             guide_json_persisted = bool(profile_settings.get('guide_json_persisted'))
             if not (guide_state.get('tours') or {}).get('app') or guide_state.get('run'):
@@ -1364,6 +1393,7 @@ def inject_nav():
                 pb_new_milestones = [_badge_payload(k, conn) for k in _pending_milestone_keys()[:_PENDING_MILESTONES_MAX]]
                 pb_new_moments = _pending_moments()[:_PENDING_MOMENTS_MAX]
                 pb_new_moments = _story_catchup(conn, guide_state, pb_new_moments)
+                pb_new_moments = _quiet_badges_card(conn, pb_new_moments)
     return {
         'nav_endpoint': request.endpoint,
         'lesson_meta': lesson_meta,
@@ -1387,6 +1417,8 @@ def inject_nav():
         'theme_preference': theme_preference,
         'motion_preference': motion_preference,
         'zorp_sound': zorp_sound,
+        'celebration_mode': celebration_mode,
+        'perfect_as_card': perfect_as_card,
         'guide_state': guide_state,
         'tour_in_class': tour_in_class,
         'guide_json_persisted': guide_json_persisted,
@@ -1902,6 +1934,8 @@ with get_db() as conn:
         ('zorp_sound', "TEXT NOT NULL DEFAULT 'off'"),
         ('guide_json', "TEXT NOT NULL DEFAULT '{}'"),
         ('zorp_outfit_json', "TEXT NOT NULL DEFAULT ''"),   # E10 phase 6b: Zorp's wardrobe choice ('' = never chose)
+        ('celebration_mode', "TEXT NOT NULL DEFAULT 'full'"),   # E11 Phase 1: full, big or small (models.social)
+        ('perfect_as_card', 'INTEGER NOT NULL DEFAULT 0'),     # E11 Phase 1: the 10/10 stage as a corner card
     ):
         if col not in profile_cols:
             conn.execute(f'ALTER TABLE user_profile_settings ADD COLUMN {col} {ddl}')
@@ -2444,6 +2478,17 @@ with get_db() as conn:
         CREATE INDEX IF NOT EXISTS idx_class_audit_class
         ON class_audit_events (class_id, id)
     """)
+    # E11 Phase 1 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 2.4 rule 6): badges awarded quietly from history carry quiet = 1 until the
+    # pupil's next page announces them in one corner card (then 2). Full marks is back-filled once, for 10/10s already on record.
+    milestone_cols = {row[1] for row in conn.execute('PRAGMA table_info(user_milestones)').fetchall()}
+    if 'quiet' not in milestone_cols:
+        conn.execute('ALTER TABLE user_milestones ADD COLUMN quiet INTEGER NOT NULL DEFAULT 0')
+    if 'e11_backfill_perfect_1' not in migrated:
+        backfill_quiet_badges(conn, (MILESTONE_PERFECT_1,))
+        conn.execute(
+            "INSERT INTO schema_migrations (name, applied_at) VALUES (?, datetime('now'))",
+            ('e11_backfill_perfect_1',),
+        )
     ensure_system_bot(conn)
     ensure_lesson_search_index(conn)
     conn.commit()
@@ -4625,6 +4670,9 @@ def _settings_to_json(settings):
             settings.get('motion_preference', MOTION_SYSTEM)
         ),
         'zorp_sound': normalize_zorp_sound(settings.get('zorp_sound', ZORP_SOUND_OFF)),
+        # E11 Phase 1: how big celebrations are, and the 10/10 stage as a card (the quiet link on that stage)
+        'celebration_mode': normalize_celebration_mode(settings.get('celebration_mode', CELEBRATION_FULL)),
+        'perfect_as_card': bool(settings.get('perfect_as_card', False)),
         'avatar': parse_avatar(settings.get('avatar')),
         # E10 phase 6b: Zorp's wardrobe choice; None = never chose (the automatic look). Owner only, like the other display settings.
         'zorp_outfit': zorp_wardrobe.parse_outfit(settings.get('zorp_outfit_json', settings.get('zorp_outfit'))),
@@ -4703,14 +4751,31 @@ def _record_study_activity(user_id):
     if not user_id:
         return []
     with get_db() as conn:
+        last = conn.execute('SELECT MAX(study_date) AS d FROM user_study_days WHERE user_id = ?', (user_id,)).fetchone()
+        last_day = last['d'] if last else None
         freezes_before = _freeze_count(conn, user_id)
-        record_study_day(conn, user_id)
+        streak_after = record_study_day(conn, user_id)
         used_skip = _freeze_count(conn, user_id) > freezes_before
         earned = evaluate_milestones(conn, user_id)
     _note_new_milestones(user_id, earned)
     if used_skip:
         _note_moment(user_id, {'type': 'toast', 'id': f'toast:skip:{current_day_key()}', 'kind': 'streak_skip'})
+    # E11 Phase 1 (plan 2.2): the first study day after WELCOME_BACK_DAYS or more away is a kind corner card (never guilt). When a
+    # weekly skip kept the streak, its own card says so and this one is not added.
+    away = _days_since(last_day)
+    if away >= WELCOME_BACK_DAYS and not used_skip:
+        kept = int((streak_after or {}).get('current') or 0) > 1
+        _note_moment(user_id, {'type': 'toast', 'id': f'toast:back:{current_day_key()}',
+                               'kind': 'welcome_back_kept' if kept else 'welcome_back'})
     return earned
+
+
+def _days_since(day_key):
+    """Whole UTC days from an ISO date (a study day) to today; 0 for none or a bad value."""
+    try:
+        return max(0, (datetime.now(timezone.utc).date() - date.fromisoformat(str(day_key))).days) if day_key else 0
+    except ValueError:
+        return 0
 
 
 def _record_set_work_answer(assignment_id, work=None):
@@ -4755,7 +4820,7 @@ def _note_quiz_finished(user_id, level, subject, topic, score, total, attempt_id
         return
     if kind == 'lesson' and not retry_mode and done and total >= 3:
         badges = getattr(g, 'pb_new_ms', None) or []
-        if not any(str(k).startswith(_PERFECT_BADGE_PREFIXES) for k in badges):
+        if not any(str(k).startswith(_PERFECT_BADGE_PREFIXES) or k in _PERFECT_BADGE_KEYS for k in badges):
             _note_moment(user_id, {'type': 'perfect', 'id': f'perfect:{aid}', 'score': score, 'total': total})
         return
     base = {'type': 'toast', 'id': f'toast:quiz:{aid}', 'score': score, 'total': total, 'wrong': wrong}
@@ -7392,6 +7457,8 @@ def profile_settings():
                 'theme_preference': request.form.get('theme_preference', THEME_SYSTEM),
                 'motion_preference': request.form.get('motion_preference', MOTION_SYSTEM),
                 'zorp_sound': request.form.get('zorp_sound', ZORP_SOUND_OFF),
+                'celebration_mode': request.form.get('celebration_mode', CELEBRATION_FULL),
+                'perfect_as_card': request.form.get('perfect_as_card') == '1',
             }
             with get_db() as conn:
                 if (
@@ -8206,6 +8273,8 @@ def api_v1_patch_settings():
         'theme_preference',
         'motion_preference',
         'zorp_sound',
+        'celebration_mode',
+        'perfect_as_card',
         'avatar',
         'avatar_face',
         'avatar_bg',
@@ -8266,7 +8335,15 @@ def api_v1_patch_settings():
                 'invalid_zorp_sound',
             )
 
+    if 'celebration_mode' in payload and payload['celebration_mode'] not in CELEBRATION_MODES:
+        return _api_error(
+            f'celebration_mode must be one of: {", ".join(CELEBRATION_MODES)}',
+            400,
+            'invalid_celebration_mode',
+        )
+
     bool_fields = (
+        'perfect_as_card',
         'show_member_since',
         'show_last_topic',
         'show_last_activity',

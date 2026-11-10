@@ -52,3 +52,9 @@
 /* Micro: a small note under a right answer */
 .pb-micro { position: relative; display: inline-block; margin: 6px 0 0; padding: 2px 26px 2px 0; font-size: var(--text-sm); font-weight: 600; color: var(--on-correct); }
 .pb-micro-spark { position: absolute; right: 2px; top: 0; width: 18px; height: 18px; }
+/* E11 Phase 1: "Skip all" in a sequence of cards, and the quiet "show as a small card" link under a 10/10 */
+.mo-skipall, .mo-cardlink { border: 0; background: none; color: var(--text-muted); font: inherit; text-decoration: underline; cursor: pointer; border-radius: var(--radius-sm); }
+.mo-skipall { margin-left: auto; padding: 4px 8px; font-size: .9rem; white-space: nowrap; }
+.mo-cardlink { display: block; margin: 10px 0 0; padding: 4px 0; font-size: .88rem; }
+.mo-skipall:hover, .mo-cardlink:hover { color: var(--text); }
+.mo-skipall:focus-visible, .mo-cardlink:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }

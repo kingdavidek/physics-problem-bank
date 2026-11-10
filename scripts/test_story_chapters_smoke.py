@@ -456,9 +456,10 @@ def test_the_offer_never_plays_by_itself():
     guide = _read(JS / 'guide.js')
     run = guide[guide.index('function runMoments()'):guide.index('function moments(list)')]
     # offers wait where every moment waits: not while a dialog, a stage or the badge stage is up; shown after the other moments
-    assert 'isOpen || stageBusy() || badgeTimer || pendingRewards.some(isBig)' in run
+    # 2026-11-10 E11 Phase 1: the moments and the badges of one beat now play together (r[0].play(batch, bigs)); offers still wait
+    assert 'isOpen || stageBusy() || badgeTimer || momentTimer' in run and 'pendingRewards.some(isBig)' in run
     assert 'offers.length ? loadStory()' in run and 'st.offer(offers[0])' in run, 'one offer at a time'
-    assert run.index('m.play(batch)') < run.index('st.offer(offers[0])'), 'after the other moments'
+    assert run.index('r[0].play(batch, bigs)') < run.index('st.offer(offers[0])'), 'after the other moments'
     assert "isStoryOffer(m) { return !!m && m.kind === 'story_offer'; }" in guide
     # it asks nothing of the pupil: the stage it opens is the stage's own dialog with a Skip story button and Esc
     assert "stage.play(ch.scenes, { story: true })" in src

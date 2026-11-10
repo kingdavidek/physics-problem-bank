@@ -2,7 +2,7 @@
 
 Written 2026-11-10 after David's report: he finished the whole BIDMAS lesson and did not get **Lesson learner**, got **First quiz** with no animation, and scored 10/10 with nothing to mark it. This plan fixes those first (Phase 0), then sets out which events earn a full-screen moment, which earn something smaller, new badges, and improvements to how progress and badges are shown.
 
-Builds on E10 (`docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md`): the stage engine, the badge stage and its 11 family choreographies, moments (`level`, `perfect`, `toast`, `micro`), the wardrobe and the story chapters all exist. Section 7 lists the decisions for David and his answers (7.1). Phase 0 is built (section 8); Phases 1 to 4 are not.
+Builds on E10 (`docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md`): the stage engine, the badge stage and its 11 family choreographies, moments (`level`, `perfect`, `toast`, `micro`), the wardrobe and the story chapters all exist. Section 7 lists the decisions for David and his answers (7.1). Phases 0 and 1 are built (sections 8 and 9); Phases 2 to 4 are not.
 
 ---
 
@@ -326,4 +326,69 @@ At 390 px in dark mode the lesson stage fits: no sideways scroll, both buttons v
 **On David's laptop after the restart.**
 - Account 777's held First quiz and Full marks show once, on the next page, if they are still in its session.
 - BIDMAS starts with no ticks on that account. Redoing the quick checks earns Lesson learner, the lesson stage with its badge, and Topic ninja, because the 10/10 is already on record.
+
+---
+
+## 9. Phase 1 built (2026-11-10)
+
+Nothing committed. David's answers 1, 3, 5 and 11 applied.
+
+**The Celebrations setting.**
+- Two new columns on `user_profile_settings`: `celebration_mode` (`full` by default, `big` or `small`) and `perfect_as_card` (0 by default).
+- They are saved by the settings form and by `PATCH /api/v1/me/settings` (`invalid_celebration_mode` for a bad value), kept by every other save, and put on `<body>` as `data-pb-celebrate` and `data-pb-perfect-card` for the client.
+- The settings page has a **Celebrations** section with the three choices and a switch, "Show full marks on a quiz as a small card".
+- What each choice does:
+
+  | Choice | Full screen | Corner card |
+  |---|---|---|
+  | Full screen | everything | a finished lesson once the day's budget is spent; a 10/10 when the switch or the link is on |
+  | Big moments only | badges and level-ups | finished lessons and 10/10s |
+  | Small cards only | nothing | everything; several badges in one moment are one card ("3 new badges: ...") so a phone is not covered |
+
+- **The quiet link.** The 10/10 stage has a link, "Show these as a small card". It saves `perfect_as_card`, closes the stage and confirms in a card with a Settings link.
+
+**One sequence per page (rule 1).**
+- `guide.js` waits one beat (`BEAT_MS` 300) and then hands the moments and the badges of that beat to `moments.js` together.
+- `moments.js` plays one sequence: the scene (a 10/10 or a finished lesson), then the badges, highest tier first (violet, gold, silver, bronze), then the level-up. It holds at most 3 cards, shows one count ("1 of 3") and has a **Skip all**.
+- The badge cards come from `badge-stage.js`, which now exposes `part()`; its own `play()` is built on that part.
+- Cards past 3 wait in the tab's session storage (`pb-celebrate-next:<storage name>`), and the next page plays them.
+- Things that wait for the moments, such as a story offer, come after the last card.
+
+**The daily budget (rule 4).**
+- At most 6 full-screen finished lessons a day; after that they become corner cards.
+- A 10/10, a badge and a level-up never count (answer 11).
+- The count is `fs:<day>:<n>` flags, which the guide state keeps in its evictable ring (`fs:` added to the volatile prefixes in `models/social.py`).
+
+**Full marks (`perfect_1`).**
+- The first 10/10 on a lesson quiz earns it: not a retry run, at least 3 questions, every answer right (the same rule as the perfect moment).
+- Its badge stage replaces that 10/10's perfect stage; every later 10/10 is the perfect stage, every time (answer 1).
+- Family `accuracy`, with a bigger dance (`victory`). A family of its own needs a wardrobe item, and every look the live Zorp can draw is already in the wardrobe. Phase 2 decides the Perfect line's family when the new cosmetics are drawn.
+
+**The quiet back-fill (rule 6).**
+- `user_milestones.quiet` records how a badge arrived: 0 earned live, 1 back-filled and not yet told, 2 told.
+- The migration `e11_backfill_perfect_1` gives Full marks to everyone with a 10/10 on record. It plays no stage and sends no notification. The earned date is the first such quiz.
+- The next page the pupil looks at shows one corner card: "You already earned a badge: Full marks. It is on your profile." (or "{n} new badges").
+- Phase 2 adds its badges to `BACKFILL_RULES`.
+
+**Welcome back (2.2).**
+- The first study day after 3 or more days away shows a corner card: "You’re back. Your streak starts again today.", or "You’re back. Good to see you again." when the streak survived.
+- No card when a weekly skip kept the streak, because that has its own card.
+
+**First right answer (2.3).** A corner card, "Your first right answer. Nice work.", replaces the dialog. It still waits 1.8 s, and gives way to a badge in the same moment.
+
+**Browser walks** (Chromium, the service worker in control):
+
+| Walk | What appeared |
+|---|---|
+| a whole lesson, then a 10/10 | Lesson learner; one lesson stage with its badge; then "1 of 3" Topic ninja, First quiz, Full marks, with Skip all |
+| five badges at once | violet, gold and silver in the first sequence; the two bronze ones on the next page; Skip all closes |
+| the link on a second 10/10 | the 10/10 stage with "Show these as a small card"; the setting saved and a confirmation card; the third 10/10 was a card |
+| Small cards only, at 390 px | Lesson learner, the lesson (naming its badge) and one "3 new badges" card, then the story offer |
+| the budget spent | Lesson learner still full screen, the finished lesson a card |
+
+**Versions and caps.**
+- `guide.js` v28, `moments.js` v3, `moments.css` v2, `badge-stage.js` v4, `sw.js` `pb-v124`.
+- Caps: `moments.js` 36,500 and `badge-stage.js` 20,000, both with dated ledger notes.
+- Tests: `scripts/test_e11_phase1_smoke.py` (new). The perfect-moment tests in `test_celebration_moments_smoke.py` now give the account Full marks first.
+- Privacy: DPIA row, ROPA row 1, both privacy notices, `SECURITY_AND_GDPR.md` and `API.md`.
 

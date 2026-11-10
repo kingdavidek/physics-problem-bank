@@ -41,13 +41,34 @@
     fixed: 'All fixed.',
     setwork: 'Every question in this set work is answered.',
     challenge: 'Your answers are in. {score} out of {total}.',
-    skip: 'Your weekly skip kept your streak going.'
+    skip: 'Your weekly skip kept your streak going.',
+    // E11 Phase 1 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 2.2 to 2.4)
+    skipAll: 'Skip all',
+    seeIt: 'See it',
+    settings: 'Settings',
+    firstCorrect: 'Your first right answer. Nice work.',
+    badgeCard: 'New badge: {title}.',
+    streakCard: '{days} days in a row. New badge.',
+    levelCard: 'Level {level}. Your effort points keep adding up.',
+    perfectCard: 'Full marks. {score} out of {total}, every answer right.',
+    lessonCard: 'Lesson complete. Every quick check is done.',
+    lessonCardBadge: 'Lesson complete. New badge: {title}.',
+    badgesCard: '{count} new badges: {title}.',
+    and: ' and ',
+    back: 'You’re back. Your streak starts again today.',
+    backKept: 'You’re back. Good to see you again.',
+    backfillOne: 'You already earned a badge: {title}. It is on your profile.',
+    backfillMany: 'You already earned {count} new badges. They are on your profile.',
+    perfectSmall: 'Show these as a small card',
+    perfectSet: 'Full marks will show as a small card now. You can change it in Settings.'
   };
   // END COPY
   // BEGIN FACES
   var FACES = {
     quiz_done: 'soft-smile', personal_best: 'proud', quicktest_done: 'soft-smile', daily_week: 'joy', retry_cleared: 'happy',
-    set_work_done: 'proud', challenge_done: 'happy', streak_skip: 'soft-smile', hint: 'happy'
+    set_work_done: 'proud', challenge_done: 'happy', streak_skip: 'soft-smile', hint: 'happy',
+    first_correct: 'happy', badge_card: 'proud', badges_card: 'proud', streak_card: 'proud', level_card: 'proud', perfect_card: 'joy', lesson_card: 'happy',
+    welcome_back: 'happy', welcome_back_kept: 'happy', backfill: 'proud', perfect_set: 'soft-smile'
   };
   // END FACES
   // BEGIN SCENES
@@ -291,6 +312,67 @@
     return out;
   }
 
+  // ---- E11 Phase 1: how big celebrations are (David's answers 1, 5 and 11; the settings live on <body>) ----
+  var MAX_CARDS = 3;      // one sequence holds at most this many cards; the rest wait for the next page
+  var BUDGET = 6;         // full-screen finished lessons a day; then corner cards (10/10s, badges and level-ups never count)
+  var TIER = { violet: 0, gold: 1, silver: 2, bronze: 3 };
+  function mode() {
+    var v = D.body && D.body.getAttribute('data-pb-celebrate');
+    return v === 'big' || v === 'small' ? v : 'full';
+  }
+  function perfectAsCard() { return !!D.body && D.body.getAttribute('data-pb-perfect-card') === '1'; }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function today() { var d = new Date(); return '' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()); }
+  function budgetUsed() {
+    var g = G();
+    var n = 0;
+    for (var i = 1; g && i <= BUDGET; i += 1) if (g.rewardSeen('fs:' + today() + ':' + i)) n = i;
+    return n;
+  }
+  function spend() {
+    var g = G();
+    var n = budgetUsed();
+    if (g && g.markReward && n < BUDGET) g.markReward('fs:' + today() + ':' + (n + 1));
+  }
+  function storeNs() {
+    var m = D.querySelector('meta[name="pb-store"]');
+    return (m && m.getAttribute('content')) || 'anon';
+  }
+  var CARRY = 'pb-celebrate-next:';
+  // cards past MAX_CARDS wait for the next page (guide.js picks them up); this tab only, this pupil only
+  function carry(moments, badges) {
+    if (!moments.length && !badges.length) return;
+    try {
+      var key = CARRY + storeNs();
+      var old = JSON.parse(window.sessionStorage.getItem(key) || 'null') || { m: [], b: [] };
+      window.sessionStorage.setItem(key, JSON.stringify({ m: (old.m || []).concat(moments).slice(-8), b: (old.b || []).concat(badges).slice(-8) }));
+    } catch (e) { /* no storage: they show on the profile shelf all the same */ }
+  }
+  function savePerfectCard() {
+    if (D.body) D.body.setAttribute('data-pb-perfect-card', '1');
+    var t = D.querySelector('meta[name="csrf-token"]');
+    try {
+      fetch('/api/v1/me/settings', {
+        method: 'PATCH', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-Token': t ? t.getAttribute('content') : '' },
+        body: JSON.stringify({ perfect_as_card: true })
+      }).catch(function () { /* the next 10/10 asks again */ });
+    } catch (e) { /* no fetch */ }
+  }
+  function perfectLink(st) {
+    var panel = st.querySelector('.pb-st-panel');
+    if (!panel || panel.querySelector('.mo-cardlink')) return;
+    var b = el('button', 'mo-cardlink', panel);
+    b.type = 'button';
+    b.textContent = UI.perfectSmall;
+    b.addEventListener('click', function () {
+      b.disabled = true;
+      savePerfectCard();
+      if (window.pbStage) window.pbStage.close();
+      setTimeout(function () { toast({ type: 'toast', id: 'toast:perfect_set:' + today(), kind: 'perfect_set' }); }, 450);
+    });
+  }
+
   function mark(m) {
     var g = G();
     if (!g) return;
@@ -303,39 +385,116 @@
     if (m.type === 'perfect') once(m.id);
   }
 
-  function playStages(list) {
+  // E11 Phase 1 (plan 2.4 rule 1): one full-screen sequence per page, in a fixed order (the scene, the badges, the level-up), with one
+  // count and "Skip all". The badge cards come from badge-stage.js (pbBadgeStage.part); each card's things come off the stage when
+  // the next card belongs to the other module. The second button (Try the quiz, See my milestones, See my profile) is followed for
+  // the card it was pressed on.
+  function sequence(front, badgeSpecs, back) {
     var g = G();
-    var scenes = list.map(sceneFor);
-    go = '';
-    return g.loadStage().then(ready).then(function () {
-      var decorated = null;
-      return window.pbStage.play(scenes, {
+    var bs = badgeSpecs.length && window.pbBadgeStage && window.pbBadgeStage.part ? window.pbBadgeStage.part(badgeSpecs) : null;
+    var items = [];
+    var momentItem = function (m) {
+      var sc = sceneFor(m);
+      return {
+        scene: sc, owner: 'm',
+        show: function (st) {
+          mark(m);
+          if (m.type === 'lesson_complete') spend();
+          enter(m, st.querySelector('.pb-st-set'));
+          if (m.type === 'perfect') perfectLink(st);
+        },
+        hide: function (st) {
+          clear();
+          var l = st && st.querySelector('.mo-cardlink');
+          if (l && l.parentNode) l.parentNode.removeChild(l);
+        },
+        markAll: function () { mark(m); },
+        go: function () {
+          if (!sc.go) return;
+          var a = D.createElement('a');
+          a.href = sc.go;
+          if (a.pathname === location.pathname && a.hash) location.hash = a.hash;
+          else location.assign(sc.go);
+        }
+      };
+    };
+    front.forEach(function (m) { items.push(momentItem(m)); });
+    if (bs) bs.cards.forEach(function (c, j) {
+      items.push({ scene: bs.scenes[j], owner: 'b', show: function (st) { bs.show(j, st); }, hide: bs.hide, markAll: bs.markAll, go: bs.go });
+    });
+    back.forEach(function (m) { items.push(momentItem(m)); });
+    if (!items.length) return Promise.resolve();
+    var at = -1;
+    var chosen = null;
+    var count = null;
+    return g.loadStage().then(function () {
+      return Promise.all([ready(), bs ? window.pbBadgeStage.ready() : null]);
+    }).then(function () {
+      return window.pbStage.play(items.map(function (it) { return it.scene; }), {
         onScene: function (i) {
           var st = D.querySelector('.pb-stage');
           if (!st) return;
-          if (!decorated) {
-            decorated = el('span', 'mo-count');
-            st.querySelector('.pb-st-top').appendChild(decorated);
+          if (!count) {
+            var top = st.querySelector('.pb-st-top');
+            count = el('span', 'mo-count', top);
             var skip = st.querySelector('.pb-st-actions .btn-outline');
-            if (skip) skip.addEventListener('click', function () { go = (decorated.go || ''); }, true);
+            if (skip) skip.addEventListener('click', function () { chosen = items[at]; }, true);
+            if (items.length > 1) {
+              var all = el('button', 'mo-skipall', top);
+              all.type = 'button';
+              all.textContent = UI.skipAll;
+              all.addEventListener('click', function () {
+                items.forEach(function (it) { it.markAll(); });
+                window.pbStage.close();
+              });
+            }
           }
-          decorated.textContent = list.length > 1 ? (i + 1) + ' of ' + list.length : '';
-          decorated.go = scenes[i].go;
-          mark(list[i]);
-          enter(list[i], st.querySelector('.pb-st-set'));
+          if (at >= 0 && items[at] && items[at].owner !== items[i].owner) items[at].hide(st);
+          at = i;
+          count.textContent = items.length > 1 ? (i + 1) + ' of ' + items.length : '';
+          items[i].show(st);
         }
       });
     }).then(function (res) {
       clear();
-      if (res && res.ended === 'skip' && go) {
-        var a = D.createElement('a');
-        a.href = go;
-        if (a.pathname === location.pathname && a.hash) location.hash = a.hash;
-        else location.assign(go);
+      if (bs) bs.end();
+      if (res && res.ended === 'skip' && chosen) {
+        chosen.markAll();
+        chosen.go();
       }
       return res;
-    });
+    }, function (err) { clear(); if (bs) bs.end(); throw err; });
   }
+
+  // a stage shown as a corner card instead (the setting, the 10/10 link or the day's budget): marked seen like the stage
+  function asCard(m) {
+    mark(m);
+    var t = { type: 'toast', id: 'card:' + (m.id || m.type + ':' + (m.level || m.topic || '')), score: m.score, total: m.total, level: m.level };
+    if (m.type === 'level') t.kind = 'level_card';
+    else if (m.type === 'perfect') t.kind = 'perfect_card';
+    else { t.kind = 'lesson_card'; t.quiz = m.quiz || ''; t.title = m.badge && m.badge.title ? String(m.badge.title).slice(0, 80) : ''; }
+    return t;
+  }
+  function badgeCard(spec) {
+    var g = G();
+    var b = spec.badge || {};
+    if (spec.type === 'streak') {
+      if (g && g.markReward) g.markReward('streak:' + spec.days);
+      return { type: 'toast', id: 'card:streak:' + spec.days, kind: 'streak_card', days: spec.days };
+    }
+    var key = String(spec.key || b.key || '');
+    if (g && g.markReward) {
+      g.markReward('milestone:' + key);
+      if (key === 'streak_7') g.markReward('streak:7');
+      if (key === 'streak_30') g.markReward('streak:30');
+    }
+    var title = b.title;
+    if (!title) {
+      try { title = ((JSON.parse((D.getElementById('pb-milestone-catalog') || {}).textContent || '{}') || {})[key] || {}).title; } catch (e) { title = ''; }
+    }
+    return { type: 'toast', id: 'card:milestone:' + key.slice(0, 50), kind: 'badge_card', title: title || key };
+  }
+  function tierOf(spec) { return spec.type === 'streak' ? TIER.gold : (TIER[(spec.badge || {}).tier] != null ? TIER[(spec.badge || {}).tier] : TIER.bronze); }
 
   // ---- toasts: the app toast host (polite live region) with a mini Zorp; never takes focus ----
   function miniZorp(parent, face) {
@@ -365,7 +524,27 @@
     if (k === 'set_work_done') return UI.setwork;
     if (k === 'challenge_done') return fill(UI.challenge, m);
     if (k === 'streak_skip') return UI.skip;
+    if (k === 'first_correct') return UI.firstCorrect;
+    if (k === 'badge_card') return fill(UI.badgeCard, m);
+    if (k === 'streak_card') return fill(UI.streakCard, m);
+    if (k === 'level_card') return fill(UI.levelCard, m);
+    if (k === 'perfect_card') return fill(UI.perfectCard, m);
+    if (k === 'lesson_card') return m.title ? fill(UI.lessonCardBadge, m) : UI.lessonCard;
+    if (k === 'badges_card') return fill(UI.badgesCard, m);
+    if (k === 'welcome_back') return UI.back;
+    if (k === 'welcome_back_kept') return UI.backKept;
+    if (k === 'backfill') return m.count > 1 ? fill(UI.backfillMany, m) : (m.title ? fill(UI.backfillOne, m) : fill(UI.backfillMany, m));
+    if (k === 'perfect_set') return UI.perfectSet;
     return '';
+  }
+  // where a card's link goes (E11 Phase 1): a badge to the Milestones shelf, a finished lesson to its quiz, the 10/10 setting to Settings
+  function linkFor(m) {
+    var a = assets();
+    if (m.kind === 'badge_card' || m.kind === 'badges_card' || m.kind === 'streak_card' || m.kind === 'backfill') return a.profile ? { href: a.profile + '#milestones', label: UI.seeIt } : null;
+    if (m.kind === 'level_card') return a.profile ? { href: a.profile, label: UI.profile } : null;
+    if (m.kind === 'lesson_card' && m.quiz) return { href: m.quiz, label: UI.quiz };
+    if (m.kind === 'perfect_set' && a.settings) return { href: a.settings + '#celebrations', label: UI.settings };
+    return null;
   }
   function dismiss(t) {
     if (!t || t.gone) return;
@@ -391,6 +570,12 @@
     miniZorp(icon, FACES[m.kind]);
     var body = el('div', 'app-toast-body', node);
     el('p', 'app-toast-message', body).textContent = text;
+    var go = linkFor(m);
+    if (go) {
+      var a = el('a', 'app-toast-action', body);
+      a.href = go.href;
+      a.textContent = go.label;
+    }
     var btn = D.getElementById('retry-wrong');
     if ((m.kind === 'quiz_done' || m.kind === 'personal_best' || m.kind === 'quicktest_done') && btn && m.wrong > 0) {
       var link = el('a', 'app-toast-action', body);
@@ -467,18 +652,52 @@
     }
     return false;
   }
-  function play(list) {
+  // E11 Phase 1: list holds the moments, badges the badge and streak rewards (guide.js hands both over in one beat). The setting,
+  // the 10/10 link and the day's budget turn stages into corner cards; the rest is one sequence of at most MAX_CARDS cards.
+  function play(list, badges) {
     list = (list || []).filter(function (m) { return m && m.type; });
+    badges = (badges || []).filter(function (b) { return b && b.type; });
+    var md = mode();
     var stages = list.filter(function (m) { return (m.type === 'level' || m.type === 'perfect' || m.type === 'lesson_complete') && wanted(m); });
     stages = stages.filter(function (m, i) { return stages.findIndex(function (x) { return x.type === m.type && (x.id || x.topic) === (m.id || m.topic); }) === i; });
     stages.sort(function (a, b) { return rank(a) - rank(b); });
+    var cards = [];
+    var lessons = 0;
+    stages = stages.filter(function (m) {
+      var small = md === 'small' || (md === 'big' && m.type !== 'level') || (m.type === 'perfect' && perfectAsCard());
+      if (!small && m.type === 'lesson_complete') { lessons += 1; small = budgetUsed() + lessons > BUDGET; }
+      if (small) cards.push(asCard(m));
+      return !small;
+    });
+    var badgeCards = [];
+    if (md === 'small' || !(window.pbBadgeStage && window.pbBadgeStage.part)) {
+      badgeCards = badges.map(badgeCard);
+      badges = [];
+      // several badges in one beat are one card, so a phone is never covered in cards
+      if (badgeCards.length > 1) {
+        var names = badgeCards.map(function (c) { return c.title || fill(UI.streakCard, c).split('.')[0]; });
+        badgeCards = [{ type: 'toast', id: badgeCards.map(function (c) { return c.id; }).join('|').slice(0, 120), kind: 'badges_card', count: names.length,
+          title: names.slice(0, -1).join(', ') + UI.and + names[names.length - 1] }];
+      }
+    }
+    badges = badges.map(function (b, i) { return { b: b, i: i }; }).sort(function (x, y) { return (tierOf(x.b) - tierOf(y.b)) || (x.i - y.i); }).map(function (x) { return x.b; });
+    var front = stages.filter(function (m) { return m.type !== 'level'; });
+    var back = stages.filter(function (m) { return m.type === 'level'; });
+    var room = MAX_CARDS;
+    var f = front.slice(0, room); room -= f.length;
+    var b2 = badges.slice(0, room); room -= b2.length;
+    var k = back.slice(0, room);
+    carry(front.slice(f.length).concat(back.slice(k.length)), badges.slice(b2.length));
     var rest = list.filter(function (m) { return m.type === 'toast' || m.type === 'micro'; });
-    var p = stages.length ? playStages(stages).catch(function () { clear(); }) : Promise.resolve();
+    var p = (f.length || b2.length || k.length) ? sequence(f, b2, k).catch(function () { clear(); }) : Promise.resolve();
     return p.then(function () {
-      rest.filter(function (m) { return m.type === 'toast'; }).forEach(function (m, i) { setTimeout(function () { toast(m); }, i * 700); });
+      var list2 = cards.concat(badgeCards).concat(rest.filter(function (m) { return m.type === 'toast'; }));
+      list2.forEach(function (m, i) { setTimeout(function () { toast(m); }, i * 700); });
       rest.filter(function (m) { return m.type === 'micro'; }).forEach(function (m) { micro(m); });
+      // what waits for the moments (a story offer) comes after the last card
+      return new Promise(function (done) { setTimeout(done, list2.length ? (list2.length - 1) * 700 + 150 : 0); });
     });
   }
 
-  window.pbMoments = { play: play, toast: toast, scenes: SCENES, faces: FACES };
+  window.pbMoments = { play: play, sequence: sequence, toast: toast, scenes: SCENES, faces: FACES };
 }());

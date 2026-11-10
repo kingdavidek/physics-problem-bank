@@ -66,7 +66,7 @@ INSTANCE_MAX_ELEMENTS = 70
 PAGE_MASCOT_MAX_BYTES = 36_000
 PAGE_MASCOT_MAX_GZIP = 6_000
 MOTION_CSS_BUDGET_BYTES = 12_000     # E9 adds about 450 B (talk and ride pivots, .zorp-sr, belly origin)
-CSS_BUDGET_BYTES = 273_700 # 2026-11-08: E10 phase 8 RAISED 268_900 -> 273_700 (+4_800) for the on-demand story.css (own cap 4_800 in test_story_chapters_smoke.py; tree 273,520). 2026-11-08: E10 phase 7 RAISED 265_300 -> 268_900 (+3_600) for the on-demand around.css (own cap 4_000 in test_zorp_around_smoke.py; tree 268,821). 2026-11-08: E10 phase 6b RAISED 262_500 -> 265_300 (+2_800) for the on-demand wardrobe.css (profile page only; own cap 2_800 in test_wardrobe_smoke.py; tree 264,949).  2026-11-08: E10 phase 5 added the on-demand moments.css inside this budget (no raise; tree 260,077).  2026-11-08: E10 phase 4 +5_500 for the on-demand badge-stage.css (own cap in test_badge_stage_smoke.py). Was           # E9 unchanged (core headroom covered it). RAISED 246_000 -> 256_000 on 2026-11-08 (E10): the on-demand stage.css, own cap 10_000 in test_zorp_stage_smoke.py  # 2026-11-08: E10 phase 6 RAISED 261_500 -> 262_500 (+1_000) for the on-demand tour.css (own cap 2_800 in test_zorp_tour_smoke.py; tree 262,304).
+CSS_BUDGET_BYTES = 274_400 # 2026-11-10: E11 Phase 1 RAISED 273_700 -> 274_400 (+700) for Skip all and the small-card link in the on-demand moments.css (tree 274,251). 2026-11-08: E10 phase 8 RAISED 268_900 -> 273_700 (+4_800) for the on-demand story.css (own cap 4_800 in test_story_chapters_smoke.py; tree 273,520). 2026-11-08: E10 phase 7 RAISED 265_300 -> 268_900 (+3_600) for the on-demand around.css (own cap 4_000 in test_zorp_around_smoke.py; tree 268,821). 2026-11-08: E10 phase 6b RAISED 262_500 -> 265_300 (+2_800) for the on-demand wardrobe.css (profile page only; own cap 2_800 in test_wardrobe_smoke.py; tree 264,949).  2026-11-08: E10 phase 5 added the on-demand moments.css inside this budget (no raise; tree 260,077).  2026-11-08: E10 phase 4 +5_500 for the on-demand badge-stage.css (own cap in test_badge_stage_smoke.py). Was           # E9 unchanged (core headroom covered it). RAISED 246_000 -> 256_000 on 2026-11-08 (E10): the on-demand stage.css, own cap 10_000 in test_zorp_stage_smoke.py  # 2026-11-08: E10 phase 6 RAISED 261_500 -> 262_500 (+1_000) for the on-demand tour.css (own cap 2_800 in test_zorp_tour_smoke.py; tree 262,304).
 CSS_CORE_BUDGET_BYTES = 216_000
 
 CAPS = {
@@ -240,7 +240,7 @@ def test_talk_loaded_under_runtime_guard_after_poses():
 def test_talk_precached():
     sw = _read(JS_DIR / 'sw.js')
     assert "'/static/js/zorp-talk.js'" in sw, 'unversioned, like the other runtime files (the offline fallback ignores ?v=)'
-    assert "CACHE_VERSION = 'pb-v123'" in sw   # 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115, phase 5); 2026-11-08: E10 phase 5 bump (was pb-v114, phase 4; pb-v113 phase 3); 2026-11-08: E10 review fixes bump (was pb-v118)
+    assert "CACHE_VERSION = 'pb-v124'" in sw   # 2026-11-10: E11 Phase 1 bump (was pb-v123, Phase 0); 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115, phase 5); 2026-11-08: E10 phase 5 bump (was pb-v114, phase 4; pb-v113 phase 3); 2026-11-08: E10 review fixes bump (was pb-v118)
 
 
 def test_talk_mouths_not_in_presets():
@@ -339,7 +339,7 @@ def test_runtime_hooks_for_talk():
 def test_talk_pins():
     base = _read(TEMPLATES / 'base.html')
     # 2026-11-08: E10 phase 8 guide.js v25 -> v26 (the story chapters loader)
-    for needle in ("zorp-motion.js') }}?v=14", "css/motion.css') }}?v=9", "study-buddy.js') }}?v=30", "guide.js') }}?v=27", "zorp-poses.js') }}?v=6",
+    for needle in ("zorp-motion.js') }}?v=14", "css/motion.css') }}?v=9", "study-buddy.js') }}?v=30", "guide.js') }}?v=28", "zorp-poses.js') }}?v=6",
                    "sound.js') }}?v=4", "celebrate.js') }}?v=15"):
         assert needle.replace("css/", "") in base or needle in base, needle
     # 2026-11-08: E10 guide.js v19 -> v20 (the stage loader) and welcome.js v5 -> v6 (the arrival film)

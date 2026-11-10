@@ -39,6 +39,12 @@ MILESTONE_ACCURACY_TOP_FRIEND = 'accuracy_top_friend'
 # (Pathfinder), its own family (`tour`: a signpost, Zorp bows) and its own key. It is never computed from activity: the
 # server awards it once, from POST /api/v1/me/tour/complete, after the tour has been finished (see app.py).
 MILESTONE_TOUR = 'app_tour'
+# E11 Phase 1 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 2.1 and 3): the first 10/10 ever on a lesson quiz. The same quizzes that
+# earn the full-screen perfect moment count (not a retry run, at least PERFECT_MIN_TOTAL questions, every answer right), and
+# this badge's stage then replaces that moment. Family `accuracy` for now (the target): a family of its own needs a wardrobe
+# item, and every look the live Zorp can draw is already in the wardrobe (plan section 9).
+MILESTONE_PERFECT_1 = 'perfect_1'
+PERFECT_MIN_TOTAL = 3
 
 # E10 phase 4 (docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md B3, section 10): every badge carries
 #   blurb  what you did, past tense and specific (shown once earned and on the badge stage)
@@ -61,6 +67,16 @@ MILESTONE_CATALOG = {
         'next': None,
         'family': 'learning',
         'emoji': '📝',
+        'tier': 'bronze',
+    },
+    MILESTONE_PERFECT_1: {
+        'title': 'Full marks',
+        'description': 'Get every answer right on a lesson quiz',
+        'blurb': 'You got every answer right on a quiz.',
+        'how': 'Get every answer right on a lesson quiz.',
+        'next': None,
+        'family': 'accuracy',
+        'emoji': '💯',
         'tier': 'bronze',
     },
     MILESTONE_FIRST_LESSON: {
@@ -402,6 +418,56 @@ def _award_milestone(conn, user_id, milestone_key):
     return True
 
 
+_PERFECT_QUIZ_WHERE = 'is_retry = 0 AND total >= ? AND score >= total'
+
+
+def _has_perfect_quiz(conn, user_id):
+    row = conn.execute(
+        f'SELECT 1 FROM quiz_attempts WHERE user_id = ? AND {_PERFECT_QUIZ_WHERE} LIMIT 1',
+        (user_id, PERFECT_MIN_TOTAL),
+    ).fetchone()
+    return row is not None
+
+
+# E11 Phase 1 (plan 2.4 rule 6, David's answer 3): a new badge that pupils may already have earned is awarded quietly from their
+# history, once, by a migration (init_db): no stage, no notification. The row is marked quiet = 1; the next page the pupil looks
+# at carries one corner card ("You already earned ...") and marks it quiet = 2. Phase 2 adds its badges to this table.
+# Each entry: SQL that returns (user_id, at) for every pupil who earned the badge, and its parameters.
+BACKFILL_RULES = {
+    MILESTONE_PERFECT_1: (
+        f'SELECT user_id, MIN(created_at) AS at FROM quiz_attempts WHERE {_PERFECT_QUIZ_WHERE} GROUP BY user_id',
+        (PERFECT_MIN_TOTAL,),
+    ),
+}
+
+
+def backfill_quiet_badges(conn, keys):
+    """Award the given badges to every pupil whose history already earns them, quietly. Returns the number of rows added."""
+    added = 0
+    for key in keys:
+        sql, params = BACKFILL_RULES[key]
+        for row in conn.execute(sql, params).fetchall():
+            cur = conn.execute(
+                'INSERT OR IGNORE INTO user_milestones (user_id, milestone_key, earned_at, quiet) VALUES (?, ?, ?, 1)',
+                (row[0], key, row[1] or utc_now_iso()),
+            )
+            added += cur.rowcount or 0
+    return added
+
+
+def quiet_badges_to_announce(conn, user_id):
+    """Badges awarded quietly that this pupil has not been told about yet (oldest first)."""
+    rows = conn.execute(
+        'SELECT milestone_key FROM user_milestones WHERE user_id = ? AND quiet = 1 ORDER BY earned_at, milestone_key',
+        (user_id,),
+    ).fetchall()
+    return [r['milestone_key'] for r in rows]
+
+
+def mark_quiet_badges_announced(conn, user_id):
+    conn.execute('UPDATE user_milestones SET quiet = 2 WHERE user_id = ? AND quiet = 1', (user_id,))
+
+
 def award_tour_badge(conn, user_id):
     """E10 phase 6: award the tour badge (Pathfinder) once. True only the first time."""
     awarded = _award_milestone(conn, user_id, MILESTONE_TOUR)
@@ -550,6 +616,9 @@ def evaluate_milestones(conn, user_id):
     ).fetchone()['n']
     if quiz_count >= 1 and _award_milestone(conn, user_id, MILESTONE_FIRST_QUIZ):
         earned.append(MILESTONE_FIRST_QUIZ)
+
+    if quiz_count >= 1 and _has_perfect_quiz(conn, user_id) and _award_milestone(conn, user_id, MILESTONE_PERFECT_1):
+        earned.append(MILESTONE_PERFECT_1)
 
     lesson_count = conn.execute(
         '''

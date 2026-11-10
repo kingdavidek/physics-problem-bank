@@ -1065,15 +1065,23 @@
 
   function isStoryOffer(m) { return !!m && m.kind === 'story_offer'; }
 
+  // E11 Phase 1 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 2.4 rule 1): the moments and the badges of one beat go to moments.js together,
+  // which plays them as one sequence (the scene, the badges, the level-up) or as corner cards, as the pupil's setting says.
   function runMoments() {
-    if (!pendingMoments.length || isOpen || stageBusy() || badgeTimer || pendingRewards.some(isBig)) return;
+    var useMoments = !!momentAssets();
+    if (useMoments) pendingRewards = pendingRewards.filter(function (r) { return !(isBig(r) && rewardSeen(rewardId(r))); });   // never stuck behind a seen one
+    var bigs = useMoments ? pendingRewards.filter(isBig) : [];
+    if ((!pendingMoments.length && !bigs.length) || isOpen || stageBusy() || badgeTimer || momentTimer) return;
+    if (!bigs.length && pendingRewards.some(isBig)) return;
+    if (bigs.length) pendingRewards = pendingRewards.filter(function (r) { return !isBig(r); });
     var all = pendingMoments;
     var offers = all.filter(isStoryOffer);
     var batch = all.filter(function (m) { return !isStoryOffer(m); });
     pendingMoments = [];
     momentsInFlight += 1;
     var settled = function () { momentsInFlight -= 1; window.setTimeout(afterClose, 0); };   // also on failure: whatever waited may go now
-    (batch.length ? loadMoments().then(function (m) { return m.play(batch); }) : Promise.resolve()).catch(function () { /* the page works without them */ }).then(function () {
+    var withBadges = bigs.length && badgeAssets() ? loadBadgeStage().catch(function () { return null; }) : Promise.resolve(null);
+    (batch.length || bigs.length ? Promise.all([loadMoments(), withBadges]).then(function (r) { return r[0].play(batch, bigs); }) : Promise.resolve()).catch(function () { /* the page works without them */ }).then(function () {
       return offers.length ? loadStory().then(function (st) { st.offer(offers[0]); }) : null;
     }).then(function () { settled(); }, function () { settled(); });
   }
@@ -1081,7 +1089,7 @@
   function moments(list) {
     if (!overlay || !momentAssets() || (isQuizRunner() && !isQuizResults())) return false;
     (Array.isArray(list) ? list : []).forEach(function (m) { if (m && m.type && !(m.id && pendingMoments.some(function (x) { return x.id === m.id; }))) pendingMoments.push(m); });   // one fetch can be read twice (celebrate.js and site.js)
-    if (pendingMoments.length && !momentTimer) momentTimer = window.setTimeout(function () { momentTimer = 0; runMoments(); }, 220);
+    if (pendingMoments.length && !momentTimer) momentTimer = window.setTimeout(function () { momentTimer = 0; runMoments(); }, BEAT_MS);
     return pendingMoments.length > 0;
   }
 
@@ -1091,6 +1099,7 @@
     while (pendingRewards.length) {
       var head = pendingRewards[0];
       if (isQuizRunner() && !(isQuizResults() && isBig(head))) return;
+      if (isBig(head) && momentAssets()) { runMoments(); return; }
       if (isBig(head) && badgeAssets()) {
         if (playBadges()) return;
         continue;
@@ -1113,6 +1122,7 @@
   //   the last quick check): the badge is taken out of the queue, or kept out when it arrives later, and named on the lesson stage,
   //   which marks it seen when it plays (moments.js).
   var FIRST_HOLD_MS = 1800;
+  var BEAT_MS = 300;      // E11 Phase 1: a badge and its scene that arrive within this time play as one sequence
   var firstHold = 0;
   var absorbed = {};
 
@@ -1129,6 +1139,12 @@
       firstHold = 0;
       if (rewardSeen('first_correct')) return;
       if (stageBusy() || badgeTimer || pendingMoments.length || pendingRewards.some(isBig)) { markRewardSeen('first_correct'); return; }
+      // E11 Phase 1 (plan 2.3): a corner card with one line, not a dialog in front of the page
+      if (momentAssets()) {
+        markRewardSeen('first_correct');
+        moments([{ type: 'toast', id: 'toast:first_correct', kind: 'first_correct' }]);
+        return;
+      }
       pendingRewards.push(spec);
       if (!isOpen) playPendingRewards();
     }, FIRST_HOLD_MS);
@@ -1162,7 +1178,7 @@
     pendingRewards.push(spec);
     if (isBig(spec) && badgeAssets()) {
       // wait a moment for the rest of the batch (a badge and its streak reward arrive together)
-      if (!badgeTimer) badgeTimer = window.setTimeout(function () { badgeTimer = 0; playPendingRewards(); }, 120);
+      if (!badgeTimer) badgeTimer = window.setTimeout(function () { badgeTimer = 0; playPendingRewards(); }, BEAT_MS);
       return 'stage';
     }
     if (isOpen) return true;
@@ -1335,9 +1351,25 @@
   // a stage just closed: anything that waited for it (a reward, a tour) may run now
   document.addEventListener('pb-stage-closed', function () { window.setTimeout(afterClose, 0); });
 
+  // E11 Phase 1: cards a sequence had no room for (more than three in one beat) wait in this tab for the next page, then join its beat
+  function resumeCarried() {
+    if (isQuizRunner() && !isQuizResults()) return;   // a question page keeps them for the next page
+    var key = 'pb-celebrate-next:' + STORE_NS;
+    var held = null;
+    try {
+      held = JSON.parse(window.sessionStorage.getItem(key) || 'null');
+      window.sessionStorage.removeItem(key);
+    } catch (err) { held = null; }
+    if (!held) return;
+    (held.b || []).forEach(function (spec) { if (spec && spec.type) reward(spec); });
+    if (Array.isArray(held.m) && held.m.length) moments(held.m);
+  }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', maybeAutoplay);
+    document.addEventListener('DOMContentLoaded', function () { window.setTimeout(resumeCarried, 900); });
   } else {
     maybeAutoplay();
+    window.setTimeout(resumeCarried, 900);
   }
 })();

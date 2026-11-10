@@ -29,7 +29,7 @@ from models.zorp_rig import CONTEXT_MAP  # noqa: E402
 
 # Own caps (bytes). 2026-11-08: E10 phase 5, lazy files that load only when a moment is due.
 CAPS = {
-    'static/js/moments.js': 24600,   # 2026-11-10 E11 Phase 0: +600, the lesson stage names the lesson badge (measured 24,085 B)
+    'static/js/moments.js': 36500,   # 2026-11-10 E11 Phase 0: +600, the lesson stage names the lesson badge (measured 24,085 B); 2026-11-10 E11 Phase 1 RAISED 24_600 -> 36_500: the one-sequence player, the setting, the day's budget, the carry to the next page and eleven new corner cards (measured 35,988 B). Lazy: loads only when a moment is due
     'static/css/moments.css': 5000,
 }
 TOPIC = ('gcse', 'maths', 'bidmas')   # ten multiple choice questions
@@ -101,6 +101,15 @@ def make_client():
         sess['_user_id'] = str(uid)
         sess['_fresh'] = True
     return c, uid
+
+
+def holds_full_marks(uid):
+    """E11 Phase 1: an account that already holds Full marks, so its next 10/10 is the perfect moment (a first 10/10 ever earns the
+    badge instead, whose stage is that 10/10's celebration)."""
+    with get_db() as conn:
+        conn.execute("INSERT OR IGNORE INTO user_milestones (user_id, milestone_key, earned_at, quiet) "
+                     "VALUES (?, 'perfect_1', datetime('now'), 2)", (uid,))
+        conn.commit()
 
 
 def lifetime(uid):
@@ -233,8 +242,11 @@ def test_perfect_quiz_real_flow_and_honest_xp():
     xp1 = lifetime(uid)
     page = c.get(r.headers['Location']).get_data(as_text=True)
     ms = moments_of(page)
-    perfect = [m for m in ms if m['type'] == 'perfect']
-    assert len(perfect) == 1 and perfect[0]['score'] == 10 and perfect[0]['total'] == 10, ms
+    # 2026-11-10 E11 Phase 1: the first 10/10 ever earns the Full marks badge, and its badge stage is that 10/10's celebration (no
+    # perfect moment beside it); every later 10/10 is the full-screen perfect moment (David's answer 1)
+    badges = re.search(r'id="pb-new-milestones">(.*?)</script>', page, re.S)
+    assert badges and 'perfect_1' in [b['key'] for b in json.loads(badges.group(1))], 'the first 10/10 earns Full marks'
+    assert not [m for m in ms if m['type'] == 'perfect'], ms
     assert not [m for m in ms if m['type'] == 'toast' and m['kind'] in ('quiz_done', 'personal_best')], ms
     # honest XP: the line equals what was recorded (3 for the quiz, plus nothing else on the submit)
     shown = re.search(r'quiz-results-xp">\+(\d+) XP earned', page)
@@ -245,10 +257,15 @@ def test_perfect_quiz_real_flow_and_honest_xp():
     again = c.get(r.headers['Location']).get_data(as_text=True)
     assert moments_of(again) == [] and 'quiz-results-xp' not in again
     assert 'score * 5' not in read('templates/lesson_mcq_results.html')
-    # ten correct answers are not 'perfect' marked a second time: a second perfect quiz is its own attempt
+    # the second 10/10 is the perfect moment, its own (the badge is not earned twice)
     r2 = take_quiz(c, uid, wrong=0)
-    ms2 = moments_of(c.get(r2.headers['Location']).get_data(as_text=True))
-    assert [m['id'] for m in ms2 if m['type'] == 'perfect'] != [perfect[0]['id']]
+    page2 = c.get(r2.headers['Location']).get_data(as_text=True)
+    perfect = [m for m in moments_of(page2) if m['type'] == 'perfect']
+    assert len(perfect) == 1 and perfect[0]['score'] == 10 and perfect[0]['total'] == 10, perfect
+    assert 'perfect_1' not in page2.split('id="pb-new-milestones">')[-1][:400] or 'id="pb-new-milestones"' not in page2
+    r3 = take_quiz(c, uid, wrong=0)
+    ms3 = moments_of(c.get(r3.headers['Location']).get_data(as_text=True))
+    assert [m['id'] for m in ms3 if m['type'] == 'perfect'] != [perfect[0]['id']], 'each 10/10 is its own moment'
 
 
 def test_imperfect_quiz_toast_retry_and_cleared():
@@ -285,6 +302,8 @@ def test_other_toasts_and_rules():
     # perfect + a ninja or master badge in the same request: the badge stage plays alone (no perfect moment, no toast)
     b = post('/_t/finished', {'score': 10, 'total': 10, 'attempt': 901, 'badges': ['topic_ninja:gcse:maths:bidmas']})
     assert 'new_moments' not in b
+    b = post('/_t/finished', {'score': 10, 'total': 10, 'attempt': 900, 'badges': ['perfect_1']})
+    assert 'new_moments' not in b                                         # E11 Phase 1: Full marks is that 10/10's stage
     b = post('/_t/finished', {'score': 10, 'total': 10, 'attempt': 902, 'badges': ['streak_7']})
     assert [m['type'] for m in b['new_moments']] == ['perfect']           # an unrelated badge: both play, badge first
     b = post('/_t/finished', {'score': 4, 'total': 4, 'attempt': 903})
@@ -371,14 +390,16 @@ def test_queue_and_wiring():
     moments = read('static/js/moments.js')
     celebrate = read('static/js/celebrate.js')
     progress = read('static/js/lesson-progress.js')
-    # badges first: moments wait for the badge timer, a badge stage in progress and any open stage or dialog
-    assert 'badgeTimer || pendingRewards.some(isBig)' in guide and 'isOpen || stageBusy()' in guide
+    # 2026-11-10 E11 Phase 1: one beat, one sequence. Moments and badges wait for the beat timers and any open stage or dialog, then
+    # go to moments.js together (the scene, the badges by tier, the level-up; three cards at most)
+    assert 'isOpen || stageBusy() || badgeTimer || momentTimer' in guide and 'pendingRewards.some(isBig)' in guide
+    assert 'r[0].play(batch, bigs)' in guide and "if (isBig(head) && momentAssets()) { runMoments(); return; }" in guide
     assert 'runMoments();' in guide.split('function afterClose()')[1][:200]
     # never while quiz questions are on screen
     assert '(isQuizRunner() && !isQuizResults())' in guide
-    # stages in one batch: perfect, lesson, level; one at a time through the stage queue
+    # stages in one batch: perfect, lesson, level; one sequence through the stage
     assert "m.type === 'perfect' ? 0 : (m.type === 'lesson_complete' ? 1 : 2)" in moments
-    assert 'window.pbStage.play(scenes' in moments
+    assert 'window.pbStage.play(items.map(function (it) { return it.scene; })' in moments
     # seen-state
     assert "'level:' + m.level" in moments and "g.rewardId(m)" in moments
     assert "'lesson:' + [spec.level, spec.subject, spec.topic].join(':')" in guide.replace('(\'lesson:\'', '\'lesson:\'') or "('lesson:' + [spec.level, spec.subject, spec.topic].join(':'))" in guide
@@ -427,11 +448,12 @@ def test_lazy_loading():
     island = re.search(r'id="pb-moment-assets">(.*?)</script>', html, re.S)
     assert island, 'the moment asset island is missing on a signed-in page'
     urls = json.loads(island.group(1))
-    assert set(urls) == {'js', 'css', 'props', 'profile'} and 'moments.js' in urls['js'] and 'moments.css' in urls['css']
+    # 2026-11-10 E11 Phase 1: + settings (the link on the 'Full marks will show as a small card' card)
+    assert set(urls) == {'js', 'css', 'props', 'profile', 'settings'} and 'moments.js' in urls['js'] and 'moments.css' in urls['css']
     assert c.get(urls['js']).status_code == 200 and c.get(urls['css']).status_code == 200
     sw = read('static/js/sw.js')
     assert 'moments.js' not in sw and 'moments.css' not in sw
-    assert "pb-v123" in sw   # 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115); 2026-11-08: E10 review fixes bump (was pb-v118)
+    assert "pb-v124" in sw   # 2026-11-10: E11 Phase 1 bump (was pb-v123, Phase 0); 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115); 2026-11-08: E10 review fixes bump (was pb-v118)
 
 
 # ---- E10 review fixes (2026-11-08) ----
@@ -592,6 +614,7 @@ def finish_mixed_quiz(c, uid, wrong):
 def test_review_mixed_lesson_quiz_next_path_finishes_like_submit():
     # fix 4: the one-question-at-a-time path (47 of 91 lesson quizzes) used to finish with no moment, personal best or XP line
     c, uid = make_client()
+    holds_full_marks(uid)
     xp0 = lifetime(uid)
     loc, problems = finish_mixed_quiz(c, uid, wrong=0)
     assert '/quiz-attempts/' in loc, loc
@@ -733,7 +756,10 @@ def test_e11_service_worker_navigation_reads_pending_lists():
     r = take_quiz(c, uid, wrong=0)
     page = c.get(r.headers['Location'], headers=relayed).get_data(as_text=True)
     ms, mm = islands(page)
-    assert 'first_quiz' in [m['key'] for m in ms], ms
+    assert {'first_quiz', 'perfect_1'} <= {m['key'] for m in ms}, ms   # E11 Phase 1: a first 10/10 earns Full marks
+    holds_full_marks(uid)
+    r = take_quiz(c, uid, wrong=0)
+    ms, mm = islands(c.get(r.headers['Location'], headers=relayed).get_data(as_text=True))
     assert [m['type'] for m in mm if m['type'] == 'perfect'] == ['perfect'], mm
 
 

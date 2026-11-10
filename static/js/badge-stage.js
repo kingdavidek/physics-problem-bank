@@ -40,7 +40,7 @@
     topic_ninja: { face: 'determined', end: 'grin', prop: 'bp-swish', fx: 'swish', beats: [{ burst: 1 }, { wait: 1300 }, { turn: 'back' }, { turn: 'front' }, { play: 'victory' }] },
     topic_master: { face: 'wow', end: 'proud', prop: 'bp-stars', fx: 'stars', beats: [{ burst: 1 }, { wait: 1300 }, { play: 'victory' }, { play: 'float' }, { face: 'proud' }] },
     subject: { face: 'joy', end: 'proud', prop: 'bp-page', fx: 'page', beats: [{ burst: 1 }, { wait: 1300 }, { play: 'dance' }, { play: 'fist-pump' }] },
-    accuracy: { face: 'soft-smile', end: 'grin', prop: 'bp-target', fx: 'target', beats: [{ burst: 1 }, { wait: 1300 }, { play: 'nod' }, { face: 'grin' }] },
+    accuracy: { face: 'joy', end: 'grin', prop: 'bp-target', fx: 'target', beats: [{ burst: 1 }, { wait: 1300 }, { play: 'victory' }, { play: 'nod' }, { face: 'grin' }] },
     tour: { face: 'happy', end: 'proud', prop: 'bp-sign', fx: 'sign', beats: [{ burst: 1 }, { wait: 1300 }, { play: 'bow' }, { play: 'wave' }] }
   };
   // END FAMILIES
@@ -280,62 +280,88 @@
     if (g && g.markReward) card.ids.forEach(function (id) { g.markReward(id); });
   }
 
-  function play(specs) {
+  // E11 Phase 1 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 2.4 rule 1): the badge cards as one part of a longer sequence. moments.js plays
+  // a finished lesson or a 10/10, then the badges, then a level-up, in one stage with one count; play() below is this part alone.
+  // show(i, st) puts card i on the stage (the kicker, Try it on, the medal), hide(st) takes this part's things off it, go() follows
+  // the second button (See my milestones, or the wardrobe for Try it on).
+  function part(specs) {
     var list = cards(specs || []);
+    var kicker = null;
+    return {
+      cards: list,
+      scenes: list.map(sceneFor),
+      show: function (i, st) {
+        var card = list[i];
+        var fam = FAMILIES[card.family] || FAMILIES.learning;
+        var top = st.querySelector('.pb-st-top');
+        if (!kicker) { kicker = el('p', 'bd-kicker'); kicker.textContent = UI.kicker; }
+        if (kicker.parentNode !== top.parentNode) top.parentNode.insertBefore(kicker, top);
+        kicker.hidden = false;
+        // E10 phase 6b: a badge that opens a wardrobe item offers "Try it on" (the profile wardrobe with the item put on, unsaved)
+        var acts = st.querySelector('.pb-st-actions');
+        var old = acts.querySelector('.bd-try');
+        if (old) acts.removeChild(old);
+        tryId = '';
+        if (card.wear) {
+          var tb = el('button', 'btn btn-outline bd-try', acts);
+          tb.type = 'button';
+          tb.textContent = UI.tryOn;
+          tb.addEventListener('click', function () { tryId = card.wear.id; acts.querySelector('.btn-outline:not(.bd-try)').click(); });
+        }
+        mark(card);
+        enter(card, fam, st.querySelector('.pb-st-set'));
+      },
+      hide: function (st) {
+        if (kicker) kicker.hidden = true;
+        var t = st && st.querySelector('.bd-try');
+        if (t && t.parentNode) t.parentNode.removeChild(t);
+        clear();
+      },
+      markAll: function () { list.forEach(mark); },
+      go: function () {
+        var url = assets().profile;
+        if (!url) return;
+        var a = D.createElement('a');
+        a.href = url;
+        if (tryId) { a.search = '?try=' + encodeURIComponent(tryId); a.hash = '#wardrobe'; location.assign(a.href); return; }
+        if (a.pathname === location.pathname) location.hash = a.hash || '#milestones';
+        else location.assign(url);
+      },
+      end: clear
+    };
+  }
+
+  function play(specs) {
+    var p = part(specs);
+    var list = p.cards;
     if (!list.length) return Promise.resolve({ ended: 'empty' });
     wantProfile = false;
     tryId = '';
-    var decorated = null;
+    var count = null;
     return ready().then(function () {
-      return window.pbStage.play(list.map(sceneFor), {
+      return window.pbStage.play(p.scenes, {
         onScene: function (i) {
-          var card = list[i];
-          var fam = FAMILIES[card.family] || FAMILIES.learning;
           var st = D.querySelector('.pb-stage');
           if (!st) return;
-          if (!decorated) {
-            decorated = {
-              kicker: el('p', 'bd-kicker'),
-              count: el('span', 'bd-count')
-            };
-            decorated.kicker.textContent = UI.kicker;
-            var top = st.querySelector('.pb-st-top');
-            top.parentNode.insertBefore(decorated.kicker, top);
-            top.appendChild(decorated.count);
+          if (!count) {
+            count = el('span', 'bd-count');
+            st.querySelector('.pb-st-top').appendChild(count);
             var skip = st.querySelector('.pb-st-actions .btn-outline');
             if (skip) skip.addEventListener('click', function () { wantProfile = true; }, true);
           }
-          decorated.count.textContent = list.length > 1 ? (i + 1) + UI.of + list.length : '';
-          // E10 phase 6b: a badge that opens a wardrobe item offers "Try it on" (the profile wardrobe with the item put on, unsaved)
-          var acts = st.querySelector('.pb-st-actions');
-          var old = acts.querySelector('.bd-try');
-          if (old) acts.removeChild(old);
-          if (card.wear) {
-            var tb = el('button', 'btn btn-outline bd-try', acts);
-            tb.type = 'button';
-            tb.textContent = UI.tryOn;
-            tb.addEventListener('click', function () { tryId = card.wear.id; acts.querySelector('.btn-outline:not(.bd-try)').click(); });
-          }
-          mark(card);
-          enter(card, fam, st.querySelector('.pb-st-set'));
+          count.textContent = list.length > 1 ? (i + 1) + UI.of + list.length : '';
+          p.show(i, st);
         }
       });
     }).then(function (res) {
-      clear();
+      p.end();
       if (res && res.ended === 'skip' && wantProfile) {
-        list.forEach(mark);
-        var url = assets().profile;
-        if (url) {
-          var a = D.createElement('a');
-          a.href = url;
-          if (tryId) { a.search = '?try=' + encodeURIComponent(tryId); a.hash = '#wardrobe'; location.assign(a.href); return res; }
-          if (a.pathname === location.pathname) location.hash = a.hash || '#milestones';
-          else location.assign(url);
-        }
+        p.markAll();
+        p.go();
       }
       return res;
     });
   }
 
-  window.pbBadgeStage = { play: play, ready: ready, families: FAMILIES };
+  window.pbBadgeStage = { play: play, part: part, ready: ready, families: FAMILIES };
 }());

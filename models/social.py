@@ -32,6 +32,16 @@ ZORP_SOUND_CHATTER = 'chatter'
 ZORP_SOUND_CHOICES = (ZORP_SOUND_OFF, ZORP_SOUND_CELEBRATIONS)
 ZORP_SOUND_DEFINED = ZORP_SOUND_CHOICES + (ZORP_SOUND_CHATTER,)
 
+# E11 Phase 1 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 2.4 rule 5, David's answer 11): how big celebrations are.
+#   full   every stage full screen (the default)
+#   big    badges and level-ups full screen; everything else (a finished lesson, a 10/10) as a corner card
+#   small  every stage as a corner card (badges still show their card, and nothing is lost from Milestones)
+# perfect_as_card (the quiet link on the 10/10 screen) turns only the 10/10 stage into a card, in full mode.
+CELEBRATION_FULL = 'full'
+CELEBRATION_BIG = 'big'
+CELEBRATION_SMALL = 'small'
+CELEBRATION_MODES = (CELEBRATION_FULL, CELEBRATION_BIG, CELEBRATION_SMALL)
+
 GUIDE_JSON_MAX = 4096
 _GUIDE_TOUR_KEY = re.compile(r'^[a-z][a-z0-9_]{0,31}$')
 _GUIDE_REWARD_KEY = re.compile(r'^[a-z0-9_:]{1,64}$')
@@ -55,7 +65,8 @@ GUIDE_REWARDS_BYTES = 800
 GUIDE_RECENT_BYTES = 1400
 GUIDE_RECENT_MAX = 80
 GUIDE_INCOMING_MAX = 16384      # transport limit for one PATCH; the stored state is always trimmed to the budgets above
-_GUIDE_VOLATILE_PREFIXES = ('level:', 'lesson:', 'milestone:')
+# 'fs:<day>:<n>' (E11 Phase 1): the full screens spent from the day's budget; old days fall out of the ring by themselves
+_GUIDE_VOLATILE_PREFIXES = ('level:', 'lesson:', 'milestone:', 'fs:')
 _GUIDE_INCOMING_TOURS = 80
 _GUIDE_INCOMING_REWARDS = 400
 GUIDE_RUN_MAX_STEP = 60
@@ -441,6 +452,12 @@ def normalize_motion_preference(value):
     return MOTION_SYSTEM
 
 
+def normalize_celebration_mode(value):
+    if value in CELEBRATION_MODES:
+        return value
+    return CELEBRATION_FULL
+
+
 def normalize_zorp_sound(value):
     # Anything else, including the not-yet-offered `chatter`, is stored and rendered as off.
     if value in ZORP_SOUND_CHOICES:
@@ -529,7 +546,7 @@ def get_profile_settings(conn, user_id):
                default_share_visibility, show_study_streak, show_milestones,
                email_weekly_digest, avatar_json, show_accuracy_leaderboard,
                sound_enabled, theme_preference, motion_preference, zorp_sound,
-               guide_json, zorp_outfit_json
+               guide_json, zorp_outfit_json, celebration_mode, perfect_as_card
         FROM user_profile_settings
         WHERE user_id = ?
         ''',
@@ -537,6 +554,8 @@ def get_profile_settings(conn, user_id):
     ).fetchone()
     data = dict(row) if row else {}
     data['avatar'] = parse_avatar(data.get('avatar_json'))
+    data['celebration_mode'] = normalize_celebration_mode(data.get('celebration_mode'))
+    data['perfect_as_card'] = bool(data.get('perfect_as_card'))
     data['guide'] = public_guide_state(data.get('guide_json'))
     data['guide_json_persisted'] = guide_json_is_stored(data.get('guide_json'))
     data['welcome'] = welcome_state(data.get('guide_json'))
@@ -555,6 +574,7 @@ def update_profile_settings(conn, user_id, settings):
     theme_preference = normalize_theme_preference(settings.get('theme_preference', THEME_SYSTEM))
     motion_preference = normalize_motion_preference(settings.get('motion_preference', MOTION_SYSTEM))
     zorp_sound = normalize_zorp_sound(settings.get('zorp_sound', ZORP_SOUND_OFF))
+    celebration_mode = normalize_celebration_mode(settings.get('celebration_mode', CELEBRATION_FULL))
     existing = conn.execute(
         'SELECT avatar_json, guide_json FROM user_profile_settings WHERE user_id = ?',
         (user_id,),
@@ -594,7 +614,9 @@ def update_profile_settings(conn, user_id, settings):
             theme_preference = ?,
             motion_preference = ?,
             zorp_sound = ?,
-            guide_json = ?
+            guide_json = ?,
+            celebration_mode = ?,
+            perfect_as_card = ?
         WHERE user_id = ?
         ''',
         (
@@ -618,6 +640,8 @@ def update_profile_settings(conn, user_id, settings):
             motion_preference,
             zorp_sound,
             guide_json,
+            celebration_mode,
+            _bool_int(settings.get('perfect_as_card', False)),
             user_id,
         ),
     )

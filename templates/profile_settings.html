@@ -220,6 +220,34 @@
         </div>
     </section>
 
+    {# E11 Phase 1 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 7.1, answer 11): how big Zorp's celebrations are #}
+    <section class="section-panel settings-section" id="celebrations">
+        <div class="section-panel-header" id="celebrations-label">Celebrations</div>
+        <div class="section-panel-body">
+            <p class="page-intro settings-intro" data-zorp-voice="system:system_settings">How Zorp celebrates badges, level-ups, finished lessons and full marks. A small card never hides anything: every badge is still in your Milestones.</p>
+            <div class="form-group" id="celebrations-group" role="radiogroup" aria-labelledby="celebrations-label">
+                <label class="privacy-radio">
+                    <input type="radio" name="celebration_mode" value="full"
+                           {% if settings.celebration_mode not in ('big', 'small') %}checked{% endif %}>
+                    <span data-zorp-voice="system:system_settings"><strong>Full screen</strong>: every celebration fills the screen</span>
+                </label>
+                <label class="privacy-radio">
+                    <input type="radio" name="celebration_mode" value="big"
+                           {% if settings.celebration_mode == 'big' %}checked{% endif %}>
+                    <span data-zorp-voice="system:system_settings"><strong>Big moments only</strong>: badges and level-ups fill the screen, the rest is a small card</span>
+                </label>
+                <label class="privacy-radio">
+                    <input type="radio" name="celebration_mode" value="small"
+                           {% if settings.celebration_mode == 'small' %}checked{% endif %}>
+                    <span data-zorp-voice="system:system_settings"><strong>Small cards only</strong>: every celebration is a small card in the corner</span>
+                </label>
+            </div>
+            <div class="settings-switch-group">
+                {{ settings_switch('perfect_as_card', 'Show full marks on a quiz as a small card', settings.perfect_as_card) }}
+            </div>
+        </div>
+    </section>
+
     <section class="section-panel settings-section">
         <div class="section-panel-header">Guide</div>
         <div class="section-panel-body">

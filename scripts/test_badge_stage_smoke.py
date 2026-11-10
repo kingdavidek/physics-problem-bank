@@ -19,7 +19,7 @@ from models.zorp_rig import CONTEXT_MAP  # noqa: E402
 
 # Own caps (bytes). 2026-11-08: E10 phase 4, lazy files that load only when a badge is shown.
 CAPS = {
-    'static/js/badge-stage.js': 18500,   # 2026-11-08: E10 phase 6b RAISED 18_000 -> 18_500 (+500) for the wardrobe line and the Try it on button (18,373 B)
+    'static/js/badge-stage.js': 20000,   # 2026-11-08: E10 phase 6b RAISED 18_000 -> 18_500 (+500) for the wardrobe line and the Try it on button (18,373 B); 2026-11-10 E11 Phase 1 RAISED 18_500 -> 20_000: part() lets moments.js play the badge cards inside one sequence (19,399 B)
     'static/css/badge-stage.css': 5500,
     'static/images/badge-props.svg': 8000,
     'static/js/badge-sheet.js': 2500,
