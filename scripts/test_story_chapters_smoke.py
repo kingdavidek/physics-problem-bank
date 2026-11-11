@@ -368,10 +368,10 @@ def test_unlock_rules_are_the_servers():
     def opened(n, extra=()):
         return story.unlocked_numbers([f'b_{i}' for i in range(n)] + list(extra))
 
-    assert [c['badges'] for c in story.CHAPTERS] == [3, 5, 8, 10, 15, 20]
-    assert opened(0) == [] and opened(2) == [] and opened(3) == [1] and opened(4) == [1] and opened(5) == [1, 2]
-    assert opened(7) == [1, 2] and opened(8) == [1, 2, 3] and opened(10) == [1, 2, 3, 4] and opened(14) == [1, 2, 3, 4]
-    assert opened(15) == [1, 2, 3, 4, 5] and opened(19) == [1, 2, 3, 4, 5] and opened(20) == [1, 2, 3, 4, 5, 6]
+    assert [c['badges'] for c in story.CHAPTERS] == [3, 6, 10, 15, 22, 30]   # 2026-11-10 E11 Phase 2 (was 3, 5, 8, 10, 15, 20)
+    assert opened(0) == [] and opened(2) == [] and opened(3) == [1] and opened(5) == [1] and opened(6) == [1, 2]
+    assert opened(9) == [1, 2] and opened(10) == [1, 2, 3] and opened(15) == [1, 2, 3, 4] and opened(21) == [1, 2, 3, 4]
+    assert opened(22) == [1, 2, 3, 4, 5] and opened(29) == [1, 2, 3, 4, 5] and opened(30) == [1, 2, 3, 4, 5, 6]
     # a first topic master badge opens chapter 3 early; a subject complete badge opens chapter 6 early; other badges do not
     assert story.unlocked_numbers(['topic_master:gcse:maths:bidmas']) == [3]
     assert story.unlocked_numbers(['subject_completed:gcse:maths']) == [6]
@@ -380,11 +380,11 @@ def test_unlock_rules_are_the_servers():
     base = ['a', 'b']
     assert story.newly_unlocked(base + ['c'], ['c']) == [1]
     assert story.newly_unlocked(base + ['c', 'd'], ['c', 'd']) == [1]
-    assert story.newly_unlocked([f'b{i}' for i in range(4)], ['b3']) == [], 'no threshold crossed'
-    assert story.newly_unlocked([f'b{i}' for i in range(5)], ['b4']) == [2]
+    assert story.newly_unlocked([f'b{i}' for i in range(5)], ['b4']) == [], 'no threshold crossed'
+    assert story.newly_unlocked([f'b{i}' for i in range(6)], ['b5']) == [2]
     assert story.newly_unlocked([f'b{i}' for i in range(6)] + ['topic_master:gcse:maths:bidmas'], ['topic_master:gcse:maths:bidmas']) == [3]
-    assert story.newly_unlocked([f'b{i}' for i in range(8)] + ['topic_master:x:y:z'], ['topic_master:x:y:z']) == [], 'chapter 3 was open by the count'
-    assert story.newly_unlocked([f'b{i}' for i in range(5)] + ['topic_master:x:y:z'], ['topic_master:x:y:z']) == [3]
+    assert story.newly_unlocked([f'b{i}' for i in range(10)] + ['topic_master:x:y:z'], ['topic_master:x:y:z']) == [], 'chapter 3 was open by the count'
+    assert story.newly_unlocked([f'b{i}' for i in range(4)] + ['topic_master:x:y:z'], ['topic_master:x:y:z']) == [3]
     assert story.newly_unlocked([f'b{i}' for i in range(1)] + ['subject_completed:gcse:maths'], ['subject_completed:gcse:maths']) == [6]
     # the shelf rows
     rows = story.shelf([f'b{i}' for i in range(6)], {'tours': {'story_w1': True}})
@@ -392,9 +392,9 @@ def test_unlock_rules_are_the_servers():
     assert rows[0]['title'] == 'Arrival' and rows[0]['unlocked']
     assert [r['unlocked'] for r in rows] == [True, True, True, False, False, False, False]
     assert rows[1]['watched'] and not rows[2]['watched']
-    assert rows[3]['unlock'] == 'Unlocks at 8 badges' and rows[3]['alt'] == 'Or earn a topic master badge.'
-    assert rows[6]['unlock'] == 'Unlocks at 20 badges' and rows[6]['alt'] == 'Or earn a subject complete badge.'
-    assert rows[4]['alt'] == '' and rows[4]['unlock'] == 'Unlocks at 10 badges'
+    assert rows[3]['unlock'] == 'Unlocks at 10 badges' and rows[3]['alt'] == 'Or earn a topic master badge.'
+    assert rows[6]['unlock'] == 'Unlocks at 30 badges' and rows[6]['alt'] == 'Or earn a subject complete badge.'
+    assert rows[4]['alt'] == '' and rows[4]['unlock'] == 'Unlocks at 15 badges'
     # no database row, no table: the unlock is derived (nothing new stored)
     src = _read(ROOT / 'models' / 'story.py')
     assert 'INSERT' not in src.upper().replace('INSERT_', '') and 'CREATE TABLE' not in src.upper()
@@ -412,11 +412,12 @@ def test_a_badge_that_crosses_a_threshold_carries_one_offer():
     assert len(got) == 1, r
     assert got[0] == {'type': 'toast', 'kind': 'story_offer', 'id': 'story:1', 'chapter': 1}, got[0]
     assert [m['key'] for m in r['new_milestones']] == ['x_3'], 'the badge itself still arrives with it (the badge stage plays first)'
-    # a fourth badge crosses nothing
-    r = c.post('/_t/earn', json={'keys': ['x_4']}, headers=H).get_json()
-    assert offers(r.get('new_moments') or []) == []
-    # the fifth opens chapter 2 only
-    r = c.post('/_t/earn', json={'keys': ['x_5']}, headers=H).get_json()
+    # a fourth and a fifth badge cross nothing (2026-11-10 E11 Phase 2: chapter 2 now opens at six)
+    for k in ('x_4', 'x_5'):
+        r = c.post('/_t/earn', json={'keys': [k]}, headers=H).get_json()
+        assert offers(r.get('new_moments') or []) == [], k
+    # the sixth opens chapter 2 only
+    r = c.post('/_t/earn', json={'keys': ['x_6']}, headers=H).get_json()
     assert [m['chapter'] for m in offers(r.get('new_moments') or [])] == [2]
     # two chapters opened by one request: only the first of them is offered (never all at once)
     c2, uid2 = make_client('dl')
@@ -471,7 +472,7 @@ def test_the_offer_never_plays_by_itself():
 
 def test_existing_pupils_are_offered_one_chapter_once():
     c, uid = make_client('cu')
-    give(uid, 12)                       # chapters 1 to 4 are open
+    give(uid, 12)                       # chapters 1 to 3 are open (2026-11-10 E11 Phase 2 counts)
     done_arrival(c)
     html = c.get('/profile').get_data(as_text=True)
     got = offers(island(html, 'pb-new-moments'))
@@ -482,7 +483,7 @@ def test_existing_pupils_are_offered_one_chapter_once():
         assert offers(island(c.get(path).get_data(as_text=True), 'pb-new-moments')) == [], path
     # Later is final until a new badge opens a new chapter (the live offer, not a catch-up)
     r = c.post('/_t/earn', json={'keys': [f'z_{i}' for i in range(4)]}, headers=H).get_json()
-    assert [m['chapter'] for m in offers(r.get('new_moments') or [])] == [5], r
+    assert [m['chapter'] for m in offers(r.get('new_moments') or [])] == [4], r
     # the same pupil who has watched anything is never caught up
     c2, uid2 = make_client('cu')
     give(uid2, 12)
@@ -571,8 +572,8 @@ def test_the_shelf_on_the_profile():
     assert 'data-story-play="1"' in by['1'] and 'Watch again' in by['1'] and 'Watched.' in by['1'], 'chapter 1 is watched'
     for n in '23456':
         assert 'data-story-play' not in by[n] and 'is-locked' in sect, n
-    assert 'Unlocks at 5 badges' in by['2'] and 'Unlocks at 8 badges' in by['3'] and 'Unlocks at 10 badges' in by['4']
-    assert 'Unlocks at 15 badges' in by['5'] and 'Unlocks at 20 badges' in by['6']
+    assert 'Unlocks at 6 badges' in by['2'] and 'Unlocks at 10 badges' in by['3'] and 'Unlocks at 15 badges' in by['4']
+    assert 'Unlocks at 22 badges' in by['5'] and 'Unlocks at 30 badges' in by['6']
     assert 'Or earn a topic master badge.' in by['3'] and 'Or earn a subject complete badge.' in by['6']
     assert 'The maths belt' in by['1'] and 'Meet the crew' in by['2'] and 'A postcard from Novara' in by['6']
     # an unwatched, unlocked chapter says Watch

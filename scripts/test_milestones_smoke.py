@@ -85,6 +85,20 @@ def insert_question_events(conn, user_id, n):
     conn.commit()
 
 
+def insert_right_answers(conn, user_id, n):
+    """2026-11-10 (E11 Phase 2, David's answer 4): Practice regular and veteran count practice questions answered right."""
+    now = utc_now_iso()
+    conn.executemany(
+        '''
+        INSERT INTO generator_mcq_attempts (
+            user_id, level, subject, topic, mode, difficulty, user_answer, correct_answer, correct, created_at
+        ) VALUES (?, 'gcse', 'maths', 'bidmas', 'mcq', 'foundational', 'A', 'A', 1, ?)
+        ''',
+        [(user_id, now)] * n,
+    )
+    conn.commit()
+
+
 def insert_quiz(conn, user_id, score, total):
     conn.execute(
         '''
@@ -143,11 +157,14 @@ def main():
             assert evaluate_milestones(conn, uid_a) == []
             assert milestone_keys(conn, uid_a).count(MILESTONE_QOTD_7) == 1
 
-            insert_question_events(conn, uid_a, 49)
+            # 2026-11-10 (E11 Phase 2): questions answered right, 25 and 100; questions only started no longer count
+            insert_question_events(conn, uid_a, 120)
+            assert MILESTONE_QUESTIONS_25 not in evaluate_milestones(conn, uid_a)
+            insert_right_answers(conn, uid_a, 99)
             forty_nine = evaluate_milestones(conn, uid_a)
             assert MILESTONE_QUESTIONS_25 in forty_nine
             assert MILESTONE_QUESTIONS_50 not in forty_nine
-            insert_question_events(conn, uid_a, 1)
+            insert_right_answers(conn, uid_a, 1)
             fifty = evaluate_milestones(conn, uid_a)
             assert MILESTONE_QUESTIONS_50 in fifty
             listed = list_user_milestones(conn, uid_a)

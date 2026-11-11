@@ -12,14 +12,16 @@ unlock rule. scripts/test_story_chapters_smoke.py pins the two to each other.
 # Chapter 0 is the arrival film itself (always available; the shelf lists it first).
 # `badges`: the number of badges that unlocks a chapter. `any_prefix` (optional): earning any badge whose key starts with this
 # opens it too, whichever comes first. `alt` is the sentence the shelf shows for that second way in.
+# 2026-11-10 (E11 Phase 2, David's answer 7): the counts went from 3, 5, 8, 10, 15, 20 to 3, 6, 10, 15, 22, 30, because the
+# catalogue grew from 39 to 56 badges and the chapters would otherwise open too quickly.
 CHAPTERS = (
     {'n': 1, 'id': 'belt', 'title': 'The maths belt', 'badges': 3},
-    {'n': 2, 'id': 'crew', 'title': 'Meet the crew', 'badges': 5},
-    {'n': 3, 'id': 'doors', 'title': 'Puzzle doors', 'badges': 8,
+    {'n': 2, 'id': 'crew', 'title': 'Meet the crew', 'badges': 6},
+    {'n': 3, 'id': 'doors', 'title': 'Puzzle doors', 'badges': 10,
      'any_prefix': 'topic_master:', 'alt': 'Or earn a topic master badge.'},
-    {'n': 4, 'id': 'home', 'title': 'Home', 'badges': 10},
-    {'n': 5, 'id': 'logbook', 'title': 'The logbook', 'badges': 15},
-    {'n': 6, 'id': 'postcard', 'title': 'A postcard from Novara', 'badges': 20,
+    {'n': 4, 'id': 'home', 'title': 'Home', 'badges': 15},
+    {'n': 5, 'id': 'logbook', 'title': 'The logbook', 'badges': 22},
+    {'n': 6, 'id': 'postcard', 'title': 'A postcard from Novara', 'badges': 30,
      'any_prefix': 'subject_completed:', 'alt': 'Or earn a subject complete badge.'},
 )
 

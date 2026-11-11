@@ -35,7 +35,7 @@ _POSE_SET = frozenset(POSE_TOKENS)
 # E7 Phase 1.6: shared overlay gear (templates/partials/zorp_overlays.html).
 # The full art catalogue is larger than what's approved for the live rig —
 # LOOK_HATS/LOOK_SHOES below are the subset actually wired into LIVE_LOOKS.
-OVERLAY_HATS = ('mortarboard', 'beanie', 'toque', 'quiff')
+OVERLAY_HATS = ('mortarboard', 'beanie', 'toque', 'quiff', 'crown', 'sprout')   # crown and sprout: E11 Phase 2
 OVERLAY_SHOES = ('sneakers',)
 
 
@@ -63,7 +63,7 @@ LOOK_FEET = ('big',)
 LOOK_MOUTHS = ('grin', 'cat')
 # E7 Phase 1.6: subset of OVERLAY_HATS/OVERLAY_SHOES approved for the live rig.
 # toque and quiff stay kit-only (pose-kit stills), not yet approved here.
-LOOK_HATS = ('mortarboard', 'beanie')
+LOOK_HATS = ('mortarboard', 'beanie', 'crown', 'sprout')   # E11 Phase 2: crown and sprout, drawn for the live rig from the start
 LOOK_SHOES = ('sneakers',)
 LOOK_FIELDS = {
     'colour': LOOK_COLOURS,

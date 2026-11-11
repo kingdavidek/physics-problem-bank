@@ -47,6 +47,9 @@ _RAW = (
     ('hat', '', 'No hat', 'no hat', None),
     ('hat', 'mortarboard', 'Mortarboard', 'the mortarboard', ('badge', 'first_lesson_step')),
     ('hat', 'beanie', 'Beanie', 'the beanie', ('badge', 'app_tour')),
+    # E11 Phase 2: one item for each new badge family (the Perfect line and the Recovery line)
+    ('hat', 'crown', 'Crown', 'the crown', ('family', 'perfect', 'a full marks badge')),
+    ('hat', 'sprout', 'Sprout', 'the sprout', ('family', 'growth', 'a recovery badge')),
     ('shoes', '', 'No shoes', 'no shoes', None),
     ('shoes', 'sneakers', 'Sneakers', 'the sneakers', ('badge', 'streak_7')),
 )
@@ -118,12 +121,17 @@ def unlocked_ids(conn, user_id):
 
 
 def items_unlocked_by(conn, user_id, milestone_key):
-    """Items that `milestone_key` newly opens for this pupil (it is the only earned badge that satisfies the rule)."""
-    keys = _earned_keys(conn, user_id)
+    """Items that `milestone_key` newly opens for this pupil: it is the first recorded of the earned badges that satisfy the
+    rule. E11 Phase 2: two badges of one family can arrive with one answer (Bounce back and Learned from a hint both open the
+    sprout); the first recorded one carries the line, the other carries nothing (before, neither did)."""
+    rows = conn.execute('SELECT milestone_key FROM user_milestones WHERE user_id = ? ORDER BY rowid', (user_id,)).fetchall()
+    order = [r['milestone_key'] for r in rows]
+    if milestone_key not in order:
+        return []
     out = []
     for item in ITEMS:
-        sat = _satisfied_by(item, keys)
-        if sat == {milestone_key}:
+        sat = _satisfied_by(item, order)
+        if sat and min(sat, key=order.index) == milestone_key:
             out.append(item)
     return out
 

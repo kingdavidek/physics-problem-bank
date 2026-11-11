@@ -453,7 +453,7 @@ def test_lazy_loading():
     assert c.get(urls['js']).status_code == 200 and c.get(urls['css']).status_code == 200
     sw = read('static/js/sw.js')
     assert 'moments.js' not in sw and 'moments.css' not in sw
-    assert "pb-v124" in sw   # 2026-11-10: E11 Phase 1 bump (was pb-v123, Phase 0); 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115); 2026-11-08: E10 review fixes bump (was pb-v118)
+    assert "pb-v125" in sw   # 2026-11-10: E11 Phase 2 bump (was pb-v124, Phase 1); 2026-11-10: E11 Phase 1 bump (was pb-v123, Phase 0); 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115); 2026-11-08: E10 review fixes bump (was pb-v118)
 
 
 # ---- E10 review fixes (2026-11-08) ----

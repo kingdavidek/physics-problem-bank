@@ -36,7 +36,7 @@
 } | tojson }}</script>
 {# E10 phase 4: the badge stage (badges and streak moments, full screen) loads only when one plays (guide.js loadBadgeStage); these are its files. #}
 <script type="application/json" id="pb-badge-assets">{{ {
-    'js': url_for('static', filename='js/badge-stage.js') ~ '?v=4',
+    'js': url_for('static', filename='js/badge-stage.js') ~ '?v=5',
     'css': url_for('static', filename='css/badge-stage.css') ~ '?v=2',
     'props': url_for('static', filename='images/badge-props.svg') ~ '?v=2',
     'profile': url_for('profile') ~ '#milestones',
@@ -44,7 +44,7 @@
 
 {# E10 phase 5: moments (level-up, perfect quiz and finished lesson on the stage; toasts; micro reactions) load only when one is due (guide.js loadMoments); these are its files. The props are the badge stage's. #}
 <script type="application/json" id="pb-moment-assets">{{ {
-    'js': url_for('static', filename='js/moments.js') ~ '?v=3',
+    'js': url_for('static', filename='js/moments.js') ~ '?v=4',
     'css': url_for('static', filename='css/moments.css') ~ '?v=2',
     'props': url_for('static', filename='images/badge-props.svg') ~ '?v=2',
     'profile': url_for('profile'),

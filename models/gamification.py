@@ -4,7 +4,9 @@ import sqlite3
 
 from models.avatar import attach_avatars
 from models.social import (
+    ACTIVITY_HINT_CORRECT,
     ACTIVITY_LESSON_STEP_COMPLETED,
+    ACTIVITY_RETRY_CORRECT,
     ACTIVITY_QUESTION_GENERATED,
     ACTIVITY_QUIZ_COMPLETED,
     ACTIVITY_SET_WORK_ANSWERED,
@@ -45,6 +47,27 @@ MILESTONE_TOUR = 'app_tour'
 # item, and every look the live Zorp can draw is already in the wardrobe (plan section 9).
 MILESTONE_PERFECT_1 = 'perfect_1'
 PERFECT_MIN_TOTAL = 3
+# E11 Phase 2 (plan section 3, David's answer 2: all of them). Each line has a next step so "Next up" always points somewhere.
+MILESTONE_QUIZZES_5 = 'quizzes_5'
+MILESTONE_QUIZZES_25 = 'quizzes_25'
+MILESTONE_PERFECT_5 = 'perfect_5'
+MILESTONE_PERFECT_20 = 'perfect_20'
+MILESTONE_BOUNCE_1 = 'bounce_1'
+MILESTONE_BOUNCE_25 = 'bounce_25'
+MILESTONE_HINT_1 = 'hint_1'
+MILESTONE_HINT_25 = 'hint_25'
+MILESTONE_RETRY_FIXED = 'retry_fixed'
+MILESTONE_QUESTIONS_250 = 'questions_250'
+MILESTONE_STREAK_3 = 'streak_3'
+MILESTONE_STREAK_100 = 'streak_100'
+MILESTONE_QOTD_30 = 'qotd_30'
+MILESTONE_TOPICS_3 = 'topics_3'
+MILESTONE_TOPICS_25 = 'topics_25'
+MILESTONE_SETWORK_1 = 'setwork_1'
+MILESTONE_SETWORK_10 = 'setwork_10'
+# Practice regular and Practice veteran count questions answered right since E11 Phase 2 (David's answer 4; before, questions
+# started). The keys stay questions_25 and questions_50 so pupils who hold them keep them; questions_50 now needs 100 right answers.
+QUESTIONS_RIGHT_THRESHOLDS = ((MILESTONE_QUESTIONS_25, 25), (MILESTONE_QUESTIONS_50, 100), (MILESTONE_QUESTIONS_250, 250))
 
 # E10 phase 4 (docs/ZORP_ARRIVAL_AND_CELEBRATIONS_PLAN.md B3, section 10): every badge carries
 #   blurb  what you did, past tense and specific (shown once earned and on the badge stage)
@@ -56,6 +79,7 @@ PERFECT_MIN_TOTAL = 3
 BADGE_FAMILIES = (
     'streak', 'daily', 'practice', 'explorer', 'learning',
     'topic_completed', 'topic_ninja', 'topic_master', 'subject', 'accuracy', 'tour',
+    'perfect', 'growth',   # E11 Phase 2: the Perfect line (Full marks, Bullseye, Flawless) and the Recovery line
 )
 
 MILESTONE_CATALOG = {
@@ -64,7 +88,7 @@ MILESTONE_CATALOG = {
         'description': 'Finish a quiz',
         'blurb': 'You finished your first quiz.',
         'how': 'Finish a quiz.',
-        'next': None,
+        'next': MILESTONE_QUIZZES_5,
         'family': 'learning',
         'emoji': '📝',
         'tier': 'bronze',
@@ -74,8 +98,8 @@ MILESTONE_CATALOG = {
         'description': 'Get every answer right on a lesson quiz',
         'blurb': 'You got every answer right on a quiz.',
         'how': 'Get every answer right on a lesson quiz.',
-        'next': None,
-        'family': 'accuracy',
+        'next': MILESTONE_PERFECT_5,
+        'family': 'perfect',
         'emoji': '💯',
         'tier': 'bronze',
     },
@@ -84,7 +108,7 @@ MILESTONE_CATALOG = {
         'description': 'Complete a lesson quick check',
         'blurb': 'You finished your first lesson step.',
         'how': 'Finish a lesson step, such as a quick check.',
-        'next': MILESTONE_FIRST_QUIZ,
+        'next': 'topics_completed_5',
         'family': 'learning',
         'emoji': '📖',
         'tier': 'bronze',
@@ -95,7 +119,7 @@ MILESTONE_CATALOG = {
         'description': 'Practise 10 different topics',
         'blurb': 'You practised 10 different topics.',
         'how': 'Practise 10 different topics.',
-        'next': None,
+        'next': MILESTONE_TOPICS_25,
         'family': 'explorer',
         'emoji': '🧭',
         'tier': 'silver',
@@ -126,16 +150,16 @@ MILESTONE_CATALOG = {
         'description': 'Reach a 30-day study streak',
         'blurb': 'You studied on 30 days in a row.',
         'how': 'Study on 30 days in a row.',
-        'next': None,
+        'next': MILESTONE_STREAK_100,
         'family': 'streak',
         'emoji': '💪',
         'tier': 'gold',
     },
     MILESTONE_QUESTIONS_25: {
         'title': 'Practice regular',
-        'description': 'Generate 25 practice questions',
-        'blurb': 'You started 25 practice questions.',
-        'how': 'Start 25 practice questions.',
+        'description': 'Get 25 practice questions right',
+        'blurb': 'You got 25 practice questions right.',
+        'how': 'Get 25 practice questions right.',
         'next': MILESTONE_QUESTIONS_50,
         'family': 'practice',
         'emoji': '✏️',
@@ -157,17 +181,17 @@ MILESTONE_CATALOG = {
         'description': 'Answer the question of the day on 7 different days',
         'blurb': 'You answered the question of the day on 7 different days.',
         'how': 'Answer the question of the day on 7 different days.',
-        'next': None,
+        'next': MILESTONE_QOTD_30,
         'family': 'daily',
         'emoji': '📅',
         'tier': 'silver',
     },
     MILESTONE_QUESTIONS_50: {
         'title': 'Practice veteran',
-        'description': 'Generate 50 practice questions',
-        'blurb': 'You started 50 practice questions.',
-        'how': 'Start 50 practice questions.',
-        'next': None,
+        'description': 'Get 100 practice questions right',
+        'blurb': 'You got 100 practice questions right.',
+        'how': 'Get 100 practice questions right.',
+        'next': MILESTONE_QUESTIONS_250,
         'family': 'practice',
         'emoji': '🏅',
         'tier': 'gold',
@@ -184,6 +208,179 @@ MILESTONE_CATALOG = {
         'family': 'accuracy',
         'emoji': '🎯',
         'tier': 'violet',
+    },
+    # ---- E11 Phase 2 (docs/BADGES_AND_CELEBRATIONS_PLAN.md section 3) ----
+    MILESTONE_QUIZZES_5: {
+        'title': 'Quiz fan',
+        'description': 'Finish 5 quizzes',
+        'blurb': 'You finished 5 quizzes.',
+        'how': 'Finish 5 quizzes.',
+        'next': MILESTONE_QUIZZES_25,
+        'family': 'learning',
+        'emoji': '📋',
+        'tier': 'silver',
+    },
+    MILESTONE_QUIZZES_25: {
+        'title': 'Quiz veteran',
+        'description': 'Finish 25 quizzes',
+        'blurb': 'You finished 25 quizzes.',
+        'how': 'Finish 25 quizzes.',
+        'next': None,
+        'family': 'learning',
+        'emoji': '🗂️',
+        'tier': 'gold',
+    },
+    MILESTONE_PERFECT_5: {
+        'title': 'Bullseye',
+        'description': 'Get every answer right on 5 lesson quizzes',
+        'blurb': 'You got every answer right on 5 quizzes.',
+        'how': 'Get every answer right on 5 lesson quizzes.',
+        'next': MILESTONE_PERFECT_20,
+        'family': 'perfect',
+        'emoji': '🌟',
+        'tier': 'silver',
+    },
+    MILESTONE_PERFECT_20: {
+        'title': 'Flawless',
+        'description': 'Get every answer right on 20 lesson quizzes',
+        'blurb': 'You got every answer right on 20 quizzes.',
+        'how': 'Get every answer right on 20 lesson quizzes.',
+        'next': None,
+        'family': 'perfect',
+        'emoji': '💎',
+        'tier': 'gold',
+    },
+    MILESTONE_BOUNCE_1: {
+        'title': 'Bounce back',
+        'description': 'Get a question right on a second try',
+        'blurb': 'You got a question right on your second try.',
+        'how': 'Get a practice question right after a wrong try.',
+        'next': MILESTONE_BOUNCE_25,
+        'family': 'growth',
+        'emoji': '🌱',
+        'tier': 'bronze',
+    },
+    MILESTONE_BOUNCE_25: {
+        'title': 'Keeps going',
+        'description': 'Get 25 questions right after a wrong try',
+        'blurb': 'You got 25 questions right after a wrong try.',
+        'how': 'Get 25 practice questions right after a wrong try.',
+        'next': None,
+        'family': 'growth',
+        'emoji': '🌿',
+        'tier': 'silver',
+    },
+    MILESTONE_HINT_1: {
+        'title': 'Learned from a hint',
+        'description': 'Open the bigger hint, then get the question right',
+        'blurb': 'You opened the bigger hint and then got it right.',
+        'how': 'Open the bigger hint on a question, then get it right.',
+        'next': MILESTONE_HINT_25,
+        'family': 'growth',
+        'emoji': '💡',
+        'tier': 'bronze',
+    },
+    MILESTONE_HINT_25: {
+        'title': 'Hint hero',
+        'description': 'Use the bigger hint and get it right 25 times',
+        'blurb': 'You used the bigger hint and got it right 25 times.',
+        'how': 'Use the bigger hint and get the question right 25 times.',
+        'next': None,
+        'family': 'growth',
+        'emoji': '🔦',
+        'tier': 'silver',
+    },
+    MILESTONE_RETRY_FIXED: {
+        'title': 'All fixed',
+        'description': 'Retry the questions you missed and get them all right',
+        'blurb': 'You fixed every question you missed on a quiz.',
+        'how': 'Retry the ones you missed on a quiz and get them all right.',
+        'next': None,
+        'family': 'growth',
+        'emoji': '🛠️',
+        'tier': 'bronze',
+    },
+    MILESTONE_QUESTIONS_250: {
+        'title': 'Problem solver',
+        'description': 'Get 250 practice questions right',
+        'blurb': 'You got 250 practice questions right.',
+        'how': 'Get 250 practice questions right.',
+        'next': None,
+        'family': 'practice',
+        'emoji': '🧩',
+        'tier': 'gold',
+    },
+    MILESTONE_STREAK_3: {
+        'title': 'Three in a row',
+        'description': 'Study on 3 days in a row',
+        'blurb': 'You studied on 3 days in a row.',
+        'how': 'Study on 3 days in a row.',
+        'next': MILESTONE_STREAK_7,
+        'family': 'streak',
+        'emoji': '🕯️',
+        'tier': 'bronze',
+    },
+    MILESTONE_STREAK_100: {
+        'title': 'Century',
+        'description': 'Study on 100 days in a row',
+        'blurb': 'You studied on 100 days in a row.',
+        'how': 'Study on 100 days in a row.',
+        'next': None,
+        'family': 'streak',
+        'emoji': '🏆',
+        'tier': 'violet',
+    },
+    MILESTONE_QOTD_30: {
+        'title': 'Daily devotee',
+        'description': 'Answer the question of the day on 30 different days',
+        'blurb': 'You answered the question of the day on 30 different days.',
+        'how': 'Answer the question of the day on 30 different days.',
+        'next': None,
+        'family': 'daily',
+        'emoji': '🗓️',
+        'tier': 'gold',
+    },
+    MILESTONE_TOPICS_3: {
+        'title': 'Curious',
+        'description': 'Practise 3 different topics',
+        'blurb': 'You practised 3 different topics.',
+        'how': 'Practise 3 different topics.',
+        'next': MILESTONE_TOPICS_10,
+        'family': 'explorer',
+        'emoji': '🔎',
+        'tier': 'bronze',
+    },
+    MILESTONE_TOPICS_25: {
+        'title': 'Globetrotter',
+        'description': 'Practise 25 different topics',
+        'blurb': 'You practised 25 different topics.',
+        'how': 'Practise 25 different topics.',
+        'next': None,
+        'family': 'explorer',
+        'emoji': '🌍',
+        'tier': 'gold',
+    },
+    MILESTONE_SETWORK_1: {
+        'title': 'Set work done',
+        'description': 'Finish a piece of set work from your class',
+        'blurb': 'You finished a piece of set work.',
+        'how': 'Finish a piece of set work from your class.',
+        'next': MILESTONE_SETWORK_10,
+        'family': 'learning',
+        'emoji': '📬',
+        'tier': 'bronze',
+        'class_only': True,
+    },
+    MILESTONE_SETWORK_10: {
+        'title': 'Ten tasks done',
+        'description': 'Finish 10 pieces of set work',
+        'blurb': 'You finished 10 pieces of set work.',
+        'how': 'Finish 10 pieces of set work from your class.',
+        'next': None,
+        'family': 'learning',
+        'emoji': '📦',
+        'tier': 'silver',
+        'class_only': True,
     },
 }
 
@@ -419,6 +616,7 @@ def _award_milestone(conn, user_id, milestone_key):
 
 
 _PERFECT_QUIZ_WHERE = 'is_retry = 0 AND total >= ? AND score >= total'
+_QUESTIONS_RIGHT_WHERE = 'correct = 1 AND part_index IS NULL'   # E11 Phase 2: a whole practice question right
 
 
 def _has_perfect_quiz(conn, user_id):
@@ -439,6 +637,44 @@ BACKFILL_RULES = {
         (PERFECT_MIN_TOTAL,),
     ),
 }
+
+# E11 Phase 2: the new badges that history already earns (the Recovery line's two events are new, so those four start from zero).
+# `at` is the latest qualifying record: on or after the day the badge was really reached.
+def _count_rule(table, where, need, *, user_col='user_id', at_col='created_at', params=()):
+    return (f'SELECT {user_col} AS user_id, MAX({at_col}) AS at FROM {table} WHERE {where} GROUP BY {user_col} HAVING COUNT(*) >= ?',
+            tuple(params) + (need,))
+
+
+BACKFILL_RULES.update({
+    MILESTONE_QUIZZES_5: _count_rule('quiz_attempts', 'is_retry = 0', 5),
+    MILESTONE_QUIZZES_25: _count_rule('quiz_attempts', 'is_retry = 0', 25),
+    MILESTONE_PERFECT_5: _count_rule('quiz_attempts', _PERFECT_QUIZ_WHERE, 5, params=(PERFECT_MIN_TOTAL,)),
+    MILESTONE_PERFECT_20: _count_rule('quiz_attempts', _PERFECT_QUIZ_WHERE, 20, params=(PERFECT_MIN_TOTAL,)),
+    MILESTONE_RETRY_FIXED: _count_rule('quiz_attempts', 'is_retry = 1 AND total >= 1 AND score >= total', 1),
+    MILESTONE_QUESTIONS_25: _count_rule('generator_mcq_attempts', _QUESTIONS_RIGHT_WHERE, 25),
+    MILESTONE_QUESTIONS_50: _count_rule('generator_mcq_attempts', _QUESTIONS_RIGHT_WHERE, 100),
+    MILESTONE_QUESTIONS_250: _count_rule('generator_mcq_attempts', _QUESTIONS_RIGHT_WHERE, 250),
+    MILESTONE_STREAK_3: ('SELECT user_id, last_active_date AS at FROM user_streaks WHERE longest_streak >= ?', (3,)),
+    MILESTONE_STREAK_100: ('SELECT user_id, last_active_date AS at FROM user_streaks WHERE longest_streak >= ?', (100,)),
+    MILESTONE_QOTD_30: ('SELECT user_id, MAX(answered_at) AS at FROM qotd_attempts GROUP BY user_id HAVING COUNT(DISTINCT day_key) >= ?',
+                        (30,)),
+    MILESTONE_SETWORK_1: _count_rule('class_assignment_recipients', "status = 'complete'", 1, user_col='student_id', at_col='completed_at'),
+    MILESTONE_SETWORK_10: _count_rule('class_assignment_recipients', "status = 'complete'", 10, user_col='student_id', at_col='completed_at'),
+})
+for _key, _need in ((MILESTONE_TOPICS_3, 3), (MILESTONE_TOPICS_25, 25)):
+    BACKFILL_RULES[_key] = (
+        '''SELECT user_id, MAX(created_at) AS at FROM user_activity_events
+           WHERE event_type IN (?, ?, ?, ?) AND json_extract(payload_json, '$.topic') IS NOT NULL
+           GROUP BY user_id
+           HAVING COUNT(DISTINCT json_extract(payload_json, '$.level') || '|' || json_extract(payload_json, '$.subject') || '|' ||
+                                 json_extract(payload_json, '$.topic')) >= ?''',
+        (ACTIVITY_TOPIC_OPENED, ACTIVITY_QUESTION_GENERATED, ACTIVITY_QUIZ_COMPLETED, ACTIVITY_LESSON_STEP_COMPLETED, _need),
+    )
+PHASE2_BACKFILL_KEYS = (
+    MILESTONE_QUIZZES_5, MILESTONE_QUIZZES_25, MILESTONE_PERFECT_5, MILESTONE_PERFECT_20, MILESTONE_RETRY_FIXED,
+    MILESTONE_QUESTIONS_25, MILESTONE_QUESTIONS_50, MILESTONE_QUESTIONS_250, MILESTONE_STREAK_3, MILESTONE_STREAK_100,
+    MILESTONE_QOTD_30, MILESTONE_TOPICS_3, MILESTONE_TOPICS_25, MILESTONE_SETWORK_1, MILESTONE_SETWORK_10,
+)
 
 
 def backfill_quiet_badges(conn, keys):
@@ -551,6 +787,31 @@ def latest_pose_milestone(conn, user_id):
     return _pose_from_meta(MILESTONE_CATALOG.get(row['milestone_key']))
 
 
+def _questions_right_count(conn, user_id):
+    row = conn.execute(
+        f'SELECT COUNT(*) AS n FROM generator_mcq_attempts WHERE user_id = ? AND {_QUESTIONS_RIGHT_WHERE}', (user_id,),
+    ).fetchone()
+    return int(row['n'] or 0) if row else 0
+
+
+def _set_work_done_count(conn, user_id):
+    try:
+        row = conn.execute(
+            "SELECT COUNT(*) AS n FROM class_assignment_recipients WHERE student_id = ? AND status = 'complete'", (user_id,),
+        ).fetchone()
+    except sqlite3.OperationalError:   # a database without the class tables (some tests)
+        return 0
+    return int(row['n'] or 0) if row else 0
+
+
+def _in_a_class(conn, user_id):
+    try:
+        row = conn.execute("SELECT 1 FROM class_memberships WHERE student_id = ? AND status = 'active' LIMIT 1", (user_id,)).fetchone()
+    except sqlite3.OperationalError:
+        return False
+    return row is not None
+
+
 def _distinct_topics_count(conn, user_id):
     row = conn.execute(
         '''
@@ -617,8 +878,23 @@ def evaluate_milestones(conn, user_id):
     if quiz_count >= 1 and _award_milestone(conn, user_id, MILESTONE_FIRST_QUIZ):
         earned.append(MILESTONE_FIRST_QUIZ)
 
-    if quiz_count >= 1 and _has_perfect_quiz(conn, user_id) and _award_milestone(conn, user_id, MILESTONE_PERFECT_1):
-        earned.append(MILESTONE_PERFECT_1)
+    if quiz_count >= 1:
+        # E11 Phase 2: lesson quizzes finished (retry runs are part of the quiz they retry), perfect quizzes, a cleared retry run
+        q = conn.execute(
+            f'''
+            SELECT SUM(CASE WHEN is_retry = 0 THEN 1 ELSE 0 END) AS finished,
+                   SUM(CASE WHEN {_PERFECT_QUIZ_WHERE} THEN 1 ELSE 0 END) AS perfect,
+                   SUM(CASE WHEN is_retry = 1 AND total >= 1 AND score >= total THEN 1 ELSE 0 END) AS fixed
+            FROM quiz_attempts WHERE user_id = ?
+            ''',
+            (PERFECT_MIN_TOTAL, user_id),
+        ).fetchone()
+        finished, perfect, fixed = int(q['finished'] or 0), int(q['perfect'] or 0), int(q['fixed'] or 0)
+        for key, ok in ((MILESTONE_QUIZZES_5, finished >= 5), (MILESTONE_QUIZZES_25, finished >= 25),
+                        (MILESTONE_PERFECT_1, perfect >= 1), (MILESTONE_PERFECT_5, perfect >= 5),
+                        (MILESTONE_PERFECT_20, perfect >= 20), (MILESTONE_RETRY_FIXED, fixed >= 1)):
+            if ok and _award_milestone(conn, user_id, key):
+                earned.append(key)
 
     lesson_count = conn.execute(
         '''
@@ -632,26 +908,39 @@ def evaluate_milestones(conn, user_id):
     if lesson_count >= 1 and _award_milestone(conn, user_id, MILESTONE_FIRST_LESSON):
         earned.append(MILESTONE_FIRST_LESSON)
 
-    if _distinct_topics_count(conn, user_id) >= 10:
-        if _award_milestone(conn, user_id, MILESTONE_TOPICS_10):
-            earned.append(MILESTONE_TOPICS_10)
+    topics = _distinct_topics_count(conn, user_id)
+    for key, need in ((MILESTONE_TOPICS_3, 3), (MILESTONE_TOPICS_10, 10), (MILESTONE_TOPICS_25, 25)):
+        if topics >= need and _award_milestone(conn, user_id, key):
+            earned.append(key)
 
-    question_count = conn.execute(
-        '''
-        SELECT COUNT(*) AS n FROM user_activity_events
-        WHERE user_id = ? AND event_type = ?
-        ''',
-        (user_id, ACTIVITY_QUESTION_GENERATED),
-    ).fetchone()['n']
-    if question_count >= 25 and _award_milestone(conn, user_id, MILESTONE_QUESTIONS_25):
-        earned.append(MILESTONE_QUESTIONS_25)
-    if question_count >= 50 and _award_milestone(conn, user_id, MILESTONE_QUESTIONS_50):
-        earned.append(MILESTONE_QUESTIONS_50)
+    # E11 Phase 2 (David's answer 4): practice questions answered right (whole questions; the parts of a multi-part question are
+    # not counted one by one)
+    right = _questions_right_count(conn, user_id)
+    for key, need in QUESTIONS_RIGHT_THRESHOLDS:
+        if right >= need and _award_milestone(conn, user_id, key):
+            earned.append(key)
 
-    if streak['longest'] >= 7 and _award_milestone(conn, user_id, MILESTONE_STREAK_7):
-        earned.append(MILESTONE_STREAK_7)
-    if streak['longest'] >= 30 and _award_milestone(conn, user_id, MILESTONE_STREAK_30):
-        earned.append(MILESTONE_STREAK_30)
+    for key, need in ((MILESTONE_STREAK_3, 3), (MILESTONE_STREAK_7, 7), (MILESTONE_STREAK_30, 30), (MILESTONE_STREAK_100, 100)):
+        if streak['longest'] >= need and _award_milestone(conn, user_id, key):
+            earned.append(key)
+
+    # E11 Phase 2: the Recovery line, from the private events the practice check routes record (once per question)
+    rec = conn.execute(
+        'SELECT SUM(CASE WHEN event_type = ? THEN 1 ELSE 0 END) AS bounce, SUM(CASE WHEN event_type = ? THEN 1 ELSE 0 END) AS hint '
+        'FROM user_activity_events WHERE user_id = ? AND event_type IN (?, ?)',
+        (ACTIVITY_RETRY_CORRECT, ACTIVITY_HINT_CORRECT, user_id, ACTIVITY_RETRY_CORRECT, ACTIVITY_HINT_CORRECT),
+    ).fetchone()
+    bounce, hint = int(rec['bounce'] or 0), int(rec['hint'] or 0)
+    for key, ok in ((MILESTONE_BOUNCE_1, bounce >= 1), (MILESTONE_BOUNCE_25, bounce >= 25),
+                    (MILESTONE_HINT_1, hint >= 1), (MILESTONE_HINT_25, hint >= 25)):
+        if ok and _award_milestone(conn, user_id, key):
+            earned.append(key)
+
+    # E11 Phase 2: set work finished (only pupils in a class have any)
+    done = _set_work_done_count(conn, user_id)
+    for key, need in ((MILESTONE_SETWORK_1, 1), (MILESTONE_SETWORK_10, 10)):
+        if done >= need and _award_milestone(conn, user_id, key):
+            earned.append(key)
 
     qotd_days = conn.execute(
         'SELECT COUNT(DISTINCT day_key) AS n FROM qotd_attempts WHERE user_id = ?',
@@ -661,6 +950,8 @@ def evaluate_milestones(conn, user_id):
         earned.append(MILESTONE_QOTD_FIRST)
     if qotd_days >= 7 and _award_milestone(conn, user_id, MILESTONE_QOTD_7):
         earned.append(MILESTONE_QOTD_7)
+    if qotd_days >= 30 and _award_milestone(conn, user_id, MILESTONE_QOTD_30):
+        earned.append(MILESTONE_QOTD_30)
 
     if _maybe_award_accuracy_top_friend(conn, user_id):
         earned.append(MILESTONE_ACCURACY_TOP_FRIEND)
@@ -719,8 +1010,11 @@ def list_milestone_shelf(conn, user_id):
     """Full catalog for the profile grid: earned badges plus locked silhouettes."""
     earned = {item['key']: item for item in list_user_milestones(conn, user_id)}
     shelf = []
+    in_class = _in_a_class(conn, user_id)
     for key, meta in MILESTONE_CATALOG.items():
         item = earned.get(key)
+        if meta.get('class_only') and item is None and not in_class:
+            continue   # E11 Phase 2: set-work badges are shown to pupils in a class (an earned one always shows)
         info = badge_display(key)
         shelf.append({
             'key': key,

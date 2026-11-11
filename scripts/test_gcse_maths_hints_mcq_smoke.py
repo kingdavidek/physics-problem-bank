@@ -72,6 +72,7 @@ SITE_JS_PHASE4_MAX_ADD = 900
 SITE_JS_CARD_MAX_ADD = 1_250        # 2026-11-04: hint card and greyed Show answer (also in the ladder smoke)
 SITE_JS_NOTE_MAX_ADD = 800         # 2026-11-07: the wrong-answer note behind "Add a note" (also in the ladder smoke)
 SITE_JS_COACH_MAX_ADD = 300        # 2026-11-08: E10 phase 3 coach events, +269 B (also in the ladder smoke)
+SITE_JS_RECOVERY_MAX_ADD = 1300    # 2026-11-10: E11 Phase 2 Recovery badges, +804 B; 2026-11-11: answer_seen, +466 B (also in the ladder smoke)
 PRACTICE_CSS_BYTES = 31_947         # Phase 4 adds none
 CSS_PHASE4_MAX_ADD = 200
 
@@ -807,13 +808,13 @@ def check_stored_and_graded(app):
 def check_client():
     js = read('static/js/site.js')
     n = len(js.encode('utf-8'))
-    cap = SITE_JS_BASE_BYTES + SITE_JS_PHASE4_MAX_ADD + SITE_JS_CARD_MAX_ADD + SITE_JS_NOTE_MAX_ADD + SITE_JS_COACH_MAX_ADD
+    cap = SITE_JS_BASE_BYTES + SITE_JS_PHASE4_MAX_ADD + SITE_JS_CARD_MAX_ADD + SITE_JS_NOTE_MAX_ADD + SITE_JS_COACH_MAX_ADD + SITE_JS_RECOVERY_MAX_ADD
     expect('client', 'site.js', n <= cap, f'site.js is {n} B, cap {cap} (Phase 4 budget +{SITE_JS_PHASE4_MAX_ADD})')
     css = (ROOT / 'static/css/practice.css').stat().st_size
     expect('client', 'practice.css', css <= PRACTICE_CSS_BYTES + CSS_PHASE4_MAX_ADD + 1_500 + 900, f'practice.css is {css} B')   # +900 on 2026-11-07 (note toggle)
     base = read('templates/base.html')
-    expect('client', 'pins', "js/site.js') }}?v=40" in base, 'site.js must be ?v=40')
-    expect('client', 'pins', "CACHE_VERSION = 'pb-v124'" in read('static/js/sw.js'), 'sw.js must be pb-v124')   # 2026-11-10: E11 Phase 1 bump (was pb-v123, Phase 0); 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115, phase 5); 2026-11-08: E10 phase 5 bump (was pb-v114, phase 4; pb-v113 phase 3); 2026-11-08: E10 review fixes bump (was pb-v118)
+    expect('client', 'pins', "js/site.js') }}?v=41" in base, 'site.js must be ?v=41 (2026-11-10: E11 Phase 2 Recovery badges)')
+    expect('client', 'pins', "CACHE_VERSION = 'pb-v125'" in read('static/js/sw.js'), 'sw.js must be pb-v125')   # 2026-11-10: E11 Phase 2 bump (was pb-v124, Phase 1); 2026-11-10: E11 Phase 1 bump (was pb-v123, Phase 0); 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115, phase 5); 2026-11-08: E10 phase 5 bump (was pb-v114, phase 4; pb-v113 phase 3); 2026-11-08: E10 review fixes bump (was pb-v118)
     fn = js[js.index('function fetchOptionNote'):js.index('function showMcqRetry')]
     expect('client', 'script', "'/api/v1/problems/option-note'" in fn and 'data-note-qid' in fn, 'the script must call the endpoint with the question tag')
     expect('client', 'script', 'focus(' not in fn and 'animate' not in fn and 'style' not in fn, 'no focus, motion or inline style')

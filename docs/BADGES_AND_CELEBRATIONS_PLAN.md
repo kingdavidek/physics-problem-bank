@@ -113,7 +113,7 @@ These stay: quiz done, personal best, all fixed (a retry run cleared), Quick Tes
 New ones:
 - **Full marks again** on a topic.
 - **Welcome back** after 3 or more days away: "You’re back. Your streak starts again today." (kind, never guilt).
-- **Close to a badge**, at most once a day, for example "Two more quizzes for Quiz habit."
+- **Close to a badge**, at most once a day, for example "Two more quizzes for Quiz fan."
 
 ### 2.3 Small reaction (micro)
 
@@ -153,17 +153,17 @@ Each line has a next step, so "Next up" always points somewhere. Effort and reco
 
 | Line (family) | Badges (tier) | How |
 |---|---|---|
-| Quizzes (learning) | First quiz (bronze, exists) → **Quiz habit** (silver) → **Quiz veteran** (gold) | finish 1, 5 and 25 quizzes |
+| Quizzes (learning) | First quiz (bronze, exists) → **Quiz fan** (silver) → **Quiz veteran** (gold) | finish 1, 5 and 25 quizzes |
 | Perfect (**new family `perfect`**: a target, Zorp’s antennae spark) | **Full marks** (bronze) → **Bullseye** (silver) → **Flawless** (gold) | 10/10 on 1, 5 and 20 lesson quizzes |
 | Lessons (topic_completed) | Lesson learner (exists) → 5, 10, 20 lessons complete (exist) | Lesson learner's next changes to 5 lessons complete |
-| Recovery (**new family `growth`**: a sprout that grows) | **Bounce back** (bronze) → **Keeps going** (silver); **Learned from a hint** (bronze) → **Hint to habit** (silver); **All fixed** (bronze) | right on a second try (1, 25); right after a hint (1, 25); a retry run with every missed question right |
+| Recovery (**new family `growth`**: a sprout that grows) | **Bounce back** (bronze) → **Keeps going** (silver); **Learned from a hint** (bronze) → **Hint hero** (silver); **All fixed** (bronze) | right on a second try (1, 25); right after a hint (1, 25); a retry run with every missed question right |
 | Practice (practice) | Practice regular, Practice veteran (exist; **changed to answered right**: 25, 100) → **Problem solver** (gold, 250) | pupils who already hold them keep them |
 | Streaks (streak) | **Three in a row** (bronze) → Week warrior → Dedicated (exist) → **Century** (violet) | 3, 7, 30 and 100 days in a row |
 | Daily (daily) | Daily starter, Seven days of questions (exist) → **Daily devotee** (gold) | the daily question on 30 days |
 | Explorer (explorer) | **Curious** (bronze) → Broad explorer (exists) → **Globetrotter** (gold) | 3, 10 and 25 topics |
 | Class work (learning; shown only to pupils in a class) | **Set work done** (bronze) → **Ten tasks done** (silver) | finish 1 and 10 pieces of set work |
 
-That is 19 new badges. They need:
+That is 18 new badges (19 in the first draft was a miscount); Full marks came in Phase 1, so Phase 2 adds 17. Quiz habit and Hint to habit were renamed Quiz fan and Hint hero when built, because the voice rules keep "habit" out of reward copy. They need:
 - **Two new choreographies** (`perfect`, `growth`) in the badge stage, and **two new wardrobe items**, one per family as now.
 - **New data** for the Recovery line, since the rest is already recorded:
   - a right answer on a second try (the quick checks save only the first attempt today);
@@ -181,7 +181,7 @@ That is 19 new badges. They need:
 - **Rows by line**, in threshold order. Each row shows the badges earned, then the next one with a progress meter ("3 of 5 quizzes").
 - **Only relevant subjects.** The pupil's own subjects (studied, or chosen at welcome) are shown; the rest sit behind "Show all".
 - **Locked badges** show their own glyph in grey with a small lock, not a shared placeholder.
-- **"Next up" picks the nearest badge** by progress, not the catalogue order. It shows a bar and a link to where to earn it: "Two more quizzes for Quiz habit. Take a quiz".
+- **"Next up" picks the nearest badge** by progress, not the catalogue order. It shows a bar and a link to where to earn it: "Two more quizzes for Quiz fan. Take a quiz".
 - **"Watch again"** in the badge sheet replays that badge's celebration.
 
 ### 4.2 Results pages
@@ -392,3 +392,63 @@ Nothing committed. David's answers 1, 3, 5 and 11 applied.
 - Tests: `scripts/test_e11_phase1_smoke.py` (new). The perfect-moment tests in `test_celebration_moments_smoke.py` now give the account Full marks first.
 - Privacy: DPIA row, ROPA row 1, both privacy notices, `SECURITY_AND_GDPR.md` and `API.md`.
 
+**Fixed 2026-11-11 (found in the Phase 2 walks).** Phase 1 gave `badge-stage.js` a second function called `part` (the cards as one part of a sequence) in the same scope as `part(id)`, which clones a prop. The later one replaced the first, so from Phase 1 on every badge stage played with no medal and no prop: Zorp, the card and a glow only. The sequence part is now `cardsPart` (still exported as `pbBadgeStage.part`), and `scripts/test_e11_phase2_smoke.py` fails if any celebration script declares one name twice in its top scope. The Phase 1 walks checked the card text and the count, not the medal; the Phase 2 walks also count `.bd-medal`.
+
+---
+
+## 10. Phase 2 built (2026-11-11)
+
+Nothing committed. David's answers 2, 3, 4, 7 and 8 applied; the badges of section 3, with two renames.
+
+**The new badges (17; the catalogue now holds 56).**
+
+| Line (family) | Badges | How (the shelf copy) |
+|---|---|---|
+| Quizzes (learning) | Quiz fan 📋 silver, Quiz veteran 🗂️ gold | Finish 5 quizzes; finish 25 |
+| Perfect (`perfect`, new) | Full marks (Phase 1) → Bullseye 🌟 silver → Flawless 💎 gold | Every answer right on 5 and 20 lesson quizzes |
+| Recovery (`growth`, new) | Bounce back 🌱 bronze → Keeps going 🌿 silver; Learned from a hint 💡 bronze → Hint hero 🔦 silver; All fixed 🛠️ bronze | Right after a wrong try (1, 25); right after the bigger hint (1, 25); a retry run of the missed questions, all right |
+| Practice | Practice regular, Practice veteran → Problem solver 🧩 gold | Practice questions answered right: 25, 100, 250 |
+| Streaks | Three in a row 🕯️ bronze → Week warrior → Dedicated → Century 🏆 violet | 3, 7, 30, 100 days in a row |
+| Daily | Daily starter → Seven days of questions → Daily devotee 🗓️ gold | The daily question on 30 days |
+| Explorer | Curious 🔎 bronze → Broad explorer → Globetrotter 🌍 gold | 3, 10, 25 topics |
+| Class work (learning) | Set work done 📬 bronze → Ten tasks done 📦 silver | 1 and 10 pieces of set work finished |
+
+- Every line has a next step: First quiz now leads to Quiz fan, Lesson learner to 5 lessons complete, Broad explorer to Globetrotter, Dedicated to Century, Seven days of questions to Daily devotee, Practice veteran to Problem solver.
+- Full marks moved from `accuracy` to the new `perfect` family.
+- **Answered right (answer 4).** Practice regular and Practice veteran now count practice questions answered right (`generator_mcq_attempts` with `correct = 1`, one row per question: the parts of a multi-part question are not counted one by one). Pupils who already hold them keep them.
+- **Class work (section 3).** The set-work badges are marked `class_only`: the shelf hides them from a pupil who is not in a class, unless already earned.
+
+**The Recovery line (new data).**
+- Two private activity events, `retry_correct` and `hint_correct`. Their payload is the level, subject and topic only. They earn no effort points and are never in a feed.
+- `_note_recovery()` in `app.py` watches the tries at the session problem (`last_problem_payload`, replaced for each new question) and keeps small flags on it: a wrong try seen, a hint sent, done. A right answer after a wrong try is `retry_correct`; a right answer after the bigger hint of a question the server sent a hint for is `hint_correct`. Each is recorded once per question.
+- The typed checks send `bigger_hint: true` when the page shows rung 2. An MCQ answer after "Try again" now goes to `/api/v1/generator/mcq-answer` as `retry: true`: checked and noted, never recorded as an attempt, so the first answer stays the one in the stats.
+- **Show answer closes the question.** Once the pupil has opened Show answer, the page sends `answer_seen: true` with every check, and that question earns no Recovery badge.
+- Out: Quick Test, the lesson quiz (session `mode` `lesson`) and the lesson quick checks (not tied to a session problem).
+
+**The quiet back-fill (answer 3).** The migration `e11_backfill_phase2` runs `backfill_quiet_badges()` over 15 keys: every new badge whose history is already recorded (quizzes, perfect quizzes, the cleared retry, answers right, streaks, the daily question, topics, set work), plus Practice regular and Practice veteran under the new rule. Bounce back, Keeps going and both hint badges have no history and start from now. As in Phase 1, there is no stage and no notification, only one corner card on the next page ("You already earned {n} badges").
+
+**Story chapters (answer 7).** The badge counts that open chapters are now 3, 6, 10, 15, 22 and 30 (they were 3, 5, 8, 10, 15, 20).
+
+**The stage and the wardrobe.**
+- The `perfect` family plays Zorp's victory and dance with the target rings. The `growth` family plays a nod and a cheer while two sprouts grow up beside the medal (drawn in `badge-stage.js`, `DRAW.sprout`: the stems first, then the leaves). Century, at 100 days, also marks `streak:100`.
+- Two new hats, one per family as before: the **crown** (any Perfect badge) and the **sprout** (any Recovery badge). Both are drawn in `templates/partials/zorp_overlays.html` and listed in `models/zorp_kit.py` and `models/zorp_wardrobe.py`.
+- **Fixed with it:** two badges of one family that arrive with one answer (Bounce back and Learned from a hint) used to leave both cards without the wardrobe line, because an item was credited only when one earned badge opened it. Now the first one recorded carries the line (`items_unlocked_by()`).
+
+**Browser walks** (Chromium, walk server):
+
+| Walk | What appeared |
+|---|---|
+| a typed question: wrong, the bigger hint, then right | "1 of 2" Bounce back, bronze medal and two sprouts, "New in your wardrobe: the sprout." and Try it on; then Learned from a hint |
+| an MCQ question: wrong, Try again, then right | Bounce back with the sprouts |
+| Bullseye, then Flawless | the silver and gold medals on the target rings, Zorp's victory; Bullseye names the crown |
+| the crown and the sprout worn, light at 1280 px and dark at 390 px | the hat on the wardrobe preview and on the topic page's Zorp; before a Recovery badge the sprout tile reads "Earn a recovery badge to unlock" |
+
+No console errors on any walk.
+
+**Versions and caps.**
+- `site.js` v41, `badge-stage.js` v5, `moments.js` v4, `sw.js` `pb-v125`.
+- Caps: `badge-stage.js` 22,500 (22,086 now); the site.js Recovery allowance 1,300 B (804 B for the Recovery wiring, 466 B for `answer_seen`), both with dated ledger notes.
+- Tests: `scripts/test_e11_phase2_smoke.py` (new: the catalogue and its next steps, the rules from seeded history, the Recovery line through the real check routes, the back-fill and its one card, the families and hats, the class-only shelf, the client wiring, no shadowed functions). `test_milestones_smoke.py` counts answers right; `test_story_chapters_smoke.py` has the new thresholds.
+- Privacy: DPIA log row, ROPA row 2, `SECURITY_AND_GDPR.md` and `API.md`.
+
+**Next.** Phase 3, the shelf (section 4): "Next up" by progress, other subjects behind Show all (answer 8). Then Phase 4, progress around the site and Your week (answer 6).

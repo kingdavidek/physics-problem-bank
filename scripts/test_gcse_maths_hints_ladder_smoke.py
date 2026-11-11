@@ -51,15 +51,16 @@ SITE_JS_PHASE4_MAX_ADD = 900        # 2026-10-26: Phase 4 (MCQ distractor notes)
 SITE_JS_CARD_MAX_ADD = 1_250        # 2026-11-04: hint card and greyed Show answer (docs/GCSE_MATHS_HINTS.md, 'Hint card and Show answer change')
 SITE_JS_NOTE_MAX_ADD = 800         # 2026-11-07: the wrong-answer note folded behind an "Add a note" toggle (docs/GCSE_MATHS_HINTS.md, 'Folded wrong-answer note')
 SITE_JS_COACH_MAX_ADD = 300        # 2026-11-08: E10 phase 3 coach events (pb-answer-checked, pb-answer-unlocked, pb-hint-shown, pb-hint-bigger), +269 B
+SITE_JS_RECOVERY_MAX_ADD = 1300    # 2026-11-10: E11 Phase 2 Recovery badges (bigger_hint on typed checks, MCQ retry after Try again), +804 B; 2026-11-11: answer_seen (Show answer opened earns no Recovery badge), +466 B
 SITE_JS_MAX_BYTES = (SITE_JS_BASE_BYTES + SITE_JS_PHASE3_MAX_ADD + SITE_JS_PHASE4_MAX_ADD + SITE_JS_CARD_MAX_ADD
-                     + SITE_JS_NOTE_MAX_ADD + SITE_JS_COACH_MAX_ADD)      # 212,796; raise only with a dated ledger line
+                     + SITE_JS_NOTE_MAX_ADD + SITE_JS_COACH_MAX_ADD + SITE_JS_RECOVERY_MAX_ADD)      # 212,796; raise only with a dated ledger line
 PRACTICE_CSS_BASE_BYTES = 31_381
 PRACTICE_CSS_PHASE3_MAX_ADD = 600
 PRACTICE_CSS_CARD_MAX_ADD = 900     # 2026-11-04: hint card and locked Show answer styles (the old ladder lines went)
 PRACTICE_CSS_NOTE_MAX_ADD = 900     # 2026-11-07: the "Add a note" toggle and the smaller note chips
 CORE_CSS_CAP = 216_000              # as test_u8_a11y_smoke and test_zorp_charm_smoke
 TOTAL_CSS_CAP = 274_400 # 2026-11-10: E11 Phase 1 RAISED 273_700 -> 274_400 (+700) for Skip all and the small-card link in the on-demand moments.css (tree 274,251). 2026-11-08: E10 phase 8 RAISED 268_900 -> 273_700 (+4_800) for the on-demand story.css (own cap 4_800 in test_story_chapters_smoke.py; tree 273,520). 2026-11-08: E10 phase 7 RAISED 265_300 -> 268_900 (+3_600) for the on-demand around.css (own cap 4_000 in test_zorp_around_smoke.py; tree 268,821). 2026-11-08: E10 phase 6b RAISED 262_500 -> 265_300 (+2_800) for the on-demand wardrobe.css (profile page only; own cap 2_800 in test_wardrobe_smoke.py; tree 264,949).  2026-11-08: E10 phase 5 added moments.css inside this cap (no raise; tree 260,077).  2026-11-08: E10 phase 4 +5_500 for badge-stage.css (on demand, own cap in test_badge_stage_smoke.py); was 256_000             # 2026-11-08: E10 +10_000 for stage.css (on demand, own cap in test_zorp_stage_smoke.py)  # 2026-11-08: E10 phase 6 RAISED 261_500 -> 262_500 (+1_000) for the on-demand tour.css (own cap 2_800 in test_zorp_tour_smoke.py; tree 262,304).
-SERVICE_WORKER_CACHE = 'pb-v124'   # 2026-11-10: E11 Phase 1 bump (was pb-v123, Phase 0); 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 (the app tour) bumped the cache (was pb-v115, phase 5); 2026-11-08: E10 phase 5 (moments) bumped the cache (was pb-v114, phase 4 badges; pb-v113 phase 3); 2026-11-08: E10 review fixes bump (was pb-v118)
+SERVICE_WORKER_CACHE = 'pb-v125'   # 2026-11-10: E11 Phase 2 bump (was pb-v124, Phase 1); 2026-11-10: E11 Phase 1 bump (was pb-v123, Phase 0); 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 (the app tour) bumped the cache (was pb-v115, phase 5); 2026-11-08: E10 phase 5 (moments) bumped the cache (was pb-v114, phase 4 badges; pb-v113 phase 3); 2026-11-08: E10 review fixes bump (was pb-v118)
 
 ISSUES = collections.defaultdict(list)
 HDR = {'Accept': 'application/json'}
@@ -939,7 +940,7 @@ def check_client():
     expect('client', 'css core', core <= CORE_CSS_CAP, f'core CSS {core} B, cap {CORE_CSS_CAP}')
     # cache pins
     base = read('templates/base.html')
-    expect('client', 'pins', "js/site.js') }}?v=40" in base, 'site.js must be ?v=40')
+    expect('client', 'pins', "js/site.js') }}?v=41" in base, 'site.js must be ?v=41 (2026-11-10: E11 Phase 2 Recovery badges)')
     expect('client', 'pins', "css/practice.css') }}?v=32" in base, 'practice.css must be ?v=32')
     expect('client', 'pins', "css/pages.css') }}?v=59" in base, 'pages.css must be ?v=59 (2026-11-08: E10 phase 7 fixed the results ring token)')
     expect('client', 'pins', f"CACHE_VERSION = '{SERVICE_WORKER_CACHE}'" in read('static/js/sw.js'), f'sw.js must be {SERVICE_WORKER_CACHE}')

@@ -40,8 +40,10 @@
     topic_ninja: { face: 'determined', end: 'grin', prop: 'bp-swish', fx: 'swish', beats: [{ burst: 1 }, { wait: 1300 }, { turn: 'back' }, { turn: 'front' }, { play: 'victory' }] },
     topic_master: { face: 'wow', end: 'proud', prop: 'bp-stars', fx: 'stars', beats: [{ burst: 1 }, { wait: 1300 }, { play: 'victory' }, { play: 'float' }, { face: 'proud' }] },
     subject: { face: 'joy', end: 'proud', prop: 'bp-page', fx: 'page', beats: [{ burst: 1 }, { wait: 1300 }, { play: 'dance' }, { play: 'fist-pump' }] },
-    accuracy: { face: 'joy', end: 'grin', prop: 'bp-target', fx: 'target', beats: [{ burst: 1 }, { wait: 1300 }, { play: 'victory' }, { play: 'nod' }, { face: 'grin' }] },
-    tour: { face: 'happy', end: 'proud', prop: 'bp-sign', fx: 'sign', beats: [{ burst: 1 }, { wait: 1300 }, { play: 'bow' }, { play: 'wave' }] }
+    accuracy: { face: 'soft-smile', end: 'grin', prop: 'bp-target', fx: 'target', beats: [{ burst: 1 }, { wait: 1300 }, { play: 'nod' }, { face: 'grin' }] },
+    tour: { face: 'happy', end: 'proud', prop: 'bp-sign', fx: 'sign', beats: [{ burst: 1 }, { wait: 1300 }, { play: 'bow' }, { play: 'wave' }] },
+    perfect: { face: 'joy', end: 'grin', prop: 'bp-target', fx: 'target', beats: [{ burst: 1 }, { wait: 1300 }, { play: 'victory' }, { play: 'dance' }, { face: 'grin' }] },
+    growth: { face: 'happy', end: 'proud', prop: '', fx: 'sprout', beats: [{ burst: 1 }, { wait: 1900 }, { play: 'nod' }, { play: 'cheer' }] }
   };
   // END FAMILIES
   var STAMP = 1250;   // ms into the scene when the medal lands (the soft thud, the sparkle ring, the cue)
@@ -142,7 +144,36 @@
     sign: function (b) {
       all(b, '.bp-board').forEach(function (s, i) { anim(s, [{ transform: 'rotate(-22deg)', opacity: 0 }, { transform: 'rotate(5deg)', opacity: 1, offset: 0.7 }, { transform: 'none', opacity: 1 }], 520, { delay: 900 + i * 220 }); });
     },
-    target: function (b) { anim(b.querySelector('.bp-rings'), [{ transform: 'scale(.4)', opacity: 0 }, { transform: 'scale(1.06)', opacity: 1, offset: 0.7 }, { transform: 'none', opacity: 1 }], 800, { delay: 400 }); }
+    target: function (b) { anim(b.querySelector('.bp-rings'), [{ transform: 'scale(.4)', opacity: 0 }, { transform: 'scale(1.06)', opacity: 1, offset: 0.7 }, { transform: 'none', opacity: 1 }], 800, { delay: 400 }); },
+    // E11 Phase 2 (the Recovery line): two sprouts push up beside the medal, the stems first, then the leaves unfold
+    sprout: function (b) {
+      all(b, '.bp-stem').forEach(function (s, i) { anim(s, [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], 700, { delay: 500 + i * 160 }); });
+      all(b, '.bp-leaf').forEach(function (s, i) { anim(s, [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.12)', opacity: 1, offset: 0.7 }, { transform: 'none', opacity: 1 }], 600, { delay: 1050 + i * 150 }); });
+    }
+  };
+  // a prop drawn here instead of cloned from badge-props.svg (the growth family's sprouts); same 240 by 180 frame
+  var DRAW = {
+    sprout: function () {
+      var s = D.createElementNS(SVGNS, 'svg');
+      s.setAttribute('viewBox', '0 0 240 180');
+      s.setAttribute('aria-hidden', 'true');
+      s.setAttribute('focusable', 'false');
+      var add = function (parent, tag, attrs) {
+        var n = D.createElementNS(SVGNS, tag);
+        Object.keys(attrs).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+        if (tag === 'path' && attrs['class']) { n.style.transformBox = 'fill-box'; n.style.transformOrigin = attrs['class'] === 'bp-stem' ? '50% 100%' : '50% 90%'; }
+        parent.appendChild(n);
+        return n;
+      };
+      [[50, 1], [190, -1]].forEach(function (p) {
+        var g = add(s, 'g', { transform: 'translate(' + p[0] + ' 170) scale(' + p[1] + ' 1)' });
+        add(g, 'ellipse', { cx: 0, cy: 4, rx: 28, ry: 7, fill: '#a16207', opacity: '0.45' });
+        add(g, 'path', { 'class': 'bp-stem', d: 'M0 3C0-14-3-30 1-48', fill: 'none', stroke: '#15803d', 'stroke-width': 5, 'stroke-linecap': 'round' });
+        add(g, 'path', { 'class': 'bp-leaf', d: 'M0-26C-10-46-34-44-38-34C-28-22-12-20 0-26Z', fill: '#22c55e', stroke: '#15803d', 'stroke-width': 1.5 });
+        add(g, 'path', { 'class': 'bp-leaf', d: 'M1-42C10-62 34-60 38-50C28-38 12-36 1-42Z', fill: '#86efac', stroke: '#15803d', 'stroke-width': 1.5 });
+      });
+      return s;
+    }
   };
 
   function rain(box) {
@@ -206,7 +237,7 @@
     var layer = el('div', 'bd-layer', set);
     cur = { layer: layer, anims: [], timers: [], hat: null };
     var box = el('div', 'bd-box', layer);
-    var art = part(fam.prop);
+    var art = part(fam.prop) || (DRAW[fam.fx] ? DRAW[fam.fx]() : null);
     if (art) box.appendChild(art);
     var ring = part('bp-ring');
     if (ring) { ring.style.opacity = '0'; box.appendChild(ring); }
@@ -244,6 +275,7 @@
     // the streak badges and the streak rewards are one moment
     if (key === 'streak_7') card.ids.push('streak:7');
     if (key === 'streak_30') card.ids.push('streak:30');
+    if (key === 'streak_100') card.ids.push('streak:100');   // E11 Phase 2: Century and the 100-day streak round are one moment
     return card;
   }
   function cards(specs) {
@@ -283,8 +315,9 @@
   // E11 Phase 1 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 2.4 rule 1): the badge cards as one part of a longer sequence. moments.js plays
   // a finished lesson or a 10/10, then the badges, then a level-up, in one stage with one count; play() below is this part alone.
   // show(i, st) puts card i on the stage (the kicker, Try it on, the medal), hide(st) takes this part's things off it, go() follows
-  // the second button (See my milestones, or the wardrobe for Try it on).
-  function part(specs) {
+  // the second button (See my milestones, or the wardrobe for Try it on). Named cardsPart, not part: part(id) above clones a prop, and
+  // a second function part in this scope replaced it (E11 Phase 1 shipped stages with no medal or prop; fixed 2026-11-11).
+  function cardsPart(specs) {
     var list = cards(specs || []);
     var kicker = null;
     return {
@@ -332,7 +365,7 @@
   }
 
   function play(specs) {
-    var p = part(specs);
+    var p = cardsPart(specs);
     var list = p.cards;
     if (!list.length) return Promise.resolve({ ended: 'empty' });
     wantProfile = false;
@@ -363,5 +396,5 @@
     });
   }
 
-  window.pbBadgeStage = { play: play, part: part, ready: ready, families: FAMILIES };
+  window.pbBadgeStage = { play: play, part: cardsPart, ready: ready, families: FAMILIES };
 }());

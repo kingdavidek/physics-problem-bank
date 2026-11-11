@@ -33,6 +33,22 @@
 <circle cx="0" cy="-13" r="2.4" fill="var(--gold-500)"/>
 {%- endmacro %}
 
+{# E11 Phase 2: the crown (the Perfect line, any full marks badge) and the sprout (the Recovery line). One element group each,
+   anchor-local like the others; colours from the design tokens so dark mode follows. #}
+{% macro _hat_crown() -%}
+<path d="M-10 1.5L-11.5-8.5L-5.5-3.5L0-11L5.5-3.5L11.5-8.5L10 1.5Z" fill="var(--gold-500)" stroke="var(--ink-800)" stroke-width="1" stroke-linejoin="round"/>
+<rect x="-10.5" y="-0.8" width="21" height="2.8" rx="1.2" fill="var(--ink-800)"/>
+<circle cx="0" cy="-11" r="1.7" fill="var(--brand-50)" stroke="var(--ink-800)" stroke-width="0.8"/>
+<circle cx="-11.5" cy="-8.5" r="1.3" fill="var(--brand-50)" stroke="var(--ink-800)" stroke-width="0.8"/>
+<circle cx="11.5" cy="-8.5" r="1.3" fill="var(--brand-50)" stroke="var(--ink-800)" stroke-width="0.8"/>
+{%- endmacro %}
+
+{% macro _hat_sprout() -%}
+<path d="M0 2.5C0-2-.6-5.5.2-9" fill="none" stroke="var(--correct-700)" stroke-width="1.8" stroke-linecap="round"/>
+<path d="M.1-5.5C-2.5-11.5-9-11-10.5-8C-7.5-4.5-3-4-.1-5.5Z" fill="var(--correct-500)" stroke="var(--correct-700)" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M.2-8.6C2.8-14.5 9.4-14 10.8-11C7.8-7.6 3.2-7.2.2-8.6Z" fill="var(--correct-300)" stroke="var(--correct-700)" stroke-width="0.8" stroke-linejoin="round"/>
+{%- endmacro %}
+
 {% macro zorp_hat(name, x, y) -%}
 {%- if name == 'mortarboard' -%}
 <g class="zorp-hat zorp-hat--mortarboard" transform="translate({{ x }} {{ y }})">{{ _hat_mortarboard() }}</g>
@@ -42,6 +58,10 @@
 <g class="zorp-hat zorp-hat--toque" transform="translate({{ x }} {{ y }})">{{ _hat_toque() }}</g>
 {%- elif name == 'beanie' -%}
 <g class="zorp-hat zorp-hat--beanie" transform="translate({{ x }} {{ y }})">{{ _hat_beanie() }}</g>
+{%- elif name == 'crown' -%}
+<g class="zorp-hat zorp-hat--crown" transform="translate({{ x }} {{ y }})">{{ _hat_crown() }}</g>
+{%- elif name == 'sprout' -%}
+<g class="zorp-hat zorp-hat--sprout" transform="translate({{ x }} {{ y }})">{{ _hat_sprout() }}</g>
 {%- endif -%}
 {%- endmacro %}
 

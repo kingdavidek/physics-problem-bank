@@ -1120,6 +1120,10 @@
             celebratePayload(result);
             refetchBuddyFromBlock(block);
           });
+        } else if (trackable && isCorrect && block.dataset.level && isReflectionEligible()) {
+          // E11 Phase 2: right after "Try again" counts for the Recovery badges (checked, not recorded as an attempt)
+          fetch('/api/v1/generator/mcq-answer', { method: 'POST', headers: apiHeaders({ 'Content-Type': 'application/json' }), credentials: 'same-origin',
+            body: JSON.stringify({ level: block.dataset.level, subject: block.dataset.subject, topic: block.dataset.topic, difficulty: block.dataset.difficulty || 'foundational', user_answer: letter, retry: true, answer_seen: answerSeen() || undefined }) }).catch(function () {});
         }
         dispatchQuicktestChecked({
           userAnswer: letter,
@@ -3256,7 +3260,8 @@
         correct_answer_raw: fieldCorrect,
         answer_type: fieldType,
       };
-      if (block.querySelector('.free-response-hint')) body.hint_ladder = true;
+      if (block.querySelector('.free-response-hint')) { body.hint_ladder = true; if (block.dataset.hintRung === '2') body.bigger_hint = true; }
+      if (answerSeen()) body.answer_seen = true;
       if (trackable) {
         body.level = block.dataset.level;
         body.subject = block.dataset.subject;
@@ -4068,7 +4073,8 @@
         correct_answer_raw: correctRaw,
         answer_type: 'proof_steps',
       };
-      if (block.querySelector('.free-response-hint')) body.hint_ladder = true;
+      if (block.querySelector('.free-response-hint')) { body.hint_ladder = true; if (block.dataset.hintRung === '2') body.bigger_hint = true; }
+      if (answerSeen()) body.answer_seen = true;
       if (trackable) {
         body.level = block.dataset.level;
         body.subject = block.dataset.subject;
@@ -4501,7 +4507,8 @@
         correct_answer_raw: correctRaw,
         answer_type: answerType,
       };
-      if (block.querySelector('.free-response-hint')) body.hint_ladder = true;
+      if (block.querySelector('.free-response-hint')) { body.hint_ladder = true; if (block.dataset.hintRung === '2') body.bigger_hint = true; }
+      if (answerSeen()) body.answer_seen = true;
       if (trackable) {
         body.level = block.dataset.level;
         body.subject = block.dataset.subject;
@@ -5090,9 +5097,13 @@
     });
   }
 
+  // E11 Phase 2: an answer seen (Show answer opened) earns no Recovery badge for that question; the checks say so
+  function answerSeen() { return !!document.querySelector('details.answer-reveal[data-seen]'); }
+
   function initAnswerRevealMathJax() {
     document.querySelectorAll('details.answer-reveal').forEach(function (details) {
       details.addEventListener('toggle', function () {
+        if (details.open) details.setAttribute('data-seen', '1');
         if (!details.open || !window.MathJax || !MathJax.typesetPromise) return;
         var targets = [details.querySelector('.answer'), details.querySelector('.hint')];
         MathJax.typesetPromise(targets.filter(Boolean)).catch(function () {});

@@ -123,7 +123,7 @@ def test_full_marks():
     assert 'perfect_1' not in badge_rows(uid), 'nine out of ten is not full marks'
     ms, mm = take_quiz(c, wrong=0)
     assert 'perfect_1' in [b['key'] for b in ms] and not [m for m in mm if m['type'] == 'perfect'], (ms, mm)
-    assert [b for b in ms if b['key'] == 'perfect_1'][0]['family'] == 'accuracy'
+    assert [b for b in ms if b['key'] == 'perfect_1'][0]['family'] == 'perfect'   # 2026-11-10: its own family since E11 Phase 2
     assert badge_rows(uid)['perfect_1'] == 0, 'earned live, not quiet'
     ms, mm = take_quiz(c, wrong=0)
     assert 'perfect_1' not in [b['key'] for b in ms] and [m['type'] for m in mm if m['type'] == 'perfect'] == ['perfect'], (ms, mm)
@@ -223,7 +223,7 @@ def test_client_rules():
     assert 'var BEAT_MS = 300;' in guide and "'pb-celebrate-next:' + STORE_NS" in guide and 'function resumeCarried()' in guide
     assert "moments([{ type: 'toast', id: 'toast:first_correct', kind: 'first_correct' }]);" in guide
     bs = read('static/js/badge-stage.js')
-    assert 'window.pbBadgeStage = { play: play, part: part, ready: ready, families: FAMILIES };' in bs
+    assert 'window.pbBadgeStage = { play: play, part: cardsPart, ready: ready, families: FAMILIES };' in bs   # cardsPart since 2026-11-11 (plan section 9, Fixed)
     social = read('models/social.py')
     assert "_GUIDE_VOLATILE_PREFIXES = ('level:', 'lesson:', 'milestone:', 'fs:')" in social
     # the budget flags go to the evictable ring, not the durable rewards

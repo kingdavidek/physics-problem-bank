@@ -240,7 +240,7 @@ def test_talk_loaded_under_runtime_guard_after_poses():
 def test_talk_precached():
     sw = _read(JS_DIR / 'sw.js')
     assert "'/static/js/zorp-talk.js'" in sw, 'unversioned, like the other runtime files (the offline fallback ignores ?v=)'
-    assert "CACHE_VERSION = 'pb-v124'" in sw   # 2026-11-10: E11 Phase 1 bump (was pb-v123, Phase 0); 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115, phase 5); 2026-11-08: E10 phase 5 bump (was pb-v114, phase 4; pb-v113 phase 3); 2026-11-08: E10 review fixes bump (was pb-v118)
+    assert "CACHE_VERSION = 'pb-v125'" in sw   # 2026-11-10: E11 Phase 2 bump (was pb-v124, Phase 1); 2026-11-10: E11 Phase 1 bump (was pb-v123, Phase 0); 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115, phase 5); 2026-11-08: E10 phase 5 bump (was pb-v114, phase 4; pb-v113 phase 3); 2026-11-08: E10 review fixes bump (was pb-v118)
 
 
 def test_talk_mouths_not_in_presets():

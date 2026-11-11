@@ -487,6 +487,7 @@
       g.markReward('milestone:' + key);
       if (key === 'streak_7') g.markReward('streak:7');
       if (key === 'streak_30') g.markReward('streak:30');
+      if (key === 'streak_100') g.markReward('streak:100');
     }
     var title = b.title;
     if (!title) {

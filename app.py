@@ -147,6 +147,8 @@ from models.social import (
     VISIBILITY_FOLLOWERS,
     VISIBILITY_PRIVATE,
     ACTIVITY_SET_WORK_ANSWERED,
+    ACTIVITY_RETRY_CORRECT,
+    ACTIVITY_HINT_CORRECT,
     VISIBILITY_PUBLIC,
     ACTIVITY_LESSON_STEP_COMPLETED,
     ACTIVITY_MCQ_ANSWERED,
@@ -263,6 +265,7 @@ from models.gamification import (
     MILESTONE_CATALOG,
     MILESTONE_TOUR,
     MILESTONE_PERFECT_1,
+    PHASE2_BACKFILL_KEYS,
     award_tour_badge,
     backfill_quiet_badges,
     quiet_badges_to_announce,
@@ -2489,6 +2492,13 @@ with get_db() as conn:
             "INSERT INTO schema_migrations (name, applied_at) VALUES (?, datetime('now'))",
             ('e11_backfill_perfect_1',),
         )
+    # E11 Phase 2: the new badges that history already earns, quietly, with one corner card (David's answer 3)
+    if 'e11_backfill_phase2' not in migrated:
+        backfill_quiet_badges(conn, PHASE2_BACKFILL_KEYS)
+        conn.execute(
+            "INSERT INTO schema_migrations (name, applied_at) VALUES (?, datetime('now'))",
+            ('e11_backfill_phase2',),
+        )
     ensure_system_bot(conn)
     ensure_lesson_search_index(conn)
     conn.commit()
@@ -3689,6 +3699,46 @@ def _track_question_generated(level, subject, topic, difficulty):
             VISIBILITY_FOLLOWERS,
         )
     _record_study_activity(current_user.id)
+
+
+def _note_recovery(correct, *, hint_sent=False, bigger_seen=False, answer_seen=False):
+    """E11 Phase 2 (docs/BADGES_AND_CELEBRATIONS_PLAN.md section 3, the Recovery line). The practice check routes see every try at
+    the question on screen (the session problem, `last_problem_payload`, replaced for each new question), so they can tell a right
+    answer after a wrong one, and a right answer after the bigger hint of a question the server sent a hint for. Each is one private
+    event, once per question (no effort points, never in a feed). Small flags on the session problem: rc.w a wrong try seen, rc.h a
+    hint sent, rc.d recorded (or closed). The bigger hint opening is the page's word (`bigger_hint`); it counts only where a hint was
+    sent. A check that says the answer was seen (`answer_seen`, Show answer opened) closes the question: no Recovery badge for it."""
+    if not current_user.is_authenticated:
+        return
+    stored = session.get('last_problem_payload')
+    if not isinstance(stored, dict) or stored.get('source') == 'quicktest' or stored.get('mode') == 'lesson':
+        return
+    flags = stored.get('rc') if isinstance(stored.get('rc'), dict) else {}
+    before = dict(flags)
+    kinds = []
+    if answer_seen:
+        flags['d'] = 1
+    if not correct:
+        flags['w'] = 1
+        if hint_sent:
+            flags['h'] = 1
+    elif not flags.get('d') and (flags.get('w') or flags.get('h')):
+        if flags.get('w'):
+            kinds.append(ACTIVITY_RETRY_CORRECT)
+        if flags.get('h') and bigger_seen:
+            kinds.append(ACTIVITY_HINT_CORRECT)
+        if kinds:
+            flags['d'] = 1
+    if flags != before:
+        stored['rc'] = flags
+        session['last_problem_payload'] = stored
+        session.modified = True
+    if kinds:
+        payload = {'level': stored.get('level') or '', 'subject': stored.get('subject') or '', 'topic': stored.get('topic') or ''}
+        with get_db() as conn:
+            for kind in kinds:
+                record_activity_event(conn, current_user.id, kind, payload, VISIBILITY_PRIVATE)
+        _record_study_activity(current_user.id)
 
 
 def _track_mcq_answered(
@@ -8157,6 +8207,10 @@ def api_v1_problems_check():
                 # added here, so no effort point: the question already earned its point when it was generated.
                 _record_study_activity(current_user.id)
 
+    if session_bound and not partial_field:
+        _note_recovery(bool(result.get('correct')), hint_sent=bool(response.get('hint')), bigger_seen=payload.get('bigger_hint') is True,
+                       answer_seen=payload.get('answer_seen') is True)
+
     field_correct_raw = correct_answer_raw if partial_field else None
     cohort = _cohort_from_stored_problem(
         stored,
@@ -8212,6 +8266,13 @@ def api_v1_generator_mcq_answer():
     correct_answer = str(problem.get('correct_answer') or '').strip().upper()[:1]
     correct = user_answer == correct_answer
 
+    # E11 Phase 2: the page sends a retry (after "Try again") as `retry: true`: checked and noted for the Recovery line, not
+    # recorded as an attempt, so the first answer stays the one in the stats
+    seen = payload.get('answer_seen') is True
+    if payload.get('retry') is True:
+        _note_recovery(correct, answer_seen=seen)
+        return jsonify({'ok': True, 'correct': correct, 'correct_answer': correct_answer})
+    _note_recovery(correct, answer_seen=seen)
     attempt_id = _track_mcq_answered(
         level,
         subject,

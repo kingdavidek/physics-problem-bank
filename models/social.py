@@ -474,6 +474,11 @@ ACTIVITY_LESSON_STEP_COMPLETED = 'lesson_step_completed'
 # E10 phase 4 (2026-11-08): a set-work question answered for the first time. Always private (never in a feed); it only adds one
 # effort point and a study day. The payload is the assignment id and nothing else.
 ACTIVITY_SET_WORK_ANSWERED = 'set_work_answered'
+# E11 Phase 2 (docs/BADGES_AND_CELEBRATIONS_PLAN.md section 3, the Recovery line): a practice question got right after a wrong try on
+# the same question, and one got right after opening its bigger hint. Always private (never in a feed: FEED_EVENT_TYPES lists what
+# feeds show), no effort points, payload level, subject and topic only. Recorded once per question by the check routes in app.py.
+ACTIVITY_RETRY_CORRECT = 'retry_correct'
+ACTIVITY_HINT_CORRECT = 'hint_correct'
 
 FEED_FILTER_ALL = 'all'
 FEED_FILTER_LESSONS = 'lessons'
