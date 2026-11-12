@@ -1119,6 +1119,9 @@ body.quiz-runner-active .lesson-quiz-cta-bar,
 .quiz-runner .lesson-quiz-cta-bar {
     display: none !important;
 }
+/* 2026-11-11 (E11 Phase 4): this selector line was missing, so the bar's box and its button rule were dropped */
+.lesson-quiz-cta-bar {
+    text-align: center;
     margin: var(--space-6) auto var(--space-4);
     padding: var(--space-5);
     max-width: 860px;
@@ -1375,3 +1378,11 @@ body.quiz-runner-active .lesson-quiz-cta-bar,
     to { background-position: -100% 0; }
 }
 
+/* E11 Phase 4 (plan 4.2, 4.3): a topic's mastery path as chips (the quiz results strip, the top of a lesson) and the quiz bar's line */
+.mastery-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; padding: 0; list-style: none; }
+.mastery-chip { padding: 3px 10px; border: 1px solid var(--border-soft); border-radius: 999px; background: var(--surface-sunken); color: var(--text-muted); font-size: .8rem; font-weight: 700; }
+.mastery-chip.is-done { border-color: var(--correct-300); background: var(--correct-50); color: var(--on-correct); }
+.mastery-chip.is-done::before { content: "\2713\00a0"; }
+.lesson-path { margin: 0 0 var(--space-4); }
+.lesson-quiz-cta-note { margin: 0 0 var(--space-3); font-weight: 700; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

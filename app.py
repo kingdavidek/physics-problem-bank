@@ -280,10 +280,8 @@ from models.gamification import (
     latest_pose_milestone,
     level_up_between,
     lifetime_effort_xp,
-    list_milestone_shelf,
     list_user_milestones,
     milestone_meta,
-    next_up_badge,
     personal_best_quiz,
     record_study_day,
     streak_ring_progress,
@@ -411,6 +409,8 @@ from models import svg_kit
 from models import zorp_kit
 from models import zorp_wardrobe
 from models import story as zorp_story
+from models import badge_shelf
+from models import progress_bits
 from models import zorp_rig
 from models.avatar import (
     AVATAR_BACKGROUNDS,
@@ -1168,7 +1168,7 @@ def _pending_milestone_keys():
 # list `pb_mm` for the next page. The client (static/js/celebrate.js -> pbGuide.moments -> static/js/moments.js) plays them.
 _PENDING_MOMENTS_MAX = 8
 _MOMENT_KEYS = ('type', 'id', 'kind', 'level', 'pct', 'score', 'total', 'wrong', 'points', 'correct', 'url', 'days', 'chapter',
-                'count', 'title')
+                'count', 'title', 'line')   # 'line': E11 Phase 4, the Close to a badge sentence
 # a perfect quiz that earns one of these badges is the badge's story: the badge stage plays alone (the client drops the perfect
 # stage and its toast, see _note_quiz_finished)
 _PERFECT_BADGE_PREFIXES = ('topic_ninja:', 'topic_master:')
@@ -1237,6 +1237,33 @@ def _story_catchup(conn, guide_state, moments):
     return moments + [zorp_story.offer_moment(n)]
 
 
+def _your_week(conn, guide_state, moments):
+    """E11 Phase 4 (plan 2.1, David's answer 6): on the first visit of a new week, if last week had a study day, a short stage of
+    last week (days studied, questions right, best moment). It is offered on every page until the client marks it seen (its id,
+    'wk:<year>w<week>', in the guide state), so a page that cannot play it (a question page, a busy beat) loses nothing."""
+    if request.endpoint in ('welcome', 'profile_settings') or (guide_state or {}).get('run') or not (guide_state or {}).get('origin'):
+        return moments
+    key = progress_bits.last_week()[2]
+    if ((guide_state or {}).get('rewards') or {}).get(key) or any(m.get('id') == key for m in moments):
+        return moments
+    week = progress_bits.week_moment(conn, current_user.id)
+    return moments + [week] if week else moments
+
+
+def _note_near_badge(conn, user_id):
+    """E11 Phase 4 (plan 2.2): Close to a badge, at most once a day, on the page after a finished quiz. Not beside a new badge (that
+    page is already celebrating), and once shown ('near:<day>' in the guide state) not again that day."""
+    if not current_user.is_authenticated or current_user.id != user_id or _pending_milestone_keys():
+        return
+    day = current_day_key().replace('-', '')
+    guide = (get_profile_settings(conn, user_id).get('guide') or {})
+    if (guide.get('rewards') or {}).get(f'near:{day}'):
+        return
+    near = progress_bits.near_moment(conn, user_id, day)
+    if near:
+        _note_moment(user_id, near)
+
+
 def record_activity_event(conn, user_id, event_type, payload, visibility=VISIBILITY_FOLLOWERS):
     """models.social.record_activity_event, plus the E10 phase 5 level-up check: an event that carries effort points
     (models.gamification.EFFORT_WEIGHTS) is compared against the pupil's lifetime points before it, and a new level becomes
@@ -1263,6 +1290,11 @@ def inject_nav():
             view_args.get('subject'),
             view_args.get('topic'),
         )
+        # E11 Phase 4 (plan 4.3): the topic's mastery path for the chips and the quiz bar (lesson-progress.js), signed-in pupils only
+        if lesson_meta and lesson_meta.get('quizUrl') and current_user.is_authenticated:
+            with get_db() as conn:
+                lesson_meta['path'] = progress_bits.path(conn, current_user.id, lesson_meta['level'], lesson_meta['subject'],
+                                                         lesson_meta['topic'])
     elif request.endpoint in (
         'lesson_mcq_results',
         'lesson_mcq_quiz',
@@ -1397,6 +1429,7 @@ def inject_nav():
                 pb_new_moments = _pending_moments()[:_PENDING_MOMENTS_MAX]
                 pb_new_moments = _story_catchup(conn, guide_state, pb_new_moments)
                 pb_new_moments = _quiet_badges_card(conn, pb_new_moments)
+                pb_new_moments = _your_week(conn, guide_state, pb_new_moments)
     return {
         'nav_endpoint': request.endpoint,
         'lesson_meta': lesson_meta,
@@ -1805,6 +1838,11 @@ with get_db() as conn:
     if 'is_retry' not in quiz_cols:
         # 2026-11-08 (E10 phase 6): Retry wrong ones runs are marked, so statistics count full quizzes only. Older rows stay 0.
         conn.execute('ALTER TABLE quiz_attempts ADD COLUMN is_retry INTEGER NOT NULL DEFAULT 0')
+    if 'is_quicktest' not in quiz_cols:
+        # 2026-11-11 (E11 Phase 4): Quick Tests are marked, so the Full marks line counts lesson quizzes only. Older rows: a Quick Test
+        # saves each answer as an object ({"user_answer": ..., "correct": ...}), a lesson quiz as plain text, so the answers tell them apart.
+        conn.execute('ALTER TABLE quiz_attempts ADD COLUMN is_quicktest INTEGER NOT NULL DEFAULT 0')
+        conn.execute("UPDATE quiz_attempts SET is_quicktest = 1 WHERE answers_json LIKE '[{%'")
     lesson_cols = {
         row[1] for row in conn.execute('PRAGMA table_info(lesson_progress)').fetchall()
     }
@@ -2673,6 +2711,7 @@ def _render_quiz_results(
     quiz_attempt_id=None,
     can_retry_wrong=None,
     quiz_xp=0,
+    earned=None,
 ):
     if can_retry_wrong is None:
         can_retry_wrong = _lesson_quiz_session_can_retry(level, subject, topic)
@@ -2701,6 +2740,7 @@ def _render_quiz_results(
         can_retry_wrong=can_retry_wrong,
         accuracy_trend=accuracy_trend,
         quiz_xp=quiz_xp,
+        earned=earned,
     )
 
 
@@ -3562,11 +3602,15 @@ def index():
             can_reroll_variant = False
 
     recent_topics = []
+    today_card = None
     if current_user.is_authenticated:
         with get_db() as conn:
             recent_topics = _recent_topics_for_generator(
                 conn, current_user.id, selected_diff=selected_diff,
             )
+            # E11 Phase 4 (plan 4.4): the Today strip (questions right, effort points and the streak, with the week's dots)
+            today_card = progress_bits.today(conn, current_user.id)
+            today_card['dots'] = streak_week_dots(conn, current_user.id)
 
     # the generators label a problem with its slug title-cased ("Bidmas"); the link shows the registry's name
     revise_topic_name = _topic_label(selected_level, selected_subject, selected_topic) if problem else None
@@ -3591,6 +3635,7 @@ def index():
         ],
         generator_topics=_generator_topic_options(),
         recent_topics=recent_topics,
+        today_card=today_card,
         # E10 phase 3: only the question that Start on /welcome (the arrival) asks for is coached (guide.js decides if it is due)
         coach_first=bool(problem and not error and request.method == 'POST' and request.form.get('coach') == '1'),
     )
@@ -4875,7 +4920,8 @@ def _note_quiz_finished(user_id, level, subject, topic, score, total, attempt_id
         return
     base = {'type': 'toast', 'id': f'toast:quiz:{aid}', 'score': score, 'total': total, 'wrong': wrong}
     if kind == 'quicktest':
-        _note_moment(user_id, dict(base, kind='quicktest_done'))
+        # E11 Phase 4 (plan 4.2): a perfect Quick Test gets its own "Full marks" card; it does not count for the Full marks badges
+        _note_moment(user_id, dict(base, kind='quicktest_perfect' if done else 'quicktest_done'))
         return
     best = False
     if not retry_mode and not done:
@@ -5549,6 +5595,7 @@ def _finalize_quicktest_session(data):
                 answers,
                 problems,
                 is_retry=bool(data.get('retry_mode')),
+                is_quicktest=True,
             )
         _track_quiz_completed(
             data.get('level', 'gcse'),
@@ -6551,6 +6598,31 @@ def verify_email(token):
     return redirect(url_for('login'))
 
 
+def _shelf_links(conn, user_id, settings, welcome_track=None):
+    """E11 Phase 3: where each Next up link goes. The pupil's own topic is the one practised or read most recently, else the one
+    chosen at welcome; with none, the links open the topic list."""
+    topic = None
+    for sql in ('SELECT level, subject, topic FROM generator_mcq_attempts WHERE user_id = ? ORDER BY created_at DESC, id DESC LIMIT 1',
+                'SELECT level, subject, topic FROM lesson_progress WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1'):
+        row = conn.execute(sql, (user_id,)).fetchone()
+        if row and _lesson_render_spec(row['level'], row['subject'], row['topic']):
+            topic = (row['level'], row['subject'], row['topic'])
+            break
+    chosen = (settings.get('welcome') or {}).get('topic')
+    if topic is None and welcome_track and chosen and _lesson_render_spec(welcome_track['level'], welcome_track['subject'], chosen):
+        topic = (welcome_track['level'], welcome_track['subject'], chosen)
+    every = url_for('topics_index')
+    links = {'topics': every, 'study': every, 'lesson': every, 'quiz': every, 'practice': url_for('index'),
+             'daily': url_for('qotd_page'), 'classwork': url_for('student_class_work'), 'tour': url_for('profile_settings')}
+    if topic:
+        level, subject, slug = topic
+        links['lesson'] = links['study'] = url_for('topic_page', level=level, subject=subject, topic=slug)
+        links['practice'] = url_for('index', level=level, subject=subject, topic=slug)
+        if _lesson_quiz_available(level, subject, slug):
+            links['quiz'] = url_for('lesson_mcq_quiz', level=level, subject=subject, topic=slug)
+    return links
+
+
 @app.route('/profile')
 @login_required
 def profile():
@@ -6567,7 +6639,7 @@ def profile():
         weekly_effort_days = weekly_effort_by_day(conn, current_user.id)
         accuracy_trend = recent_accuracy_trend(conn, current_user.id, limit=10)
         streak_ring = streak_ring_progress(study_streak.get('current'))
-        milestones = list_milestone_shelf(conn, current_user.id)
+        today_card = progress_bits.today(conn, current_user.id, study_streak)   # E11 Phase 4 (plan 4.4): the Today row
         weekly_recap = get_weekly_recap(conn, current_user.id)
         leaderboard = friend_effort_leaderboard(conn, current_user.id, days=7)
         pending_suggestions = count_pending_suggestions(conn, current_user.id)
@@ -6617,14 +6689,15 @@ def profile():
             })
             if len(mastery_topics) >= 12:
                 break
-        badges_earned = sum(1 for item in milestones if item.get('earned'))
-        # E10 phase 7: badges earned in the last 7 days wear a small "New" ribbon on the Milestones shelf.
-        new_cutoff = (datetime.now(timezone.utc) - timedelta(days=7)).replace(microsecond=0).isoformat()
-        for item in milestones:
-            item['is_new'] = bool(item.get('earned') and (item.get('earned_at') or '') >= new_cutoff)
-        next_up = next_up_badge(milestones)
+        # E11 Phase 3 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 4.1): the shelf by line, Next up by progress, own subjects first.
+        # E10 phase 7's "New" ribbon (the last 7 days) is set by badge_shelf.build.
+        welcome_track = _welcome_track((own_settings.get('welcome') or {}).get('level'))
+        own_pairs = {(welcome_track['level'], welcome_track['subject'])} if welcome_track else set()
+        shelf = badge_shelf.build(conn, current_user.id, own=own_pairs)
+        shelf_links = _shelf_links(conn, current_user.id, own_settings, welcome_track)
+        badges_earned = shelf['earned_count']
         # E10 phase 8: Zorp's story shelf (which chapters the earned badges open; watched flags are in the guide state)
-        story_shelf = zorp_story.shelf([i['key'] for i in milestones if i.get('earned')], own_settings.get('guide'))
+        story_shelf = zorp_story.shelf(shelf['earned_keys'], own_settings.get('guide'))
     for item in saved:
         item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
     for item in progress:
@@ -6672,7 +6745,10 @@ def profile():
         weekly_effort_days=weekly_effort_days,
         accuracy_trend=accuracy_trend,
         streak_ring=streak_ring,
-        milestones=milestones,
+        shelf=shelf,
+        shelf_links=shelf_links,
+        today_card=today_card,
+        progress_labels=progress_bits.LABELS,
         story_shelf=story_shelf,
         weekly_recap=weekly_recap,
         friend_leaderboard=leaderboard[:5],
@@ -6696,7 +6772,6 @@ def profile():
         wardrobe=wardrobe,
         mastery_topics=mastery_topics,
         badges_earned=badges_earned,
-        next_up=next_up,
     )
 
 
@@ -11451,9 +11526,12 @@ def view_quiz_attempt(attempt_id):
     # E10 phase 5, honest XP: the effort points the quiz recorded, shown once, on the page the pupil lands on after submitting
     held = session.get('pb_qxp') if _pending_owned() else None
     quiz_xp = 0
+    earned = None
     if isinstance(held, list) and len(held) == 2 and held[0] == attempt_id:
         quiz_xp = int(held[1] or 0)
         session.pop('pb_qxp', None)
+        # E11 Phase 4 (plan 4.2): what this quiz earned, under the score ring, on the page a pupil lands on after submitting
+        earned = _results_earned(attempt['level'], attempt['subject'], attempt['topic'], quiz_xp)
     return _render_quiz_results(
         problems,
         attempt['score'],
@@ -11469,7 +11547,20 @@ def view_quiz_attempt(attempt_id):
         show_wrong_explanations_only=True,
         quiz_attempt_id=attempt_id,
         quiz_xp=quiz_xp,
+        earned=earned,
     )
+
+
+def _results_earned(level, subject, topic, quiz_xp):
+    """The results strip: the level bar from before this quiz's points to after them, and the topic's mastery path with its
+    next step. Also the day's Close to a badge card, when one is near."""
+    with get_db() as conn:
+        after = lifetime_effort_xp(conn, current_user.id)
+        out = {'bar': progress_bits.level_bar(after - int(quiz_xp or 0), after, xp_level_progress), 'labels': progress_bits.LABELS}
+        if _lesson_quiz_available(level, subject, topic):
+            out['path'] = progress_bits.path(conn, current_user.id, level, subject, topic)
+        _note_near_badge(conn, current_user.id)
+    return out
 
 
 def _lesson_assist_client_ip():
@@ -12041,6 +12132,9 @@ def quicktest_results():
     summary = _quicktest_results_summary(problems, answers)
     wrong_count = _quicktest_wrong_count(problems, answers)
     attempt_id = _finalize_quicktest_session(data)
+    if attempt_id and current_user.is_authenticated:
+        with get_db() as conn:
+            _note_near_badge(conn, current_user.id)   # E11 Phase 4: Close to a badge, at most once a day
     # the note on a wrong multiple-choice pick shows here, after the test (docs/GCSE_MATHS_HINTS.md Phase 4)
     pick_notes = [
         option_notes.picked_note(p, (answers[i] or {}).get('user_answer')) if i < len(answers) and not (answers[i] or {}).get('correct') else ''

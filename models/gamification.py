@@ -615,7 +615,8 @@ def _award_milestone(conn, user_id, milestone_key):
     return True
 
 
-_PERFECT_QUIZ_WHERE = 'is_retry = 0 AND total >= ? AND score >= total'
+# 2026-11-11 (E11 Phase 4, plan 4.2): lesson quizzes only; a perfect Quick Test has its own card and never counts here
+_PERFECT_QUIZ_WHERE = 'is_retry = 0 AND is_quicktest = 0 AND total >= ? AND score >= total'
 _QUESTIONS_RIGHT_WHERE = 'correct = 1 AND part_index IS NULL'   # E11 Phase 2: a whole practice question right
 
 
@@ -1051,22 +1052,6 @@ def list_milestone_shelf(conn, user_id):
         })
     shelf.sort(key=lambda row: (not row['earned'], row['title']))
     return shelf
-
-
-def next_up_badge(shelf):
-    """One badge to point at on the profile ("Next up"): the one that follows the newest badge earned, else the first
-    badge in the catalog that is not earned yet. The shelf is the list from list_milestone_shelf(). None when all are earned."""
-    by_key = {item['key']: item for item in shelf}
-    earned = sorted((i for i in shelf if i.get('earned')), key=lambda i: i.get('earned_at') or '', reverse=True)
-    for item in earned:
-        nxt = by_key.get((milestone_meta(item['key']) or {}).get('next') or '')
-        if nxt and not nxt.get('earned'):
-            return nxt
-    for key in MILESTONE_CATALOG:
-        item = by_key.get(key)
-        if item and not item.get('earned'):
-            return item
-    return None
 
 
 def streak_week_dots(conn, user_id, as_of=None):

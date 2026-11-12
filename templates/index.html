@@ -16,6 +16,16 @@
 <div class="practice-hero">
     <h1>{% if current_user.is_authenticated %}Hi, {{ current_user.display_handle }}{% else %}Ready to practise?{% endif %}</h1>
 </div>
+{# E11 Phase 4 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 4.4): today at a glance; the copy is in models/progress_bits.py #}
+{% if today_card %}
+<section class="today-strip" aria-label="{{ today_card.title }}">
+    <span class="today-strip-title">{{ today_card.title }}</span>
+    <span class="today-strip-stat">{{ today_card.right_label }}</span>
+    <span class="today-strip-stat">{{ today_card.xp_label }}</span>
+    <span class="today-strip-stat today-strip-stat--streak">{{ today_card.streak_label }}</span>
+    <ol class="today-dots" aria-hidden="true">{% for dot in today_card.dots %}<li class="today-dot is-{{ dot.state }}{% if dot.is_today %} is-today{% endif %}">{{ dot.label }}</li>{% endfor %}</ol>
+</section>
+{% endif %}
 
 {% if current_user.is_authenticated and recent_topics %}
 <section class="recent-practised" aria-label="Recently practised">
@@ -262,8 +272,11 @@
 
 </div>
 {# E10 phase 7: the sparkle on Show answer as it opens after the first try (around.css) and Zorp's eyes following the focused option or the hint (zorp-around.js, full motion only). Not precached. #}
+{# E11 Phase 4: the Today strip is styled there too, so the sheet loads whenever the strip shows #}
+{% if problem or today_card %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/around.css') }}?v=2">
+{% endif %}
 {% if problem %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/around.css') }}?v=1">
 {% if current_user.is_authenticated %}<script src="{{ url_for('static', filename='js/zorp-around.js') }}?v=1" defer></script>{% endif %}
 {% endif %}
 {% endblock %}

@@ -22,7 +22,7 @@ CAPS = {
     'static/js/badge-stage.js': 22500,   # 2026-11-10 E11 Phase 2 RAISED 20_000 -> 22_500: the perfect and growth families, the drawn sprouts (21,886 B); 2026-11-08: E10 phase 6b RAISED 18_000 -> 18_500 (+500) for the wardrobe line and the Try it on button (18,373 B); 2026-11-10 E11 Phase 1 RAISED 18_500 -> 20_000: part() lets moments.js play the badge cards inside one sequence (19,399 B)
     'static/css/badge-stage.css': 5500,
     'static/images/badge-props.svg': 8000,
-    'static/js/badge-sheet.js': 2500,
+    'static/js/badge-sheet.js': 3300,   # 2026-11-11: E11 Phase 3 RAISED 2_500 -> 3_300: the sheet reads the #pb-badge-data island and has Watch again (3,202 B)
 }
 
 

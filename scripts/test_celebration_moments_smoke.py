@@ -29,7 +29,7 @@ from models.zorp_rig import CONTEXT_MAP  # noqa: E402
 
 # Own caps (bytes). 2026-11-08: E10 phase 5, lazy files that load only when a moment is due.
 CAPS = {
-    'static/js/moments.js': 36500,   # 2026-11-10 E11 Phase 0: +600, the lesson stage names the lesson badge (measured 24,085 B); 2026-11-10 E11 Phase 1 RAISED 24_600 -> 36_500: the one-sequence player, the setting, the day's budget, the carry to the next page and eleven new corner cards (measured 35,988 B). Lazy: loads only when a moment is due
+    'static/js/moments.js': 41500,   # 2026-11-11 E11 Phase 4 RAISED 36_500 -> 41_500: Your week (three drawn cards), Close to a badge and the Quick Test full marks card (measured 41,161 B); 2026-11-10 E11 Phase 0: +600, the lesson stage names the lesson badge (measured 24,085 B); 2026-11-10 E11 Phase 1 RAISED 24_600 -> 36_500: the one-sequence player, the setting, the day's budget, the carry to the next page and eleven new corner cards (measured 35,988 B). Lazy: loads only when a moment is due
     'static/css/moments.css': 5000,
 }
 TOPIC = ('gcse', 'maths', 'bidmas')   # ten multiple choice questions
@@ -453,7 +453,7 @@ def test_lazy_loading():
     assert c.get(urls['js']).status_code == 200 and c.get(urls['css']).status_code == 200
     sw = read('static/js/sw.js')
     assert 'moments.js' not in sw and 'moments.css' not in sw
-    assert "pb-v125" in sw   # 2026-11-10: E11 Phase 2 bump (was pb-v124, Phase 1); 2026-11-10: E11 Phase 1 bump (was pb-v123, Phase 0); 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115); 2026-11-08: E10 review fixes bump (was pb-v118)
+    assert "pb-v127" in sw   # 2026-11-11: E11 Phase 4 bump (was pb-v126, Phase 3); 2026-11-11: E11 Phase 3 bump (was pb-v125, Phase 2); 2026-11-10: E11 Phase 2 bump (was pb-v124, Phase 1); 2026-11-10: E11 Phase 1 bump (was pb-v123, Phase 0); 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115); 2026-11-08: E10 review fixes bump (was pb-v118)
 
 
 # ---- E10 review fixes (2026-11-08) ----

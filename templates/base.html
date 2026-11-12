@@ -26,7 +26,7 @@
     <!-- App CSS - load order is significant (docs/UI_REDESIGN.md U0) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v=25">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=26">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=35">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=36">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=48">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/motion.css') }}?v=9">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=32">
@@ -80,10 +80,10 @@
     {% if current_user.is_authenticated and lesson_assist_enabled and lesson_meta %}
     {# E10 phase 7: the thinking Zorp beside a slow AI explanation (static/js/zorp-around.js); the assist scripts check for it #}
     <script src="{{ url_for('static', filename='js/zorp-around.js') }}?v=1" defer></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/around.css') }}?v=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/around.css') }}?v=2">
     {% endif %}
     {% if lesson_meta and not lesson_meta.get('quizReview') %}
-    <script src="{{ url_for('static', filename='js/lesson-progress.js') }}?v=27" defer></script>
+    <script src="{{ url_for('static', filename='js/lesson-progress.js') }}?v=28" defer></script>
     {% endif %}
 </head>
 
@@ -254,7 +254,7 @@
 <script type="application/json" id="pb-guide-state"{% if guide_json_persisted %} data-guide-persisted="1"{% endif %}>{{ guide_state | tojson }}</script>
 {% endif %}
 
-<div class="site-wrapper{% if quiz_runner_mode %} site-wrapper--quiz-runner{% endif %}" data-user-logged-in="{% if current_user.is_authenticated %}1{% else %}0{% endif %}"{% if lesson_meta %} data-lesson-level="{{ lesson_meta.level }}" data-lesson-subject="{{ lesson_meta.subject }}" data-lesson-topic="{{ lesson_meta.topic }}" data-lesson-title="{{ lesson_meta.topicTitle|e }}"{% if lesson_meta.get('quizUrl') %} data-lesson-quiz-url="{{ lesson_meta.quizUrl }}" data-lesson-quiz-count="{{ lesson_meta.quizCount }}"{% endif %}{% if lesson_meta.get('practiceUrl') %} data-lesson-practice-url="{{ lesson_meta.practiceUrl }}"{% endif %}{% if lesson_meta.get('quizReview') %} data-quiz-review="1"{% elif not quiz_runner_mode %} data-lesson-content{% endif %}{% elif ibl is defined %} data-lesson-subject="science"{% endif %}>
+<div class="site-wrapper{% if quiz_runner_mode %} site-wrapper--quiz-runner{% endif %}" data-user-logged-in="{% if current_user.is_authenticated %}1{% else %}0{% endif %}"{% if lesson_meta %} data-lesson-level="{{ lesson_meta.level }}" data-lesson-subject="{{ lesson_meta.subject }}" data-lesson-topic="{{ lesson_meta.topic }}" data-lesson-title="{{ lesson_meta.topicTitle|e }}"{% if lesson_meta.get('quizUrl') %} data-lesson-quiz-url="{{ lesson_meta.quizUrl }}" data-lesson-quiz-count="{{ lesson_meta.quizCount }}"{% endif %}{% if lesson_meta.get('practiceUrl') %} data-lesson-practice-url="{{ lesson_meta.practiceUrl }}"{% endif %}{% if lesson_meta.get('path') %} data-lesson-path='{{ lesson_meta.path|tojson }}'{% endif %}{% if lesson_meta.get('quizReview') %} data-quiz-review="1"{% elif not quiz_runner_mode %} data-lesson-content{% endif %}{% elif ibl is defined %} data-lesson-subject="science"{% endif %}>
     {% block content %}{% endblock %}
 </div>
 

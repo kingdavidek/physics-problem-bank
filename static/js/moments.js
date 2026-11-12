@@ -60,7 +60,19 @@
     backfillOne: 'You already earned a badge: {title}. It is on your profile.',
     backfillMany: 'You already earned {count} new badges. They are on your profile.',
     perfectSmall: 'Show these as a small card',
-    perfectSet: 'Full marks will show as a small card now. You can change it in Settings.'
+    perfectSet: 'Full marks will show as a small card now. You can change it in Settings.',
+    // E11 Phase 4 (plan 2.1, 2.2, 4.2): Your week, Close to a badge, a perfect Quick Test
+    quicktestPerfect: 'Full marks on the Quick Test. {score} out of {total} marks.',
+    near: 'Nearly there: {title}. {line}',
+    weekHead: 'Your week',
+    weekDays: 'You studied on {days} of 7 days last week.',
+    weekRight: 'You got {count} questions right.',
+    weekRightOne: 'You got one question right.',
+    weekBadge: 'Best moment: you earned {title}.',
+    weekPerfect: 'Best moment: full marks on {title}.',
+    weekQuiz: 'Best moment: {score} out of {total} on {title}.',
+    weekTopic: 'You practised {title} the most.',
+    weekCard: 'Your week: you studied on {days} of 7 days.'
   };
   // END COPY
   // BEGIN FACES
@@ -68,7 +80,8 @@
     quiz_done: 'soft-smile', personal_best: 'proud', quicktest_done: 'soft-smile', daily_week: 'joy', retry_cleared: 'happy',
     set_work_done: 'proud', challenge_done: 'happy', streak_skip: 'soft-smile', hint: 'happy',
     first_correct: 'happy', badge_card: 'proud', badges_card: 'proud', streak_card: 'proud', level_card: 'proud', perfect_card: 'joy', lesson_card: 'happy',
-    welcome_back: 'happy', welcome_back_kept: 'happy', backfill: 'proud', perfect_set: 'soft-smile'
+    welcome_back: 'happy', welcome_back_kept: 'happy', backfill: 'proud', perfect_set: 'soft-smile',
+    quicktest_perfect: 'joy', near_badge: 'happy', week_card: 'happy'
   };
   // END FACES
   // BEGIN SCENES
@@ -76,7 +89,8 @@
     level: { face: 'determined', end: 'proud', beats: [{ wait: 1900 }, { burst: 1 }, { play: 'flex' }, { play: 'fist-pump' }] },
     perfect: { face: 'joy', end: 'grin', beats: [{ burst: 1 }, { wait: 1300 }, { play: 'victory' }, { play: 'dance' }] },
     lessonFirst: { face: 'happy', end: 'proud', beats: [{ burst: 1 }, { wait: 1700 }, { play: 'cheer' }] },
-    lessonMore: { face: 'happy', end: 'happy', beats: [{ wait: 1100 }, { play: 'cheer' }] }
+    lessonMore: { face: 'happy', end: 'happy', beats: [{ wait: 1100 }, { play: 'cheer' }] },
+    week: { face: 'happy', end: 'proud', beats: [{ wait: 900 }, { play: 'cheer' }] }
   };
   // END SCENES
   var TOAST_MS = 9000;
@@ -279,6 +293,29 @@
     }
   }
 
+  // E11 Phase 4: Your week's three cards: the week's seven days, the questions right, the best moment (a star)
+  function weekBox(box, m) {
+    var s = svgEl('svg', { viewBox: '0 0 240 180', 'aria-hidden': 'true', focusable: 'false' }, box);
+    if (m.part === 'days') {
+      String(m.dots || '').split('').forEach(function (d, i) {
+        var g = svgEl('g', { transform: 'translate(' + (30 + i * 30) + ' 90)' }, s);
+        var c = svgEl('circle', { r: 11, fill: d === '1' ? '#fb923c' : 'none', stroke: d === '1' ? '#fdba74' : '#94a3b8', 'stroke-width': 2 }, g);
+        svgEl('text', { y: 32, 'text-anchor': 'middle', fill: '#cbd5e1', 'font-size': 12, 'font-weight': 700 }, g).textContent = 'MTWTFSS'.charAt(i);
+        c.style.transformBox = 'fill-box'; c.style.transformOrigin = '50% 50%';
+        anim(c, [{ transform: 'scale(0)' }, { transform: 'scale(1.2)', offset: 0.7 }, { transform: 'none' }], 420, { delay: 300 + i * 110 });
+      });
+    } else if (m.part === 'right') {
+      var g2 = svgEl('g', { transform: 'translate(120 90)' }, s);
+      svgEl('circle', { r: 58, fill: '#16a34a', stroke: '#86efac', 'stroke-width': 4 }, g2);
+      svgEl('text', { y: 18, 'text-anchor': 'middle', fill: '#fff', 'font-size': 50, 'font-weight': 800 }, g2).textContent = String(m.count);
+      g2.style.transformBox = 'fill-box'; g2.style.transformOrigin = '50% 50%';
+      anim(g2, [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.08)', opacity: 1, offset: 0.7 }, { transform: 'none', opacity: 1 }], 700, { delay: 300 });
+    } else {
+      var star = svgEl('path', { d: 'M120 22l19 41 45 5-34 30 10 44-40-23-40 23 10-44-34-30 45-5z', fill: '#fbbf24', stroke: '#fde68a', 'stroke-width': 3 }, s);
+      star.style.transformBox = 'fill-box'; star.style.transformOrigin = '50% 50%';
+      anim(star, [{ transform: 'rotate(-40deg) scale(.2)', opacity: 0 }, { transform: 'rotate(8deg) scale(1.1)', opacity: 1, offset: 0.7 }, { transform: 'none', opacity: 1 }], 800, { delay: 300 });
+    }
+  }
   function enter(m, set) {
     clear();
     var layer = el('div', 'mo-layer', set);
@@ -286,11 +323,23 @@
     var box = el('div', 'mo-box', layer);
     if (m.type === 'level') levelBox(box, m);
     else if (m.type === 'perfect') sealBox(box, m);
+    else if (m.type === 'week') weekBox(box, m);
     else bookBox(box, !m.more);
   }
 
   // ---- moments -> scenes ----
+  function weekLine(m) {
+    if (m.part === 'days') return fill(UI.weekDays, m);
+    if (m.part === 'right') return m.count === 1 ? UI.weekRightOne : fill(UI.weekRight, m);
+    var t = { badge: UI.weekBadge, perfect: UI.weekPerfect, quiz: UI.weekQuiz, topic: UI.weekTopic }[m.best] || '';
+    return fill(t, { title: String(m.title || '').slice(0, 48), score: m.score, total: m.total });
+  }
   function sceneFor(m) {
+    if (m.type === 'week') {
+      var w = SCENES.week;
+      return { id: 'moment.week.' + m.part, props: [], layout: 'moment', face: w.face, end: w.end, beats: [w.beats], primary: UI.primary,
+        skipLabel: '', heading: UI.weekHead, lines: [weekLine(m)] };
+    }
     var key = m.type === 'level' ? 'level' : (m.type === 'perfect' ? 'perfect' : (m.more ? 'lessonMore' : 'lessonFirst'));
     var def = SCENES[key];
     var out = { id: 'moment.' + key, props: [], layout: 'moment', face: def.face, end: def.end, beats: [def.beats], primary: UI.primary, skipLabel: '' };
@@ -383,6 +432,7 @@
       if (m.badge && m.badge.key) g.markReward('milestone:' + String(m.badge.key).replace(/\s+/g, '_'));
     }
     if (m.type === 'perfect') once(m.id);
+    if (m.type === 'week' && g.markReward) g.markReward(m.id);   // E11 Phase 4: the server offers it until this flag is saved
   }
 
   // E11 Phase 1 (plan 2.4 rule 1): one full-screen sequence per page, in a fixed order (the scene, the badges, the level-up), with one
@@ -399,7 +449,7 @@
         scene: sc, owner: 'm',
         show: function (st) {
           mark(m);
-          if (m.type === 'lesson_complete') spend();
+          if (m.type === 'lesson_complete' || (m.type === 'week' && m.part === 'days')) spend();
           enter(m, st.querySelector('.pb-st-set'));
           if (m.type === 'perfect') perfectLink(st);
         },
@@ -472,6 +522,7 @@
     var t = { type: 'toast', id: 'card:' + (m.id || m.type + ':' + (m.level || m.topic || '')), score: m.score, total: m.total, level: m.level };
     if (m.type === 'level') t.kind = 'level_card';
     else if (m.type === 'perfect') t.kind = 'perfect_card';
+    else if (m.type === 'week') { t.kind = 'week_card'; t.days = m.days; }
     else { t.kind = 'lesson_card'; t.quiz = m.quiz || ''; t.title = m.badge && m.badge.title ? String(m.badge.title).slice(0, 80) : ''; }
     return t;
   }
@@ -536,12 +587,15 @@
     if (k === 'welcome_back_kept') return UI.backKept;
     if (k === 'backfill') return m.count > 1 ? fill(UI.backfillMany, m) : (m.title ? fill(UI.backfillOne, m) : fill(UI.backfillMany, m));
     if (k === 'perfect_set') return UI.perfectSet;
+    if (k === 'quicktest_perfect') return fill(UI.quicktestPerfect, m);
+    if (k === 'near_badge') return fill(UI.near, { title: String(m.title || '').slice(0, 48), line: String(m.line || '') });
+    if (k === 'week_card') return fill(UI.weekCard, m);
     return '';
   }
   // where a card's link goes (E11 Phase 1): a badge to the Milestones shelf, a finished lesson to its quiz, the 10/10 setting to Settings
   function linkFor(m) {
     var a = assets();
-    if (m.kind === 'badge_card' || m.kind === 'badges_card' || m.kind === 'streak_card' || m.kind === 'backfill') return a.profile ? { href: a.profile + '#milestones', label: UI.seeIt } : null;
+    if (m.kind === 'badge_card' || m.kind === 'badges_card' || m.kind === 'streak_card' || m.kind === 'backfill' || m.kind === 'near_badge') return a.profile ? { href: a.profile + '#milestones', label: UI.seeIt } : null;
     if (m.kind === 'level_card') return a.profile ? { href: a.profile, label: UI.profile } : null;
     if (m.kind === 'lesson_card' && m.quiz) return { href: m.quiz, label: UI.quiz };
     if (m.kind === 'perfect_set' && a.settings) return { href: a.settings + '#celebrations', label: UI.settings };
@@ -565,6 +619,7 @@
     var host = D.getElementById('app-toast-host');
     var text = textFor(m);
     if (!host || !text || !FACES[m.kind] || !once(m.id)) return;
+    if (m.kind === 'near_badge' && G() && G().markReward) G().markReward(m.id);   // E11 Phase 4: once a day (the server checks it)
     var node = el('div', 'app-toast is-success pb-mtoast', host);
     node.setAttribute('role', 'status');
     var icon = el('span', 'app-toast-icon', node);
@@ -651,6 +706,7 @@
       m.more = !!g && g.rewardSeen('lesson_complete');
       return !!g && !g.rewardSeen(g.rewardId(m));
     }
+    if (m.type === 'week') return !!g && !g.rewardSeen(m.id);
     return false;
   }
   // E11 Phase 1: list holds the moments, badges the badge and streak rewards (guide.js hands both over in one beat). The setting,
@@ -659,14 +715,16 @@
     list = (list || []).filter(function (m) { return m && m.type; });
     badges = (badges || []).filter(function (b) { return b && b.type; });
     var md = mode();
-    var stages = list.filter(function (m) { return (m.type === 'level' || m.type === 'perfect' || m.type === 'lesson_complete') && wanted(m); });
+    var stages = list.filter(function (m) { return (m.type === 'level' || m.type === 'perfect' || m.type === 'lesson_complete' || m.type === 'week') && wanted(m); });
+    // E11 Phase 4: Your week plays only on a quiet page (nothing else to celebrate); otherwise the server offers it on the next page
+    if (stages.some(function (m) { return m.type !== 'week'; }) || badges.length) stages = stages.filter(function (m) { return m.type !== 'week'; });
     stages = stages.filter(function (m, i) { return stages.findIndex(function (x) { return x.type === m.type && (x.id || x.topic) === (m.id || m.topic); }) === i; });
     stages.sort(function (a, b) { return rank(a) - rank(b); });
     var cards = [];
     var lessons = 0;
     stages = stages.filter(function (m) {
       var small = md === 'small' || (md === 'big' && m.type !== 'level') || (m.type === 'perfect' && perfectAsCard());
-      if (!small && m.type === 'lesson_complete') { lessons += 1; small = budgetUsed() + lessons > BUDGET; }
+      if (!small && (m.type === 'lesson_complete' || m.type === 'week')) { lessons += 1; small = budgetUsed() + lessons > BUDGET; }
       if (small) cards.push(asCard(m));
       return !small;
     });
@@ -682,6 +740,16 @@
       }
     }
     badges = badges.map(function (b, i) { return { b: b, i: i }; }).sort(function (x, y) { return (tierOf(x.b) - tierOf(y.b)) || (x.i - y.i); }).map(function (x) { return x.b; });
+    // Your week is up to three cards of one moment: the days, the questions right (when any), the best moment (when there is one)
+    var parts = [];
+    stages.forEach(function (m) {
+      if (m.type !== 'week') { parts.push(m); return; }
+      ['days', 'right', 'best'].forEach(function (part) {
+        if ((part === 'right' && !(m.count > 0)) || (part === 'best' && !m.best)) return;
+        parts.push(Object.assign({}, m, { part: part }));
+      });
+    });
+    stages = parts;
     var front = stages.filter(function (m) { return m.type !== 'level'; });
     var back = stages.filter(function (m) { return m.type === 'level'; });
     var room = MAX_CARDS;

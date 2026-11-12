@@ -252,6 +252,7 @@
       if (useLocal) window.localStorage.setItem(celebrateKey, '1');
     } catch (err) {}
     if (quizCtaBar) quizCtaBar.classList.add('is-complete');
+    pathLessonDone();
     if (live && window.pbCelebrate && window.pbCelebrate.lessonComplete) {
       var heading = document.querySelector('h1');
       window.pbCelebrate.lessonComplete({
@@ -262,6 +263,49 @@
         quiz: wrapper.dataset.lessonQuizUrl || '',
         badge: badge || null,
       });
+    }
+  }
+
+  // E11 Phase 4 (docs/BADGES_AND_CELEBRATIONS_PLAN.md 4.3): the topic's mastery path (from the server, signed-in pupils only) as chips
+  // under the lesson's heading, and the quiz bar's line once every quick check is done ("Lesson done. A 10/10 on the quiz makes you
+  // a ninja on this topic."). The words come from models/progress_bits.py; textContent only.
+  var path = null;
+  try { path = JSON.parse(wrapper.dataset.lessonPath || 'null'); } catch (err) { path = null; }
+  var pathChips = null;
+  function markDone(li) {
+    li.classList.add('is-done');
+    var s = document.createElement('span');
+    s.className = 'vh';
+    s.textContent = ' ' + (path.done || '');
+    li.appendChild(s);
+  }
+  function initPath(root) {
+    if (!path || !path.steps) return;
+    pathChips = document.createElement('ol');
+    pathChips.className = 'mastery-chips lesson-path';
+    pathChips.setAttribute('aria-label', path.label || '');
+    path.steps.forEach(function (step) {
+      var li = document.createElement('li');
+      li.className = 'mastery-chip';
+      li.setAttribute('data-step', step.id);
+      li.textContent = step.label;
+      if (step.done) markDone(li);
+      pathChips.appendChild(li);
+    });
+    var h1 = root.querySelector('h1');
+    if (h1 && h1.parentNode) h1.parentNode.insertBefore(pathChips, h1.nextSibling);
+    else root.insertBefore(pathChips, root.firstChild);
+    if (path.steps[0] && path.steps[0].done) pathLessonDone();
+  }
+  function pathLessonDone() {
+    if (!path) return;
+    var li = pathChips && pathChips.querySelector('[data-step="lesson"]');
+    if (li && !li.classList.contains('is-done')) markDone(li);
+    if (quizCtaBar && path.bar && !quizCtaBar.querySelector('.lesson-quiz-cta-note')) {
+      var note = document.createElement('p');
+      note.className = 'lesson-quiz-cta-note';
+      note.textContent = path.bar;
+      quizCtaBar.insertBefore(note, quizCtaBar.firstChild);
     }
   }
 
@@ -383,8 +427,9 @@
   contentRoot = findLessonContentRoot(wrapper);
   initGeneratorCta(wrapper);
   initQuizCta(contentRoot);
+  initPath(contentRoot);
   celebrated = readCelebratedFlag();
-  if (celebrated && quizCtaBar) quizCtaBar.classList.add('is-complete');
+  if (celebrated && quizCtaBar) { quizCtaBar.classList.add('is-complete'); pathLessonDone(); }
 
   var steps = buildSteps(contentRoot);
   if (!steps.length) return;

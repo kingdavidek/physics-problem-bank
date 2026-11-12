@@ -15,6 +15,7 @@
   // BEGIN COPY
   var UI = {
     kicker: 'New badge',
+    again: 'Your badge',
     of: ' of ',
     next: 'Next: ',
     primary: 'Continue',
@@ -270,7 +271,7 @@
     var card = {
       key: key, family: b.family || 'learning', emoji: b.emoji || meta.emoji || '★', tier: b.tier || 'bronze', title: b.title || meta.title || UI.kicker,
       blurb: b.blurb || UI.earned, next_title: b.next_title || '', next_how: b.next_how || '', note: '', ids: ['milestone:' + key],
-      wear: b.wardrobe && b.wardrobe.id ? b.wardrobe : null
+      wear: b.wardrobe && b.wardrobe.id ? b.wardrobe : null, replay: spec.replay === true
     };
     // the streak badges and the streak rewards are one moment
     if (key === 'streak_7') card.ids.push('streak:7');
@@ -327,7 +328,8 @@
         var card = list[i];
         var fam = FAMILIES[card.family] || FAMILIES.learning;
         var top = st.querySelector('.pb-st-top');
-        if (!kicker) { kicker = el('p', 'bd-kicker'); kicker.textContent = UI.kicker; }
+        if (!kicker) kicker = el('p', 'bd-kicker');
+        kicker.textContent = card.replay ? UI.again : UI.kicker;   // E11 Phase 3: Watch again on the profile is not a new badge
         if (kicker.parentNode !== top.parentNode) top.parentNode.insertBefore(kicker, top);
         kicker.hidden = false;
         // E10 phase 6b: a badge that opens a wardrobe item offers "Try it on" (the profile wardrobe with the item put on, unsaved)

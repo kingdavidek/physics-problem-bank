@@ -591,7 +591,7 @@ def extract_badge_copy(path='static/js/badge-stage.js'):
     a, b = src.find('// BEGIN COPY'), src.find('// END COPY')
     if a < 0 or b < a:
         return items, errors + [f'{path}: the COPY block moved']
-    surfaces = {'kicker': 'heading', 'streakTitle': 'heading', 'primary': 'button_label', 'profile': 'button_label',
+    surfaces = {'kicker': 'heading', 'again': 'heading', 'streakTitle': 'heading', 'primary': 'button_label', 'profile': 'button_label',
                 'earned': 'reward_line', 'streakBlurb': 'reward_line', 'big': 'reward_line', 'streakNext': 'reward_line',
                 'wardrobe': 'reward_line', 'tryOn': 'button_label'}   # 2026-11-08: E10 phase 6b
     block = src[a:b]
@@ -616,8 +616,9 @@ def extract_moment_copy(path='static/js/moments.js'):
     if a < 0 or b < a:
         return [], [f'{path}: the COPY block moved']
     surfaces = {'primary': 'button_label', 'profile': 'button_label', 'quiz': 'button_label', 'retry': 'button_label',
-                'levelHead': 'heading', 'levelCap': 'heading', 'perfectHead': 'heading', 'lessonHead': 'heading'}
-    sample = {'n': '4', 'score': '7', 'total': '10', 'wrong': '3'}
+                'levelHead': 'heading', 'levelCap': 'heading', 'perfectHead': 'heading', 'lessonHead': 'heading',
+                'weekHead': 'heading'}   # 2026-11-11: E11 Phase 4 Your week
+    sample = {'n': '4', 'score': '7', 'total': '10', 'wrong': '3', 'days': '4', 'count': '37'}
     items, errors = [], []
     block = src[a:b]
     for m in re.finditer(r"^\s*(\w+):\s*'((?:[^'\\]|\\.)*)',?\s*$", block, re.M):
@@ -673,6 +674,71 @@ def extract_wardrobe_copy(path='static/js/wardrobe.js'):
     if not items:
         return [], [f'{path}: no copy extracted']
     return items, []
+
+
+def extract_shelf_copy(path='models/badge_shelf.py'):
+    """E11 Phase 3: the Milestones shelf (system voice, models/badge_shelf.py SHELF COPY block): row titles, the meter labels with a
+    sample count, the Next up sentences (one more, and four more), the link labels and the shelf's own labels."""
+    from models import badge_shelf as bs
+    src = _read(path)
+    a, b = src.find('# BEGIN SHELF COPY'), src.find('# END SHELF COPY')
+    if a < 0 or b < a:
+        return [], [f'{path}: the SHELF COPY block moved']
+    rows = src.split('\n')
+
+    def line_of(needle):
+        for i, row in enumerate(rows, 1):
+            if needle and needle in row:
+                return i
+        return 0
+
+    items = []
+
+    def add(surface, text, where, needle=None):
+        items.append(Item(path, line_of(needle or text), 'system', surface, kind_of(surface), text, where=where))
+
+    for line_id, title, _keys in bs.LINES + (bs.EXTRAS,):
+        add('heading', title, f'line {line_id}')
+    for counter, (unit, one, many, _link) in bs.COPY.items():
+        add('reward_line', bs.UI['of'].format(have=3, need=25, unit=unit), f'{counter} meter', needle=f"'{unit}'")
+        add('reward_line', one, f'{counter} one more')
+        if many:
+            add('reward_line', many.replace('{n}', 'four'), f'{counter} more', needle=many)
+    for key, label in bs.LINKS.items():
+        add('button_label', label, f'link {key}', needle=f"'{key}': ")
+    for key in ('next_up', 'all_done', 'subjects', 'topic_badges', 'show_all'):
+        add('heading', bs.UI[key], f'ui {key}', needle=f"'{key}': ")
+    missing = [it.where for it in items if not it.line]
+    return items, [f'{path}: no source line for {w}' for w in missing]
+
+
+def extract_progress_copy(path='models/progress_bits.py'):
+    """E11 Phase 4: progress around the site (system voice, models/progress_bits.py PROGRESS COPY block): the mastery path's step
+    labels and next steps (a sample date), the quiz bar line, and the labels of the results strip and the Today card."""
+    from models import progress_bits as pb
+    src = _read(path)
+    if '# BEGIN PROGRESS COPY' not in src or '# END PROGRESS COPY' not in src:
+        return [], ['models/progress_bits.py: the PROGRESS COPY block moved']
+    rows = src.split('\n')
+
+    def line_of(needle):
+        return next((i for i, row in enumerate(rows, 1) if needle in row), 0)
+
+    items = []
+
+    def add(surface, text, where, needle):
+        items.append(Item(path, line_of(needle), 'system', surface, kind_of(surface), text, where=where))
+
+    for key, label in pb.STEPS:
+        add('detail_label', label, f'step {key}', f"('{key}', ")
+    for key, text in pb.NEXT.items():
+        add('reward_line', text.replace('{date}', '12 February'), f'next {key}', f"'{key}': ")
+    add('reward_line', pb.BAR_DONE + ' ' + pb.NEXT['ninja'], 'quiz bar', 'BAR_DONE = ')
+    sample = {'n': '120', 'next': '5'}
+    for key, text in pb.LABELS.items():
+        surface = 'heading' if key in ('path', 'earned', 'today') else 'detail_label'
+        add(surface, re.sub(r'\{(\w+)\}', lambda k: sample.get(k.group(1), k.group(0)), text), f'label {key}', f"'{key}': ")
+    return items, [f'{path}: no source line for {it.where}' for it in items if not it.line]
 
 
 def _js_concat(expr, env):
@@ -1115,6 +1181,8 @@ EXTRACTORS = (
     extract_moment_copy,
     extract_story_copy,
     extract_wardrobe_copy,
+    extract_shelf_copy,
+    extract_progress_copy,
     extract_guide_js,
     extract_study_buddy_js,
     extract_buddy,

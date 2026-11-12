@@ -208,13 +208,13 @@ def test_client_rules():
     play = mo.split('  function play(list, badges) {')[1].split('window.pbMoments = ')[0]
     # the setting, the 10/10 link, the budget (finished lessons only)
     assert "md === 'small' || (md === 'big' && m.type !== 'level') || (m.type === 'perfect' && perfectAsCard())" in play
-    assert "if (!small && m.type === 'lesson_complete') { lessons += 1; small = budgetUsed() + lessons > BUDGET; }" in play
+    assert "if (!small && (m.type === 'lesson_complete' || m.type === 'week')) { lessons += 1; small = budgetUsed() + lessons > BUDGET; }" in play   # 2026-11-11: E11 Phase 4, Your week spends from the same budget
     assert "if (md === 'small' || !(window.pbBadgeStage && window.pbBadgeStage.part))" in play and 'badges.map(badgeCard)' in play
     # the order and the cap, the rest carried
     assert play.index('var front =') < play.index('var b2 =') < play.index('var k =') and 'carry(front.slice(f.length)' in play
     assert 'tierOf(x.b) - tierOf(y.b)' in play and "TIER = { violet: 0, gold: 1, silver: 2, bronze: 3 }" in mo
     seq = mo.split('  function sequence(front, badgeSpecs, back) {')[1].split('  function asCard(m)')[0]
-    assert "if (m.type === 'lesson_complete') spend();" in seq and "if (m.type === 'perfect') perfectLink(st);" in seq
+    assert "if (m.type === 'lesson_complete' || (m.type === 'week' && m.part === 'days')) spend();" in seq and "if (m.type === 'perfect') perfectLink(st);" in seq
     assert 'UI.skipAll' in seq and 'window.pbStage.close();' in seq and 'items.length > 1' in seq
     assert "'fs:' + today() + ':' + (n + 1)" in mo, 'the budget lives in the protected guide state ring'
     assert "JSON.stringify({ perfect_as_card: true })" in mo and "'data-pb-perfect-card', '1'" in mo
@@ -225,7 +225,7 @@ def test_client_rules():
     bs = read('static/js/badge-stage.js')
     assert 'window.pbBadgeStage = { play: play, part: cardsPart, ready: ready, families: FAMILIES };' in bs   # cardsPart since 2026-11-11 (plan section 9, Fixed)
     social = read('models/social.py')
-    assert "_GUIDE_VOLATILE_PREFIXES = ('level:', 'lesson:', 'milestone:', 'fs:')" in social
+    assert "_GUIDE_VOLATILE_PREFIXES = ('level:', 'lesson:', 'milestone:', 'fs:', 'wk:', 'near:')" in social   # 2026-11-11: E11 Phase 4 adds wk: and near:
     # the budget flags go to the evictable ring, not the durable rewards
     from models.social import merge_guide_json
     merged = json.loads(merge_guide_json('{}', {'rewards': {f'fs:20261110:{i}': True for i in range(1, 7)}}))

@@ -239,16 +239,17 @@ def clear_lesson_progress(conn, user_id, level, subject, topic):
     return cursor.rowcount > 0
 
 
-def record_quiz_attempt(conn, user_id, level, subject, topic, score, total, answers, problems, is_retry=False):
+def record_quiz_attempt(conn, user_id, level, subject, topic, score, total, answers, problems, is_retry=False, is_quicktest=False):
     # 2026-11-08 (E10 phase 6): is_retry marks a Retry wrong ones run (a small attempt made of questions the pupil missed). Every
     # statistic about how well a pupil did (personal best, accuracy trend, topic status, weak topics, accuracy boards, class averages)
     # counts full quizzes only (is_retry = 0); the history list and activity counts still show the retry.
+    # 2026-11-11 (E11 Phase 4): is_quicktest marks a Quick Test (its score is marks); the Full marks line counts lesson quizzes only.
     now = utc_now_iso()
     cursor = conn.execute(
         '''
         INSERT INTO quiz_attempts (
-            user_id, level, subject, topic, score, total, answers_json, problems_json, created_at, is_retry
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            user_id, level, subject, topic, score, total, answers_json, problems_json, created_at, is_retry, is_quicktest
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''',
         (
             user_id,
@@ -261,6 +262,7 @@ def record_quiz_attempt(conn, user_id, level, subject, topic, score, total, answ
             json.dumps(public_problems(problems)),
             now,
             1 if is_retry else 0,
+            1 if is_quicktest else 0,
         ),
     )
     conn.commit()

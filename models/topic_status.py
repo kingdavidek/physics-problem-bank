@@ -318,6 +318,8 @@ def compute_topic_status(completed_keys, step_total, quizzes, now=None):
         'mastery': mastery,
         'step_total': total_steps,
         'completed_count': len(keys),
+        # E11 Phase 4: perfect 10-question quizzes in a row at the end (the mastery path's "one more 10/10 in a row")
+        'perfect_run': streak,
     }
 
 
@@ -364,11 +366,15 @@ def topic_status_map(conn, user_id, now=None):
         }
 
     quizzes = {}
+    # 2026-11-12 (E11, David's decision on the plan's section 12 question): a Quick Test (is_quicktest, its score is marks) neither
+    # makes a ninja or a master nor breaks a run of 10/10s; only the topic's lesson quiz counts, as the badge copy says ("its quiz")
+    quiz_cols = {row[1] for row in conn.execute('PRAGMA table_info(quiz_attempts)').fetchall()}
+    not_quick = ' AND is_quicktest = 0' if 'is_quicktest' in quiz_cols else ''
     quiz_rows = conn.execute(
-        '''
+        f'''
         SELECT level, subject, topic, score, total, created_at
         FROM quiz_attempts
-        WHERE user_id = ? AND is_retry = 0
+        WHERE user_id = ? AND is_retry = 0{not_quick}
         ORDER BY created_at ASC, id ASC
         ''',
         (user_id,),

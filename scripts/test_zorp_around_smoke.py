@@ -15,7 +15,7 @@ from models import qotd as qotd_model  # noqa: E402
 from models import zorp_rig  # noqa: E402
 
 # Own caps (bytes), 2026-11-08: E10 phase 7. Both files are on demand and not precached.
-CAPS = {'static/js/zorp-around.js': 8600, 'static/css/around.css': 4000}
+CAPS = {'static/js/zorp-around.js': 8600, 'static/css/around.css': 5800}   # 2026-11-11: E11 Phase 4 RAISED around.css 4_000 -> 5_800 for the Today strip, the Today row and the results strip (5,744 B)
 
 
 def read(rel):

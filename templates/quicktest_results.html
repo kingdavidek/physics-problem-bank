@@ -116,6 +116,6 @@
 </div>
 
 </div>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/around.css') }}?v=1">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/around.css') }}?v=2">
 {% if current_user.is_authenticated and not (lesson_assist_enabled and lesson_meta) %}<script src="{{ url_for('static', filename='js/zorp-around.js') }}?v=1" defer></script>{% endif %}
 {% endblock %}

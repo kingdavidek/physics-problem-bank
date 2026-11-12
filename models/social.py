@@ -66,7 +66,8 @@ GUIDE_RECENT_BYTES = 1400
 GUIDE_RECENT_MAX = 80
 GUIDE_INCOMING_MAX = 16384      # transport limit for one PATCH; the stored state is always trimmed to the budgets above
 # 'fs:<day>:<n>' (E11 Phase 1): the full screens spent from the day's budget; old days fall out of the ring by themselves
-_GUIDE_VOLATILE_PREFIXES = ('level:', 'lesson:', 'milestone:', 'fs:')
+# 'wk:<year>w<week>' (Your week shown) and 'near:<day>' (Close to a badge shown), E11 Phase 4: one per week or day, safe to forget
+_GUIDE_VOLATILE_PREFIXES = ('level:', 'lesson:', 'milestone:', 'fs:', 'wk:', 'near:')
 _GUIDE_INCOMING_TOURS = 80
 _GUIDE_INCOMING_REWARDS = 400
 GUIDE_RUN_MAX_STEP = 60

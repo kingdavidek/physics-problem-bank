@@ -452,3 +452,146 @@ No console errors on any walk.
 - Privacy: DPIA log row, ROPA row 2, `SECURITY_AND_GDPR.md` and `API.md`.
 
 **Next.** Phase 3, the shelf (section 4): "Next up" by progress, other subjects behind Show all (answer 8). Then Phase 4, progress around the site and Your week (answer 6).
+
+---
+
+## 11. Phase 3 built (2026-11-11)
+
+Nothing committed. Section 4.1, with David's answer 8. It fixes the shelf problems in 1.3.4: every badge in one alphabetical grid, subjects the pupil does not study, and one grey placeholder for every locked badge.
+
+**Rows by line.**
+- `models/badge_shelf.py` builds the shelf; the profile shows it in place of the old grid.
+- Each line is a card: the badges earned, in threshold order, then the next one with a progress meter ("3 of 5 quizzes"). A finished line says "All earned".
+- The lines, in shelf order: Lessons, Quizzes, Full marks, Practice, Second tries, Hints, Retries, Streaks, Daily question, Explorer, Topic ninjas, Topic masters, Class work (only for a pupil in a class, or once one is earned), then Extras (Pathfinder and Sharp week, which have no count behind them).
+- The meters count from the same records that award the badges, so a full meter means the badge comes with the next check. The streak meter counts the run going now, since a streak badge is earned when the run reaches the count.
+- A badge whose next step is a single action (First quiz, Bounce back) shows its how-to line instead of a meter.
+
+**Subjects (answer 8).**
+- "Your subjects" shows the subject chosen at welcome, every subject the pupil has lessons, quizzes or practice in, and any subject they hold a badge in. The rest sit behind "Show all subjects (n)", a plain `<details>`.
+- A subject row is its line (complete, ninja, master), with "0 of 32 lessons"-style meters. The topic badges earned in that subject sit under it.
+
+**Locked badges** show their own glyph, greyed, with a small lock.
+
+**Next up.**
+- It points at the line closest to its next badge: the largest share done, then the fewest to go, then shelf order.
+- A line that cannot move again today (the streak once studied today, the daily question once answered) comes after the rest, and has no link if it is still the one chosen.
+- It shows the badge, a sentence ("Get seven more questions right."), the meter and a link to where to earn it:
+
+  | Link | Goes to |
+  |---|---|
+  | Open a lesson, Study today | the topic page |
+  | Take a quiz | that topic's lesson quiz, if it has one |
+  | Try a question | the generator, opened on that topic |
+  | Try a new topic | the topic list |
+  | Today's question | the daily question |
+  | Open class work | class work |
+  | Take the tour | Settings |
+
+  "That topic" is the one practised or read most recently, else the one chosen at welcome; with none, the links open the topic list.
+
+**The badge sheet.**
+- It now reads every badge from a data island on the page (`#pb-badge-data`: the fields it shows), so it opens any badge by key. That includes a wardrobe "Earn ... to unlock" link whose badge has no button on the shelf (Week warrior, while Three in a row is the next streak badge).
+- **Watch again** (earned badges only) closes the sheet and replays that badge on the badge stage. A replay's kicker reads "Your badge", not "New badge".
+
+**Copy.** All shelf copy is in the SHELF COPY block of `models/badge_shelf.py`: row titles, meter units, the one-more and n-more sentences, link labels and labels. It is linted as system voice through `models/zorp_voice.py` `extract_shelf_copy` (71 lines).
+
+**Removed.** The alphabetical grid and `next_up_badge()`, which went by catalogue order. `list_milestone_shelf()` stays for its tests.
+
+**Browser walks** (Chromium; a pupil with 3 quizzes, 18 answers right and five badges, at 1280 px light and 390 px dark):
+
+| Walk | What appeared |
+|---|---|
+| the shelf | Next up "Practice regular. Get seven more questions right." with 18 of 25 and Try a question (the generator on Pythagoras, the latest practised topic); 13 rows, GCSE Maths under Your subjects with its topic badge, five subjects behind Show all; no sideways scroll |
+| Show all | opens in place |
+| a locked badge | the sheet: "How to earn it", no Watch again |
+| an earned badge | the sheet with its date and Watch again; the replay plays the stage with the medal and "Your badge" |
+| a wardrobe link to Week warrior | the sheet opens though the badge has no button on the shelf |
+
+No console errors. Fixed during the walks: the "New" ribbon sat under the smaller medal.
+
+**Versions and caps.**
+- `badge-sheet.js` v2 (cap 3,300, was 2,500), `shelf.css` v1 (profile only, not precached, own cap 3,900), `badge-stage.js` v6, `sw.js` `pb-v126`.
+- The CSS total is 278,200 (was 274,400), with dated ledger notes in the three tests that hold it.
+- Tests: `scripts/test_e11_phase3_smoke.py` (new). It covers the lines against the catalogue, the meters against the rules, the class-only line, the Next up order, subjects and topic badges, the page and its links, the sheet and Watch again, the copy lint and the CSS.
+- No new data and no API change, so no privacy document changes.
+
+**Next.** Phase 4: progress around the site (sections 4.2 to 4.4) and Your week (answer 6).
+
+---
+
+## 12. Phase 4 built (2026-11-11)
+
+Nothing committed. Sections 4.2 to 4.4, Your week (2.1, David's answer 6) and Close to a badge (2.2). No phase in section 6 named Close to a badge, so it is built here. With it, every item in sections 2 to 4 is now built.
+
+**Results pages (4.2).**
+- **What you earned.** On the page a pupil lands on after a lesson quiz, a strip under the score ring shows:
+  - the level bar moving from before this quiz's points to after them (from empty when the quiz crossed into a new level), with "N XP to level M";
+  - the topic's mastery path as three chips (Lesson complete, Ninja, Master);
+  - the next step in words, for example "One more 10/10 in a row for Master." or "A 10/10 on the quiz makes you a ninja on this topic."
+
+  Reopening the attempt later shows no strip. The "+N XP earned" line stays where it was.
+- **Quick Test full marks.** A perfect Quick Test gets its own corner card: "Full marks on the Quick Test. 12 out of 12 marks."
+- **Fixed with it: Quick Tests counted as lesson quizzes.** They are saved in the same `quiz_attempts` table, so a perfect Quick Test of 3 marks or more earned Full marks and counted toward Bullseye and Flawless (Phases 1 and 2).
+  - A new column, `is_quicktest`, marks them. Older rows are back-filled from their answers: a Quick Test saves each answer as an object, a lesson quiz as text.
+  - The Full marks line now counts lesson quizzes only (`_PERFECT_QUIZ_WHERE`).
+  - Badges already earned are kept.
+  - Topic ninja and master still counted a 10-mark perfect Quick Test, as they always had. David decided on 2026-11-12 that they should not; see 12.1.
+
+**Lesson pages (4.3).**
+- For a signed-in pupil on a topic with a quiz, the mastery path chips sit under the lesson's heading (`data-lesson-path`, drawn by `lesson-progress.js`).
+- Once every quick check is done, the Lesson complete chip ticks and the quiz bar gains a line: "Lesson done. A 10/10 on the quiz makes you a ninja on this topic." (or the next step for that pupil).
+- **Fixed with it:** `components.css` had lost the `.lesson-quiz-cta-bar {` selector line, at least since the git base. Browsers dropped the bar's box and its button rule, so the bar was unstyled. The line is back.
+
+**Today (4.4).**
+- Practice page: a Today strip under the greeting, with questions right today, effort points today, the streak and the week's dots.
+- Profile: a Today row in the streak panel. The ring and the dots below it are the rest of the card.
+- "Questions right" counts:
+  - practice questions (whole questions);
+  - lesson quiz answers (not retries, and not Quick Tests, whose scores are marks);
+  - the daily question.
+
+  The day is UTC, as for the streak.
+
+**Your week (2.1, answer 6).**
+- On the first visit of a new week, if last week had a study day, a short stage of up to three cards:
+  - "You studied on 4 of 7 days last week." with the week's seven days drawn;
+  - "You got 23 questions right.";
+  - the best moment: a badge (highest tier), else full marks on a lesson quiz, else the best lesson quiz, else the topic practised most.
+
+  It has one count ("1 of 3"), Continue and Skip all.
+- The server offers it on each page until the client saves its flag (`wk:<year>w<week>` in the guide state's ring), so a page that cannot play it loses nothing.
+- It plays only on a quiet page; a page with other celebrations leaves it for the next one.
+- It spends from the day's budget of 6. With Big moments only or Small cards only, or the budget spent, it is one card: "Your week: you studied on 4 of 7 days."
+
+**Close to a badge (2.2).**
+- After a lesson quiz or a Quick Test, when the Next up badge of the shelf is one or two steps away, a card reads, for example, "Nearly there: Quiz fan. Finish one more quiz." with See it.
+- It shows at most once a day (`near:<day>` in the guide state's ring) and never beside a new badge.
+
+**Copy.** `models/progress_bits.py` (PROGRESS COPY block, system voice, 22 lines, linted by `extract_progress_copy`) and `moments.js` (12 new lines).
+
+**Browser walks** (Chromium):
+
+| Walk | What appeared |
+|---|---|
+| Practice and Profile, 1280 px light and 390 px dark | the Today strip ("6 right, 0 XP, No streak yet" and the dots) and the Today row; no sideways scroll |
+| BIDMAS: open, all quick checks, then a 10/10 quiz | chips under the heading; Lesson learner, then the lesson stage; the Lesson complete chip ticked and the bar line appeared; the quiz played Ninja and Full marks ("1 of 2"); the results strip showed Level 1, "183 XP to level 2", Lesson complete and Ninja ticked, "One more 10/10 in a row for Master." |
+| Your week (4 days, 23 right, Practice regular last week) | three cards with the drawn days, the number and a star; nothing on the next page |
+| the three new cards | Close to a badge with See it (its flag saved), Quick Test full marks, Your week as a card |
+
+No console errors. Fixed during the walks: the practice page loaded `around.css` only with a question on screen, so the strip was unstyled without one.
+
+**Versions and caps.**
+- `moments.js` v5 (cap 41,500, was 36,500), `lesson-progress.js` v28, `components.css` v36, `around.css` v2 (every page that links it; cap 5,800, was 4,000), `sw.js` `pb-v127`.
+- CSS total 281,600 (was 278,200), with dated ledger notes in the three tests that hold it.
+- Tests: `scripts/test_e11_phase4_smoke.py` (new). The Phase 1 smoke's pins on the budget line, `spend()` and the ring prefixes follow the new lines.
+- Privacy: DPIA log row (the Quick Test mark, and the two kinds of display flag in the guide state).
+
+**What is left.** Nothing in sections 2 to 4.
+
+### 12.1 Quick Tests and the mastery path (2026-11-12)
+
+Built in the cloud (David's laptop was out of reach). Nothing committed. David's answer to the question above: a Quick Test does not count toward a topic's Ninja or Master.
+- `topic_status_map` reads lesson quizzes only (`is_quicktest = 0`; the column is checked first, as for `step_total`). The topic status drives every view of it: the Ninja and Master badges, the mastery chips and next step, the topic list's mastery bars, the shelf's topic meters and the subject lines.
+- So a perfect Quick Test of 10 marks no longer makes a ninja, and a Quick Test between two 10/10 lesson quizzes no longer breaks a run toward Master.
+- Badges already earned are kept. The mastery path also counts a topic's Ninja or Master badge that the pupil holds, so a ninja earned with a Quick Test before this change keeps its chip, and its next step points at Master.
+- Tests: `test_quick_tests_make_no_ninja` in `scripts/test_e11_phase4_smoke.py`.

@@ -37,7 +37,7 @@ MIN_ITEMS = {
     'static/js/zorp-coach.js': 7 + 2,         # 2026-11-08: E10 phase 3 coach, 7 lines plus two button labels
     'static/js/zorp-tour.js': 29 + 23,        # 2026-11-08: E10 phase 6 tour: 19 steps, the end scene and 9 spotlights (29 lines), plus 20 headings and 3 labels
     'static/js/guide.js': 6,
-    'static/js/badge-stage.js': 11,           # 2026-11-08: E10 phase 4 badge stage copy; 9 -> 11 (the wardrobe line and the Try it on button, phase 6b)
+    'static/js/badge-stage.js': 12,           # 2026-11-08: E10 phase 4 badge stage copy; 9 -> 11 (the wardrobe line and the Try it on button, phase 6b); 2026-11-11: E11 Phase 3 11 -> 12 (Your badge, the Watch again kicker)
     'static/js/wardrobe.js': 2,               # 2026-11-08: E10 phase 6b wardrobe status lines
     'models/zorp_wardrobe.py': 17,            # 2026-11-08: E10 phase 6b wardrobe item names (one per catalogue item)
     'templates/partials/wardrobe.html': 7,    # 2026-11-08: E10 phase 6b wardrobe panel (intro, two notes, locked reason twice, two buttons)
@@ -68,6 +68,8 @@ MIN_ITEMS = {
     'templates/errors/404.html': 5,           # 2026-11-08: E10 phase 7 friendly 404: heading, Zorp's line, the hint, two links
     'templates/errors/500.html': 4,           # 2026-11-08: E10 phase 7 friendly 500: heading, Zorp's line, two links
     'templates/partials/around.html': 3,      # 2026-11-08: E10 phase 7 results lines by score band (high, middle, low)
+    'models/progress_bits.py': 22,            # 2026-11-11: E11 Phase 4 progress around the site: 3 path steps, 7 next steps, the quiz bar line, 11 labels
+    'models/badge_shelf.py': 70,              # 2026-11-11: E11 Phase 3 the shelf: 14 row titles, 15 meters, 15 one-more and 14 n-more sentences, 8 link labels, 5 labels (71)
     'templates/profile.html': 3,              # 2026-11-08: E10 phase 7 the New ribbon and two empty-state lines (quiz history, revision plan)
 }
 MIN_LINES = {'static/js/story-chapters.js': 34, 'static/js/guide-catalog.js': 31, 'static/js/stage-catalog.js': 8, 'static/js/zorp-coach.js': 7, 'static/js/zorp-tour.js': 29, 'models/buddy.py': 10, 'app.py': 7}
