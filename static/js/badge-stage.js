@@ -233,6 +233,20 @@
     if (fam.hat) wearHat(false);
   }
 
+  // docs/CELEBRATION_SOUNDS_PLAN.md 3: a whoosh as the scene opens (a streak's warm swell instead), the medal's stamp as it lands
+  // (100 days: violet), then the family's touch. sound.js decides whether anything sounds; later() timers die with the scene.
+  // Reduced motion: the stamp alone, soft. Nothing sounds once the stage starts to close (its fade), even if a timer is still due.
+  var TOUCH = { perfect: 'sparkle', growth: 'sprout' };
+  function snd(name, o) { var s = window.pbSound; if (s && s.play && D.body.classList.contains('pb-stage-open')) s.play(name, o); }
+  function sound(item) {
+    var f = item.family;
+    var stamp = 'stamp-' + (f === 'streak100' ? 'violet' : (item.tier || 'bronze'));
+    if (!full()) { snd(stamp, { soft: true }); return; }
+    snd(f === 'streak' || f === 'streak100' ? 'fire' : 'whoosh');
+    later(function () { snd(stamp, { chain: true }); }, STAMP);
+    if (TOUCH[f]) later(function () { snd(TOUCH[f], { chain: true }); }, STAMP + 600);
+  }
+
   function enter(item, fam, set) {
     clear();
     var layer = el('div', 'bd-layer', set);
@@ -245,6 +259,7 @@
     var wrap = el('div', 'bd-medal-wrap', box);
     var medal = el('div', 'bd-medal bd-medal--' + (item.tier || 'bronze') + (item.family === 'streak' ? ' bd-medal--streak' : ''), wrap);
     el('span', 'bd-medal-glyph', medal).textContent = item.emoji || '★';
+    sound(item);
     if (!full()) { still(box, fam); if (ring) ring.style.opacity = '0'; return; }
     FX[fam.fx] && art && FX[fam.fx](box);
     if (art && !FX[fam.fx]) anim(art, [{ opacity: 0 }, { opacity: 1 }], 500, { delay: 300 });

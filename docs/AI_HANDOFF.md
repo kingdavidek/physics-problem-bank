@@ -411,6 +411,17 @@ Product tracks (E4.1, UI, etc.) can proceed on a local/dev site. **Do not** star
 
 **E11 follow-up 2026-11-12, built in the cloud, nothing committed** (plan 12.1). Quick Tests no longer count toward topic Ninja or Master: `topic_status_map` reads `is_quicktest = 0` rows only (so a Quick Test neither makes a ninja nor breaks a run of 10/10s), and `progress_bits.path` treats a held `topic_ninja:`/`topic_master:` badge as done so older badges keep their chips. Smoke: `test_quick_tests_make_no_ninja`.
 
+**Celebrations gallery 2026-11-12, nothing committed** (plan section 13). Dev-only `/celebrations-gallery` (gate as `/guide-preview`): every badge by line (plays its stage or its card; the wardrobe item it opens), every stage moment, every corner card kind, the +XP float, the story, and static samples of the Phase 4 pieces. Preview mode (nothing saved); `inject_nav` skips the pending celebrations on that endpoint. `static/js/celebrations-gallery.js`, `templates/celebrations_gallery.html`; smoke `scripts/test_celebrations_gallery_smoke.py`.
+
+**Celebration sounds 2026-11-13, nothing committed** (`docs/CELEBRATION_SOUNDS_PLAN.md` section 7). The badges and celebrations sound, under the Zorp's sounds setting (now "Celebration sounds"; new accounts already start on). Pieces:
+- `static/js/sound-library.js` (15 sounds made in code) through `pbSound.play(name)` in `sound.js` v5;
+- wiring in `badge-stage.js` v7, `moments.js` v7 and `story-chapters.js` v2;
+- a speaker button on every stage (`zorp-stage.js` v3, `stage.css` v2) that saves `zorp_sound`;
+- a Sounds section on the gallery;
+- `sw.js` `pb-v129`.
+
+A tap on the page before counts for 5 s, so in Chrome the quiz results celebrations sound too. Smoke `scripts/test_celebration_sounds_smoke.py`, harness `scripts/celebration_sound_harness.js`.
+
 **G8 teacher / class mode is complete** (Phases 0–6). Verification smoke: `scripts/test_g8_phase6_smoke.py`. Full suite **71/71**. Post-track audit 2026-09-01 (join/invite/class-work hardening). No T3 to teachers. No student Leave.
 
 **E7 (mascot motion + onboarding) Phase 1 built 2026-09-22, awaiting David's visual review.** Decisions frozen in `docs/MASCOT_MOTION_AND_ONBOARDING.md` §2 #1-13 (rig-only, WAAPI, no library, cosmetics not a second character, CSS budget raised). New: `static/css/motion.css` (2,288 bytes — pivots, CSS idle breathe/sway loop, reduced-motion block) and `static/js/zorp-motion.js` (`window.pbZorp`: `bind/play/idle/setFace/motionLevel`, WAAPI clips `idle/blink/cheer/wobble/think/wave/point/nod/wink/tap/shake`). `templates/partials/buddy.html` gained rig groups (`buddy-root/shadow/arms/body/antennae/pupils`); every path is byte-identical otherwise except the body ellipse, which gained `class="buddy-body-shape"` (needed for the reduced-motion cheer pulse). `study-buddy.js` binds the corner buddy and starts idle; `applyFace` now goes through `pbZorp.setFace` with a fallback. Dev demo sections added to `/styleguide` (`#zorp-motion`) and `/guide-preview`. Cache bumped to `pb-v85`; build-info `study_buddy_js` is now `v8`. `react()` and changing the `pb-buddy-refetch` hop to `play('nod')` are deferred to Phase 2 (D1/D2 in the spec). `scripts/test_zorp_motion_smoke.py` now runs the Phase 0 checks plus the Phase 1 rig/runtime/dev-page checks. Full suite 91/91. Phase 1.5 follows after David's sign-off.

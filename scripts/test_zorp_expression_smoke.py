@@ -1291,7 +1291,7 @@ def test_phase7_polish():
     base = (TEMPLATES / 'base.html').read_text(encoding='utf-8')
     assert 'Study streak at risk' not in base and 'keeps your streak going' in base
     sw = (JS_DIR / 'sw.js').read_text(encoding='utf-8')
-    assert "pb-v127" in sw and 'ignoreSearch: true' in sw   # 2026-11-11: E11 Phase 4 bump (was pb-v126, Phase 3); 2026-11-11: E11 Phase 3 bump (was pb-v125, Phase 2); 2026-11-10: E11 Phase 2 bump (was pb-v124, Phase 1); 2026-11-10: E11 Phase 1 bump (was pb-v123, Phase 0); 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115); 2026-11-08: E10 phase 5 bump (was pb-v114, phase 4; pb-v113 phase 3); 2026-11-08: E10 review fixes bump (was pb-v118)
+    assert "pb-v129" in sw and 'ignoreSearch: true' in sw   # 2026-11-13: the celebration sounds (was pb-v128); 2026-11-12: the 10/10 redrawn (was pb-v127); 2026-11-11: E11 Phase 4 bump (was pb-v126, Phase 3); 2026-11-11: E11 Phase 3 bump (was pb-v125, Phase 2); 2026-11-10: E11 Phase 2 bump (was pb-v124, Phase 1); 2026-11-10: E11 Phase 1 bump (was pb-v123, Phase 0); 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115); 2026-11-08: E10 phase 5 bump (was pb-v114, phase 4; pb-v113 phase 3); 2026-11-08: E10 review fixes bump (was pb-v118)
 
 
 def test_phase7_runtime_fixes_static():

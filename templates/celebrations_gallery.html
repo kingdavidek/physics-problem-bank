@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% from "partials/zorp_badge.html" import zorp_badge_face %}
+{% block title %}Celebrations gallery – Problem Bank{% endblock %}
+
+{% block content %}
+{# Dev only (/celebrations-gallery, same gate as /guide-preview). Every badge and every celebration, played on the real stage, cards and
+   reactions by static/js/celebrations-gallery.js. Preview mode: nothing played here is saved to an account. #}
+<style>
+  .cg-row { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  .cg-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+  .cg-line { padding: var(--space-3) var(--space-4); border: 1px solid var(--border-soft); border-radius: var(--radius-md); background: var(--surface); }
+  .cg-line-head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); }
+  .cg-line-head h3 { margin: 0; font-size: var(--text-sm); font-weight: 800; }
+  .cg-badges { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .cg-badge { width: 96px; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+  .cg-badge .badge-medallion-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; min-height: 44px; }
+  .cg-badge .badge-medallion-btn:focus-visible { outline: 3px solid var(--brand-500); outline-offset: 4px; border-radius: var(--radius-md); }
+  .cg-badge .badge-medallion-face { width: 48px; height: 54px; font-size: 1.2rem; }
+  .cg-badge strong { font-size: .76rem; line-height: 1.2; }
+  .cg-badge small { font-size: .68rem; color: var(--text-muted); line-height: 1.2; }
+  .cg-card-btn { padding: 0 6px; min-height: 24px; border: 0; background: none; color: var(--brand-600); font: inherit; font-size: .72rem; font-weight: 700; text-decoration: underline; cursor: pointer; }
+  .cg-sample { margin-top: var(--space-3); padding: var(--space-3); border: 1px dashed var(--border-soft); border-radius: var(--radius-md); }
+  .cg-check { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; font-weight: 600; }
+  .cg-check input { width: 20px; height: 20px; }
+  .cg-sample-label { margin: 0 0 var(--space-2); font-size: .78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+</style>
+<div class="page-shell" id="celebrations-gallery">
+    <div class="lesson-hero">
+        <h1>Celebrations gallery</h1>
+        <p class="hero-sub">Dev only. Every badge and every celebration, played on the real stage. Nothing here is saved to an account, and the page never takes your own waiting celebrations. Full screens play at full size whatever the Celebrations setting says; reduced motion still applies. Also: <a href="{{ url_for('guide_preview') }}">guide preview</a> (arrival film, tours, gestures).</p>
+    </div>
+
+    <section class="section-panel" id="gallery-sounds">
+        <div class="section-panel-header">Sounds</div>
+        <div class="section-panel-body">
+            <p class="profile-empty">Every celebration sound, made in code (<code>sound-library.js</code>). Tap one to hear it alone. Turn on "Play the celebrations with sound" and every moment, badge and card on this page plays its sounds the way a pupil with Celebration sounds on hears them (this page only: your own setting does not change). They are quiet on purpose, so headphones help.</p>
+            <div class="cg-row">
+                <label class="cg-check"><input type="checkbox" data-gal-with-sound> Play the celebrations with sound</label>
+                <label class="cg-check"><input type="checkbox" data-gal-soft> Soft, as with reduced motion (the sounds below)</label>
+            </div>
+            <div class="cg-row" id="gallery-sounds-list"></div>
+        </div>
+    </section>
+
+    <section class="section-panel">
+        <div class="section-panel-header">Full-screen moments</div>
+        <div class="section-panel-body">
+            <p class="profile-empty">The stage scenes. A sequence holds up to three cards with one count and Skip all.</p>
+            <div class="cg-row">
+                <button type="button" class="btn btn-outline" data-gal-moment="level">Level up</button>
+                <button type="button" class="btn btn-outline" data-gal-moment="perfect">10/10 on a lesson quiz</button>
+                <button type="button" class="btn btn-outline" data-gal-moment="lesson">Lesson complete (first)</button>
+                <button type="button" class="btn btn-outline" data-gal-moment="lesson_more">Lesson complete (another)</button>
+                <button type="button" class="btn btn-outline" data-gal-moment="lesson_badge">Lesson complete with its badge</button>
+                <button type="button" class="btn btn-outline" data-gal-moment="week">Your week (3 cards)</button>
+                <button type="button" class="btn btn-primary" data-gal-moment="sequence">A full sequence (lesson, a badge, level up)</button>
+            </div>
+            <div class="cg-row">
+                <button type="button" class="btn btn-outline" data-gal-streak="7">7-day streak</button>
+                <button type="button" class="btn btn-outline" data-gal-streak="30">30-day streak</button>
+                <button type="button" class="btn btn-outline" data-gal-streak="100">100-day streak</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-panel" id="gallery-badges-section">
+        <div class="section-panel-header">Every badge ({{ gallery_count }} in the catalogue, plus the per-topic badges)</div>
+        <div class="section-panel-body">
+            <p class="profile-empty">Press a badge to play its full screen, or <em>card</em> for its corner card. "Opens" names the wardrobe item a badge unlocks (the line on its stage). The other {{ gallery_other_subjects }} subject badges and every topic's badges look like the two samples at the end.</p>
+            <ul class="cg-lines">
+                {% for row in gallery_rows %}{% set r = loop.index0 %}
+                <li class="cg-line">
+                    <div class="cg-line-head"><h3>{{ row.title }}</h3><button type="button" class="btn btn-outline btn-sm" data-gal-line="{{ r }}">Play the line</button></div>
+                    <ul class="cg-badges">
+                        {% for b in row.badges %}
+                        <li class="cg-badge badge-medallion--{{ b.tier }}">
+                            <button type="button" class="badge-medallion-btn" data-gal-badge="{{ r }}:{{ loop.index0 }}" aria-label="Play {{ b.title }}">
+                                {{ zorp_badge_face(b, size=30, variant='medallion') }}
+                                <strong>{{ b.title }}</strong>
+                            </button>
+                            <small>{{ b.tier }} · {{ b.family }}</small>
+                            {% if b.wardrobe %}<small>Opens {{ b.wardrobe.noun }}</small>{% endif %}
+                            <button type="button" class="cg-card-btn" data-gal-badge-card="{{ r }}:{{ loop.index0 }}">card</button>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+                {% endfor %}
+            </ul>
+            <script type="application/json" id="gallery-badges">{{ gallery_rows|tojson }}</script>
+        </div>
+    </section>
+
+    <section class="section-panel">
+        <div class="section-panel-header">Corner cards</div>
+        <div class="section-panel-body">
+            <p class="profile-empty">The small cards with a mini Zorp. They stay 9 seconds; hover or focus keeps them; Escape closes the newest.</p>
+            <div class="cg-row" id="gallery-cards"></div>
+            <div class="cg-row"><button type="button" class="btn btn-primary" data-gal-card="all">Show them all</button></div>
+        </div>
+    </section>
+
+    <section class="section-panel">
+        <div class="section-panel-header">Small reactions and Zorp's story</div>
+        <div class="section-panel-body">
+            <div class="cg-row">
+                <button type="button" class="btn btn-outline" data-gal-xp="15">+15 XP (corner float)</button>
+                {% for n, label in [(0, '0 Arrival'), (1, '1 The maths belt'), (2, '2 Meet the crew'), (3, '3 Puzzle doors'), (4, '4 Home'), (5, '5 The logbook'), (6, '6 A postcard from Novara')] %}
+                <button type="button" class="btn btn-outline" data-gal-story="{{ n }}">Story {{ label }}</button>
+                {% endfor %}
+                <button type="button" class="btn btn-outline" data-gal-offer="3">The story offer card</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-panel">
+        <div class="section-panel-header">Progress around the site</div>
+        <div class="section-panel-body">
+            <p class="profile-empty">The pieces that sit on ordinary pages (samples, not your own numbers).</p>
+            <div class="cg-sample">
+                <p class="cg-sample-label">Lesson page: the mastery path under the heading</p>
+                <ol class="mastery-chips" aria-label="{{ gallery_path.label }}">
+                    {% for step in gallery_path.steps %}<li class="mastery-chip{% if step.done %} is-done{% endif %}">{{ step.label }}{% if step.done %}<span class="vh"> {{ gallery_path.done }}</span>{% endif %}</li>{% endfor %}
+                </ol>
+            </div>
+            <div class="cg-sample">
+                <p class="cg-sample-label">Lesson page: the quiz bar once every quick check is done</p>
+                <div class="lesson-quiz-cta-bar is-complete"><p class="lesson-quiz-cta-note">{{ gallery_bar }}</p><a href="#" class="btn btn-primary lesson-quiz-cta-btn" data-gal-noop>Take the quiz · 10 questions</a></div>
+            </div>
+            <div class="cg-sample">
+                <p class="cg-sample-label">Quiz results: what you earned <button type="button" class="cg-card-btn" data-gal-refill>play the bar again</button></p>
+                <section class="results-earned" aria-label="{{ gallery_labels.earned }}">
+                    <div class="results-level">
+                        <p class="results-level-head"><strong>Level 3</strong> <span>62 XP to level 4</span></p>
+                        <div class="results-level-track" role="progressbar" aria-label="Level 3" aria-valuemin="0" aria-valuemax="100" aria-valuenow="82"><span class="results-level-fill" style="--from: 0.55; --to: 0.82;"></span></div>
+                    </div>
+                    <div class="results-path">
+                        <ol class="mastery-chips" aria-label="{{ gallery_path.label }}">{% for step in gallery_path.steps %}<li class="mastery-chip{% if step.done %} is-done{% endif %}">{{ step.label }}</li>{% endfor %}</ol>
+                        <p class="results-path-next">{{ gallery_next.master_one }}</p>
+                    </div>
+                </section>
+            </div>
+            <div class="cg-sample">
+                <p class="cg-sample-label">Practice page: Today</p>
+                <section class="today-strip" aria-label="Today">
+                    <span class="today-strip-title">Today</span><span class="today-strip-stat">12 right</span><span class="today-strip-stat">85 XP</span><span class="today-strip-stat">4-day streak</span>
+                    <ol class="today-dots" aria-hidden="true">{% for d, s in [('T', 'studied'), ('F', 'missed'), ('S', 'studied'), ('S', 'frozen'), ('M', 'studied'), ('T', 'studied'), ('W', 'studied')] %}<li class="today-dot is-{{ s }}{% if loop.last %} is-today{% endif %}">{{ d }}</li>{% endfor %}</ol>
+                </section>
+            </div>
+            <p class="profile-empty" style="margin-top: var(--space-3);">The Milestones shelf itself is on your <a href="{{ url_for('profile') }}#milestones">profile</a> (signed in).</p>
+        </div>
+    </section>
+</div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/around.css') }}?v=2">
+<script src="{{ url_for('static', filename='js/celebrations-gallery.js') }}?v=2" defer></script>
+{% endblock %}

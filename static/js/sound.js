@@ -12,6 +12,8 @@
   var GESTURE_MS = 5000;
   var ARBITER_MS = 400;
   var SEQ_MS = 7000;
+  var LATE_MS = 1000;       // a celebration sound whose audio was not ready by then is dropped, never played late
+  var CARRY = 'pb-tap';
   var CUE_GAIN = 0.06;      // below soft (0.08), the quietest answer tone
   var BLIP_GAIN = 0.03;
   // [wave, from Hz, to Hz, ms, delay ms, attack ms]
@@ -27,7 +29,7 @@
     return body.getAttribute('data-sound-enabled') === '1';
   }
 
-  // html[data-zorp-sound] mirrors zorp_sound: off (default), celebrations (chatter is defined, never offered).
+  // html[data-zorp-sound] mirrors zorp_sound: off, celebrations (new accounts; chatter is defined, never offered).
   function zorpMode() {
     return document.documentElement.getAttribute('data-zorp-sound');
   }
@@ -91,6 +93,12 @@
       document.addEventListener(type, unlock, { capture: true, passive: true });
     });
     document.addEventListener('visibilitychange', function () { if (document.hidden) stopAll(); });
+    // a tap on the page before (a quiz submit) counts here for its 5 s too; the browser may still keep audio off until a tap here
+    try {
+      var t = parseInt(window.sessionStorage.getItem(CARRY), 10);
+      if (Date.now() - t <= GESTURE_MS) lastGesture = Math.max(lastGesture, t);
+      window.addEventListener('pagehide', function () { try { window.sessionStorage.setItem(CARRY, String(lastGesture)); } catch (e) { /* full */ } });
+    } catch (err) { /* no storage */ }
   }
 
   function playTone(audio, freq, durationMs, type, gain, delayMs) {
@@ -234,6 +242,46 @@
     return true;
   }
 
+  // docs/CELEBRATION_SOUNDS_PLAN.md: the celebration sounds (sound-library.js, loaded the first time one may play). The rules of
+  // Zorp's cues hold: the Celebrations setting, a tap or key in the last 5 s, a visible page, never a quiz question page (results
+  // pages may sound). And 400 ms after any other sound, unless o.chain (a later layer of the same moment). A scene sound holds Zorp's
+  // own cues back for 7 s (seq.at), so two layers never stack. o.soft plays it at 0.6 (reduced motion: one soft sound a moment).
+  // o.force (the gallery and the settings preview) skips the setting, the tap and the gap.
+  var lib = null;
+  function library() {
+    if (window.pbSoundLib) return Promise.resolve(window.pbSoundLib);
+    if (lib) return lib;
+    var src = document.documentElement.getAttribute('data-pb-sound-lib');
+    if (!src) return Promise.resolve(null);
+    lib = new Promise(function (ok) {
+      var s = document.createElement('script');
+      s.src = src;
+      s.onload = function () { ok(window.pbSoundLib || null); };
+      s.onerror = function () { lib = null; ok(null); };
+      document.head.appendChild(s);
+    });
+    return lib;
+  }
+  function inResults() { return !!document.body && document.body.getAttribute('data-guide-quiz-results') === '1'; }
+  function play(name, o) {
+    o = o || {};
+    var force = !!o.force;
+    var now = Date.now();
+    if (!audioClass() || document.hidden) return false;
+    if (!force && (zorpMode() !== 'celebrations' || now - lastGesture > GESTURE_MS || (inQuiz() && !inResults()))) return false;
+    if (!force && !o.chain && now - lastSound < ARBITER_MS) return false;
+    lastSound = seq.at = now;
+    Promise.all([ctxReady(), library()]).then(function (r) {
+      if (!r[0] || !r[1] || Date.now() - now > LATE_MS) return;
+      if (!bus) {
+        bus = r[0].createGain();
+        bus.connect(r[0].destination);
+      }
+      r[1].play(name, r[0], bus, o.soft ? 0.6 : 1, o);
+    });
+    return true;
+  }
+
   function setEnabled(value) {
     var on = !!value;
     if (document.body) {
@@ -259,5 +307,7 @@
     blips: blips,
     stopAll: stopAll,
     arm: function () { bindUnlock(true); },   // the styleguide records taps without either setting on
+    play: play,   // a celebration sound by name (sound-library.js)
+    prepare: function () { if (zorpMode() === 'celebrations') library(); },   // load the library before a stage needs it
   };
 })();

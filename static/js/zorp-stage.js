@@ -149,6 +149,51 @@
     return svg;
   }
 
+  // docs/CELEBRATION_SOUNDS_PLAN.md 4: one tap for quiet. Shown while Celebrations is on (or was turned off here); it saves zorp_sound
+  // as Settings does, except in the previews, and turning it back on plays a soft pop.
+  var muted = false;
+  function sndOn() { return D.documentElement.getAttribute('data-zorp-sound') === 'celebrations'; }
+  function muteBtn(st, ns) {   // ns: the SVG namespace, read off Zorp's own drawing (this file names no URL)
+    var snd = window.pbSound;
+    if (!(sndOn() || muted) || !snd || !snd.play || !ns) return;
+    var b = el('button', 'pb-st-mute', st);
+    b.type = 'button';
+    b.setAttribute('aria-label', 'Celebration sounds');
+    var svg = D.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    var on = null;
+    var off = null;
+    ['M4 9h4l5-4v14l-5-4H4z', 'M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11', 'M16.5 9.5l5 5M21.5 9.5l-5 5'].forEach(function (d, i) {
+      var p = D.createElementNS(ns, 'path');
+      p.setAttribute('d', d);
+      svg.appendChild(p);
+      if (i === 1) on = p;
+      if (i === 2) off = p;
+    });
+    b.appendChild(svg);
+    var paint = function () {
+      var yes = sndOn();
+      b.setAttribute('aria-pressed', yes ? 'true' : 'false');
+      b.title = yes ? 'Celebration sounds: on' : 'Celebration sounds: off';
+      on.style.display = yes ? '' : 'none';
+      off.style.display = yes ? 'none' : '';
+    };
+    paint();
+    b.addEventListener('click', function () {
+      var mode = sndOn() ? 'off' : 'celebrations';
+      D.documentElement.setAttribute('data-zorp-sound', mode);
+      muted = mode === 'off';
+      if (muted) snd.stopAll(); else snd.play('pop', { chain: true });
+      paint();
+      if (D.body.getAttribute('data-guide-preview') === '1' || !window.fetch) return;
+      var t = D.querySelector('meta[name="csrf-token"]');
+      fetch('/api/v1/me/settings', { method: 'PATCH', credentials: 'same-origin', body: JSON.stringify({ zorp_sound: mode }),
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-Token': t ? t.getAttribute('content') : '' } }).catch(noop);
+    });
+  }
+
   function build() {
     var st = el('div', 'pb-stage');
     st.setAttribute('role', 'dialog');
@@ -202,6 +247,7 @@
     r.next.type = r.skip.type = 'button';
     r.next.addEventListener('click', onNext);
     r.skip.addEventListener('click', onSkip);
+    muteBtn(st, (r.zorp && r.zorp.namespaceURI) || (props && props.documentElement && props.documentElement.namespaceURI));
     return r;
   }
 
@@ -493,6 +539,7 @@
     stopRigs();
     slotOut();
     D.removeEventListener('keydown', onKey, true);
+    if (window.pbSound && window.pbSound.stopAll) window.pbSound.stopAll();   // Continue at the end, Skip, Skip all, Esc: quiet at once
     s.inert.forEach(function (n) { n.inert = false; });
     D.body.classList.remove('pb-stage-open');
     var z = Z();
@@ -539,4 +586,5 @@
   };
   window.pbStage = api;
   registerClips();
+  if (window.pbSound && window.pbSound.prepare) window.pbSound.prepare();   // the celebration sounds load beside the stage
 }());

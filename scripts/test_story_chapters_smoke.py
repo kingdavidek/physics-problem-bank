@@ -172,7 +172,7 @@ def test_files_and_caps():
         size = path.stat().st_size
         print(f'  {path.relative_to(ROOT)}: {size:,} of {cap:,} (headroom {cap - size:,})')
         assert size <= cap, f'{path.name} {size} B exceeds its cap {cap}'
-    assert (JS / 'zorp-stage.js').stat().st_size <= 24_000, 'the engine keeps its cap (phase 8 adds only the four prop names and addProps)'
+    assert (JS / 'zorp-stage.js').stat().st_size <= 27_000, 'the engine keeps its cap (phase 8 added only the four prop names and addProps; 2026-11-13 the sounds button raised it 24_000 -> 27_000)'
     for path in (CHAPTERS_JS, SHELF_JS):
         text = _read(path)
         for banned in ('innerHTML', 'outerHTML', 'insertAdjacentHTML', 'document.write', 'eval(', 'new Function', 'setInterval',
@@ -463,7 +463,7 @@ def test_the_offer_never_plays_by_itself():
     assert run.index('r[0].play(batch, bigs)') < run.index('st.offer(offers[0])'), 'after the other moments'
     assert "isStoryOffer(m) { return !!m && m.kind === 'story_offer'; }" in guide
     # it asks nothing of the pupil: the stage it opens is the stage's own dialog with a Skip story button and Esc
-    assert "stage.play(ch.scenes, { story: true })" in src
+    assert "stage.play(ch.scenes, { story: true, onScene:" in src   # 2026-11-13: onScene plays the chapter's sound as it opens
 
 
 # ---------------------------------------------------------------------------------------------

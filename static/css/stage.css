@@ -87,6 +87,15 @@ body.pb-stage-open .study-buddy { visibility: hidden; }
 [data-set~=right] .st-ans-a, [data-set~=right] .st-cross { opacity: 0; }
 [data-set~=right] .st-ans-b, [data-set~=right] .st-tick { opacity: 1; transform: none; }
 
+/* The celebration sounds button (CELEBRATION_SOUNDS_PLAN 4) */
+.pb-st-mute {
+  position: absolute; z-index: 2; top: calc(12px + var(--safe-top, 0px)); right: calc(12px + var(--safe-right, 0px)); width: 44px; height: 44px;
+  display: grid; place-items: center; padding: 0; border-radius: 50%; border: 1px solid rgba(255,255,255,.28); background: rgba(15,23,42,.55); color: #e2e8f0; cursor: pointer;
+}
+.pb-st-mute:hover { background: rgba(30,41,59,.8); }
+.pb-st-mute:focus-visible { outline: 3px solid var(--brand-300); outline-offset: 2px; }
+.pb-st-mute svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
 /* The text panel */
 .pb-st-panel {
   position: absolute; left: 0; right: 0; bottom: 24px; width: min(620px, calc(100% - 32px)); min-height: calc(var(--st-panel) - 48px);

@@ -100,7 +100,8 @@ def test_cue_gate_harness():
 
 
 def test_force_and_blips_only_from_styleguide():
-    """3.4.7: only styleguide.js may pass force, turn the D7 blips on or arm the tap listeners; D7 blips are not wired to pupils."""
+    """3.4.7: only the dev pages may pass force or arm the tap listeners (styleguide.js; since 2026-11-13 also the celebrations
+    gallery, which auditions each celebration sound), and only styleguide.js turns the D7 blips on; D7 blips are not wired to pupils."""
     hits = {'force': [], 'blips': [], 'arm': []}
     for path in sorted(JS_DIR.glob('*.js')) + sorted(TEMPLATES.rglob('*.html')):
         text = _read(path)
@@ -110,7 +111,8 @@ def test_force_and_blips_only_from_styleguide():
             hits['blips'].append(path.name)
         if re.search(r'pbSound\.arm\(|\bs\.arm\(', text):
             hits['arm'].append(path.name)
-    assert hits == {'force': ['styleguide.js'], 'blips': ['styleguide.js'], 'arm': ['styleguide.js']}, hits
+    dev = ['celebrations-gallery.js', 'styleguide.js']
+    assert hits == {'force': dev, 'blips': ['styleguide.js'], 'arm': dev}, hits
     talk = _read(JS_DIR / 'zorp-talk.js')
     assert 'o.blips' in talk and 'force: o.force' in talk and 'force: true' not in talk, 'talk passes the styleguide options through, never its own'
     for name in ('guide.js', 'study-buddy.js', 'welcome.js', 'celebrate.js', 'zorp-poses.js'):
@@ -127,7 +129,7 @@ def test_sound_js_stays_synthesised_and_loaded_everywhere():
     top = sound[sound.index('  bindUnlock();'):]
     assert 'ensureCtx' not in top and 'ctxReady' not in top
     base = _read(TEMPLATES / 'base.html')
-    assert "js/sound.js') }}?v=4" in base
+    assert "js/sound.js') }}?v=5" in base   # 2026-11-13: v5, the celebration sounds (play, prepare)
 
 
 def test_guide_welcome_and_react_pass_cue_true():
@@ -348,10 +350,13 @@ def test_settings_page_markup_and_copy():
     head = html.index('id="zorp-sound-label"')
     section = html[head:html.index('</section>', head)]
     assert 'role="radiogroup"' in section and 'aria-labelledby="zorp-sound-label"' in section
-    assert '>Zorp’s sounds</div>' in section
-    assert 'Short, quiet sounds when Zorp celebrates. Best with headphones. They play only with full motion.' in section
-    # Final audit B4: the option labels use colons (no dash), and the intro says cues need full motion
-    assert '<strong>Off</strong>: Zorp is silent' in section and '<strong>Celebrations</strong>: a short sound when Zorp celebrates' in section
+    # 2026-11-13 (docs/CELEBRATION_SOUNDS_PLAN.md 6): the setting now covers the badge and celebration sounds too, which also play
+    # (soft) with reduced motion, so "They play only with full motion" went; the stage's speaker button is named
+    assert '>Celebration sounds</div>' in section
+    assert ('Short, quiet sounds when you earn a badge and when Zorp celebrates. Best with headphones or at home. '
+            'The speaker button on a celebration turns them off.') in section
+    # Final audit B4: the option labels use colons (no dash)
+    assert '<strong>Off</strong>: no celebration sounds' in section and '<strong>On</strong>: a short sound for each badge and celebration' in section
     assert '—' not in section and '–' not in section
     values = re.findall(r'<input type="radio" name="zorp_sound" value="([a-z]+)"', section)
     assert values == ['off', 'celebrations'], f'chatter is never offered: {values}'

@@ -429,7 +429,8 @@
     var ch = chapter(n);
     if (!ch) return Promise.resolve({ ended: 'none', scene: '' });
     return ready().then(function () {
-      return stage.play(ch.scenes, { story: true });
+      // docs/CELEBRATION_SOUNDS_PLAN.md 3: a music-box phrase as the chapter opens (sound.js decides; reduced motion: soft)
+      return stage.play(ch.scenes, { story: true, onScene: function (i) { if (!i && window.pbSound && window.pbSound.play) window.pbSound.play('story', { soft: !full() }); } });
     }).then(function (res) {
       if (res && res.ended === 'done') {
         mark('story_w' + n);

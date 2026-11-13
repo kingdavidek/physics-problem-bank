@@ -595,3 +595,31 @@ Built in the cloud (David's laptop was out of reach). Nothing committed. David's
 - So a perfect Quick Test of 10 marks no longer makes a ninja, and a Quick Test between two 10/10 lesson quizzes no longer breaks a run toward Master.
 - Badges already earned are kept. The mastery path also counts a topic's Ninja or Master badge that the pupil holds, so a ninja earned with a Quick Test before this change keeps its chip, and its next step points at Master.
 - Tests: `test_quick_tests_make_no_ninja` in `scripts/test_e11_phase4_smoke.py`.
+
+---
+
+## 13. The celebrations gallery (2026-11-12)
+
+Nothing committed. A dev-only page that shows every badge and every celebration, at `/celebrations-gallery` (`python app.py`, then http://127.0.0.1:5000/celebrations-gallery).
+
+- **The gate.** It has the same gate as `/guide-preview`: always on localhost, else only with `PB_STYLEGUIDE=1` or `PB_TESTING=1`, and a 404 on a production HTTPS site.
+- **Preview mode** (`data-guide-preview`). Nothing played there is saved to an account. The page never takes the signed-in pupil's own waiting celebrations; they stay for the next real page.
+- **Every badge.** All 38 catalogue badges outside the subject lines, by line in shelf order, plus GCSE Maths' three subject badges and the three per-topic badges of Order of Operations as samples. Each badge has:
+  - its tier, its family and the wardrobe item it opens;
+  - a press that plays its full screen, and a "card" link for its corner card;
+  - each line also has Play the line.
+- **Full-screen moments.** Level up, a 10/10, Lesson complete (first, another, and with its badge), Your week (three cards), a full sequence (lesson, a badge, level up: "1 of 3" and Skip all), and the 7-, 30- and 100-day streaks.
+- **Every corner card.** 24 kinds with sample numbers, and Show them all.
+- **Small reactions and the story.** The +XP float, the seven story chapters and the story offer card.
+- **Progress around the site.** Static samples of the mastery chips, the quiz bar line, the results strip (with "play the bar again") and the Today strip.
+- **Files.** `templates/celebrations_gallery.html` and `static/js/celebrations-gallery.js` (not precached; it loads the badge stage and the moments player the way `guide.js` does). The guide preview links to it.
+- **Tests.** `scripts/test_celebrations_gallery_smoke.py`.
+
+### 13.1 The 10/10 redrawn (2026-11-12)
+
+David found the 10/10 stage underwhelming: a gold medal ringed by yellow five-point stars, which read like a flag. The perfect quiz scene (`sealBox` in `moments.js`) now has:
+- a cool gem: a glossy cyan, indigo and violet seal with a soft halo that turns behind it;
+- seven four-point twinkles in cyan, lilac, pink, mint and ice, scattered rather than in a ring;
+- a confetti burst (strips and dots) from the seal as it lands, then a light confetti rain in the same colours.
+
+With reduced motion it is a still scene: the gem, its glow and the twinkles. The topic master badge keeps its own stars prop. `moments.js` v6 (cap 43,500), `moments.css` v3 (cap 5,600), CSS total 282,200, `pb-v128`.

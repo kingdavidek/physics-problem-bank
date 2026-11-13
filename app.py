@@ -1424,7 +1424,8 @@ def inject_nav():
             buddy_look = zorp_wardrobe.outfit_look(conn, current_user.id, profile_settings.get('zorp_outfit_json'))
             if buddy_look is None:
                 buddy_look = zorp_kit.live_look(latest_pose_milestone(conn, current_user.id))
-            if (not quiz_runner_mode_now or _quiz_results_now()) and _pending_may_emit():
+            # the celebrations gallery (dev only, preview mode) never takes the pupil's own waiting celebrations
+            if (not quiz_runner_mode_now or _quiz_results_now()) and _pending_may_emit() and request.endpoint != 'celebrations_gallery':
                 pb_new_milestones = [_badge_payload(k, conn) for k in _pending_milestone_keys()[:_PENDING_MILESTONES_MAX]]
                 pb_new_moments = _pending_moments()[:_PENDING_MOMENTS_MAX]
                 pb_new_moments = _story_catchup(conn, guide_state, pb_new_moments)
@@ -6268,6 +6269,51 @@ def guide_preview():
     }
     preview_badges = {name: _badge_payload(key) for name, key in samples.items()}
     return render_template('guide_preview.html', guide_preview_mode=True, preview_badges=preview_badges)
+
+
+@app.get('/celebrations-gallery')
+def celebrations_gallery():
+    """Dev-only (as /guide-preview): every badge and every celebration in one place, each playable on the real stage, cards and
+    reactions. The page runs in preview mode (data-guide-preview), so nothing it plays is saved to an account, and it never takes
+    the signed-in pupil's own waiting celebrations (see inject_nav). Rows follow the Milestones shelf (models/badge_shelf.py)."""
+    if not _guide_preview_enabled():
+        abort(404)
+    # the wardrobe line a badge would carry: an item named by its badge, else the first badge of a family opens that family's item
+    item_for = {}
+    for item in zorp_wardrobe.ITEMS:
+        rule = item.get('unlock')
+        if not rule:
+            continue
+        if rule[0] == 'badge':
+            item_for.setdefault(rule[1], item)
+        else:
+            first = next((k for k, m in MILESTONE_CATALOG.items() if (m.get('family') or '') == rule[1]), None)
+            if first:
+                item_for.setdefault(first, item)
+
+    from models.gamification import _pose_from_meta, milestone_meta
+
+    def payload(key):
+        info = badge_display(key)
+        out = {name: info[name] for name in BADGE_STAGE_FIELDS}
+        out['how'] = info['how']
+        out['pose'] = _pose_from_meta(milestone_meta(key))   # the medallion face (a Zorp pose for some badges)
+        item = item_for.get(key)
+        if item:
+            out['wardrobe'] = {'id': item['id'], 'name': item['name'], 'noun': item['noun']}
+        return out
+
+    rows = [{'title': title, 'badges': [payload(k) for k in keys]} for _id, title, keys in badge_shelf.LINES + (badge_shelf.EXTRAS,)]
+    rows.append({'title': 'A subject (GCSE Maths)', 'badges': [payload(f'subject_{k}:gcse:maths') for k in ('completed', 'ninja', 'master')]})
+    rows.append({'title': 'A topic (Order of Operations)', 'badges': [payload(f'topic_{k}:gcse:maths:bidmas') for k in ('completed', 'ninja', 'master')]})
+    others = [k for k in MILESTONE_CATALOG if k.startswith('subject_') and ':gcse:maths' not in k]
+    path_sample = {'label': progress_bits.LABELS['path'], 'done': progress_bits.LABELS['done'], 'steps': [
+        {'id': k, 'label': label, 'done': i < 2} for i, (k, label) in enumerate(progress_bits.STEPS)]}
+    return render_template(
+        'celebrations_gallery.html', guide_preview_mode=True, gallery_rows=rows, gallery_other_subjects=len(others),
+        gallery_count=len(MILESTONE_CATALOG), gallery_next=progress_bits.NEXT, gallery_labels=progress_bits.LABELS,
+        gallery_path=path_sample, gallery_bar=progress_bits.BAR_DONE + ' ' + progress_bits.NEXT['ninja'],
+    )
 
 
 @app.route('/about')

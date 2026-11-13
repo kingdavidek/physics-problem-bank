@@ -202,19 +202,19 @@
     </section>
 
     <section class="section-panel settings-section">
-        <div class="section-panel-header" id="zorp-sound-label">Zorp’s sounds</div>
+        <div class="section-panel-header" id="zorp-sound-label">Celebration sounds</div>
         <div class="section-panel-body">
-            <p class="page-intro settings-intro" data-zorp-voice="system:system_settings">Short, quiet sounds when Zorp celebrates. Best with headphones. They play only with full motion.</p>
+            <p class="page-intro settings-intro" data-zorp-voice="system:system_settings">Short, quiet sounds when you earn a badge and when Zorp celebrates. Best with headphones or at home. The speaker button on a celebration turns them off.</p>
             <div class="form-group" id="zorp-sound-group" role="radiogroup" aria-labelledby="zorp-sound-label">
                 <label class="privacy-radio">
                     <input type="radio" name="zorp_sound" value="off"
                            {% if settings.zorp_sound != 'celebrations' %}checked{% endif %}>
-                    <span data-zorp-voice="system:system_settings"><strong>Off</strong>: Zorp is silent</span>
+                    <span data-zorp-voice="system:system_settings"><strong>Off</strong>: no celebration sounds</span>
                 </label>
                 <label class="privacy-radio">
                     <input type="radio" name="zorp_sound" value="celebrations"
                            {% if settings.zorp_sound == 'celebrations' %}checked{% endif %}>
-                    <span data-zorp-voice="system:system_settings"><strong>Celebrations</strong>: a short sound when Zorp celebrates</span>
+                    <span data-zorp-voice="system:system_settings"><strong>On</strong>: a short sound for each badge and celebration</span>
                 </label>
             </div>
         </div>

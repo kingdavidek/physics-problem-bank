@@ -34,8 +34,8 @@ STAGE_CSS = CSS / 'stage.css'
 PROPS_SVG = ROOT / 'static' / 'images' / 'stage-props.svg'
 
 # Own caps for the on-demand files (plan 6.4 proposed 24 KB, 10 KB and 12 KB; the catalog is new).
-STAGE_JS_MAX_BYTES = 24_000
-STAGE_CSS_MAX_BYTES = 10_000
+STAGE_JS_MAX_BYTES = 27_000   # 2026-11-13 RAISED 24_000 -> 27_000: the celebration sounds button, quiet on close, the sound library loaded beside the stage (26,386 B)
+STAGE_CSS_MAX_BYTES = 11_000   # 2026-11-13 RAISED 10_000 -> 11_000: the celebration sounds button (10,564 B)
 PROPS_MAX_BYTES = 12_000
 CATALOG_MAX_BYTES = 8_000
 

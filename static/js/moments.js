@@ -240,23 +240,46 @@
     }, 2000);
   }
 
-  // ---- a score seal with stars (a perfect quiz) ----
+  // ---- a score seal (a perfect quiz). 2026-11-12 (David): a cool gem in place of the gold medal, four-point twinkles scattered
+  // around it in place of a ring of yellow stars (which read like a flag), and confetti that bursts from the seal as it lands ----
+  var GEM = ['#22d3ee', '#a78bfa', '#f472b6', '#34d399', '#e0f2fe'];
+  var TWINKLE = 'M0-12C1.4-3 3-1.4 12 0C3 1.4 1.4 3 0 12C-1.4 3-3 1.4-12 0C-3-1.4-1.4-3 0-12Z';
   function sealBox(box, m) {
-    var art = part('bp-stars');
-    if (art) box.appendChild(art);
-    var ring = part('bp-ring');
-    if (ring) { ring.style.opacity = '0'; box.appendChild(ring); }
+    var s = svgEl('svg', { viewBox: '0 0 240 180', 'aria-hidden': 'true', focusable: 'false' }, box);
+    [[34, 44, 1.1, 0], [64, 142, 0.7, 2], [204, 36, 0.9, 1], [212, 118, 1.2, 3], [176, 160, 0.6, 4], [22, 104, 0.6, 1], [118, 8, 0.55, 2]].forEach(function (p) {
+      var g = svgEl('g', { transform: 'translate(' + p[0] + ' ' + p[1] + ') scale(' + p[2] + ')' }, s);
+      var t = svgEl('path', { d: TWINKLE, fill: GEM[p[3]], class: 'mo-twinkle' }, g);
+      t.style.transformBox = 'fill-box';
+      t.style.transformOrigin = '50% 50%';
+    });
     var wrap = el('div', 'mo-seal-wrap', box);
+    var halo = el('div', 'mo-halo', wrap);
     var seal = el('div', 'mo-seal', wrap);
     el('span', 'mo-seal-text', seal).textContent = m.score + '/' + m.total;
     if (!full()) return;
-    all(box, '.bp-star').forEach(function (s, i) {
-      anim(s, [{ transform: 'scale(0) rotate(-40deg)', opacity: 0 }, { transform: 'scale(1.3) rotate(8deg)', opacity: 1, offset: 0.6 }, { transform: 'none', opacity: 1 }], 600, { delay: 900 + i * 170 });
-      anim(s, [{ opacity: 1 }, { opacity: 0.45 }, { opacity: 1 }], 1400, { delay: 2200 + i * 230, iterations: 3, fill: 'none', easing: 'ease-in-out' });
+    all(box, '.mo-twinkle').forEach(function (t, i) {
+      anim(t, [{ transform: 'scale(0) rotate(-90deg)', opacity: 0 }, { transform: 'scale(1.35) rotate(10deg)', opacity: 1, offset: 0.6 }, { transform: 'none', opacity: 1 }], 600, { delay: 1100 + i * 140 });
+      anim(t, [{ transform: 'scale(1) rotate(0deg)' }, { transform: 'scale(.55) rotate(45deg)' }, { transform: 'scale(1) rotate(90deg)' }], 1600, { delay: 2300 + i * 260, iterations: 3, fill: 'none', easing: 'ease-in-out' });
     });
+    anim(halo, [{ transform: 'rotate(0deg)', opacity: 0 }, { opacity: 0.6, offset: 0.15 }, { transform: 'rotate(360deg)', opacity: 0.6 }], 7000, { delay: 900, iterations: 2, easing: 'linear', fill: 'backwards' });
     anim(seal, [{ transform: 'translateY(-170%) scale(1.5)', opacity: 0 }, { transform: 'translateY(0) scale(1)', opacity: 1, offset: 0.7 },
       { transform: 'scale(.93,1.07)', opacity: 1, offset: 0.8 }, { transform: 'scale(1.05,.95)', opacity: 1, offset: 0.9 }, { transform: 'none', opacity: 1 }], 1000, { delay: 350, easing: 'cubic-bezier(.4,0,.6,1)' });
-    if (ring) anim(ring, [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)', offset: 0.4 }, { opacity: 0, transform: 'scale(1.3)' }], 900, { delay: 1250, fill: 'forwards' });
+    later(function () { burst(wrap); }, 1060);
+    rain(GEM);
+  }
+  // confetti that bursts out of the seal: strips and dots fly out, turn, and fall away
+  function burst(wrap) {
+    for (var i = 0; i < 26; i += 1) {
+      var a = (i / 26) * Math.PI * 2 + (i % 3) * 0.2;
+      var d = 110 + (i % 4) * 34;
+      var x = Math.cos(a) * d;
+      var y = Math.sin(a) * d * 0.75;
+      var bit = el('div', 'mo-bit' + (i % 3 === 0 ? ' mo-bit--dot' : ''), wrap);
+      bit.style.background = GEM[i % GEM.length];
+      anim(bit, [{ transform: 'translate(0,0) rotate(0deg) scale(.4)', opacity: 1 },
+        { transform: 'translate(' + (x * 0.75) + 'px,' + (y * 0.75 - 24) + 'px) rotate(' + (200 + i * 23) + 'deg) scale(1)', opacity: 1, offset: 0.55 },
+        { transform: 'translate(' + x + 'px,' + (y + 70) + 'px) rotate(' + (360 + i * 31) + 'deg) scale(.9)', opacity: 0 }], 1500 + (i % 5) * 120, { easing: 'cubic-bezier(.2,.7,.4,1)', fill: 'forwards' });
+    }
   }
 
   // ---- a book that closes, with a tick (a finished lesson) ----
@@ -280,10 +303,10 @@
     if (first) rain();
   }
 
-  function rain() {
+  function rain(palette) {
     var layer = cur.layer;
     var h = layer.getBoundingClientRect().height || 500;
-    var colours = ['#fde047', '#f472b6', '#60a5fa', '#34d399', '#fb923c'];
+    var colours = palette || ['#fde047', '#f472b6', '#60a5fa', '#34d399', '#fb923c'];
     for (var i = 0; i < 18; i += 1) {
       var bit = el('div', 'mo-conf', layer);
       var s = part('bp-conf');
@@ -316,6 +339,18 @@
       anim(star, [{ transform: 'rotate(-40deg) scale(.2)', opacity: 0 }, { transform: 'rotate(8deg) scale(1.1)', opacity: 1, offset: 0.7 }, { transform: 'none', opacity: 1 }], 800, { delay: 300 });
     }
   }
+  // docs/CELEBRATION_SOUNDS_PLAN.md 3: each moment's sound, timed with its picture: the 10/10's glassy run as the gem drops and a fizz
+  // with the burst, the level run as the ring fills (its chord when the number turns), the book's thump as it closes and its chime
+  // with the tick, one note per Your week card. sound.js decides whether anything sounds. Reduced motion: the main sound, soft.
+  // A stage's sound never plays once the stage starts to close (its fade); `card` is the corner card's pop.
+  function snd(name, o, card) { var s = window.pbSound; if (s && s.play && (card || D.body.classList.contains('pb-stage-open'))) s.play(name, o); }
+  function chime(m) {
+    var o = { step: { days: 0, right: 1, best: 2 }[m.part] || 0 };
+    var main = { level: 'level', perfect: 'gem', week: 'week' }[m.type] || 'book';
+    if (!full()) { o.soft = true; snd(main, o); return; }
+    if (m.type === 'perfect') later(function () { snd('confetti', { chain: true }); }, 1060);
+    later(function () { snd(main, o); }, { perfect: 780, level: 900, week: 300 }[m.type] || (m.more ? 715 : 1300));
+  }
   function enter(m, set) {
     clear();
     var layer = el('div', 'mo-layer', set);
@@ -325,6 +360,7 @@
     else if (m.type === 'perfect') sealBox(box, m);
     else if (m.type === 'week') weekBox(box, m);
     else bookBox(box, !m.more);
+    chime(m);
   }
 
   // ---- moments -> scenes ----
@@ -659,6 +695,7 @@
     toasts.push(t);
     if (toasts.length === 1) D.addEventListener('keydown', onEsc);
     arm();
+    snd('pop', null, 1);   // a soft pop (David, 2026-11-13); never on a question page (sound.js)
   }
 
   // ---- micro ----

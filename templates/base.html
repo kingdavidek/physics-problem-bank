@@ -2,7 +2,7 @@
 {% from "partials/wordmark.html" import wordmark %}
 {% from "partials/buddy.html" import buddy_mascot %}
 <!DOCTYPE html>
-<html lang="en" data-theme="{{ theme_preference }}" data-motion="{{ motion_preference }}" data-zorp-sound="{{ zorp_sound }}">
+<html lang="en" data-theme="{{ theme_preference }}" data-motion="{{ motion_preference }}" data-zorp-sound="{{ zorp_sound }}" data-pb-sound-lib="{{ url_for('static', filename='js/sound-library.js') }}?v=1">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -53,7 +53,7 @@
     <script src="{{ url_for('static', filename='js/site-search.js') }}?v=17" defer></script>
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=4" defer></script>
     <script src="{{ url_for('static', filename='js/tab-bar.js') }}?v=2" defer></script>
-    <script src="{{ url_for('static', filename='js/sound.js') }}?v=4" defer></script>
+    <script src="{{ url_for('static', filename='js/sound.js') }}?v=5" defer></script>
     <script src="{{ url_for('static', filename='js/u4.js') }}?v=13" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=5" defer></script>
     {% if current_user.is_authenticated or guide_preview_mode or zorp_motion_demo %}

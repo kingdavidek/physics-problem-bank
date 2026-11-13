@@ -297,11 +297,11 @@ def test_client_copy_versions():
     for fn in (voice.extract_progress_copy, voice.extract_moment_copy):
         items, errors = fn()
         assert not errors and not [v for v in voice.lint(items) if v.level == 'error'], fn.__name__
-    assert "js/moments.js') ~ '?v=5'" in read('templates/partials/guide.html')
+    assert "js/moments.js') ~ '?v=7'" in read('templates/partials/guide.html')   # 2026-11-12: v6, the 10/10 redrawn; 2026-11-13: v7, its sounds
     assert "js/lesson-progress.js') }}?v=28" in read('templates/base.html') and "css/components.css') }}?v=36" in read('templates/base.html')
     for f in (ROOT / 'templates').rglob('*.html'):
         assert "around.css') }}?v=1" not in f.read_text(encoding='utf-8'), f
-    assert "CACHE_VERSION = 'pb-v127'" in read('static/js/sw.js')
+    assert "CACHE_VERSION = 'pb-v129'" in read('static/js/sw.js')   # 2026-11-13: the celebration sounds; 2026-11-12: the 10/10 redrawn
 
 
 def main():
