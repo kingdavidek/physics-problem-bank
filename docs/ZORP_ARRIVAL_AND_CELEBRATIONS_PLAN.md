@@ -617,3 +617,68 @@ David asked for Zorp's highlights to contrast more with the blue UI. The app tou
 ### 11.15 Lesson quiz spotlight fix (2026-11-10)
 
 David saw the lesson-quiz spotlight card on entering a lesson with nothing highlighted. Cause: the spotlight matched the inline quiz button at the top of the lesson, which `lesson-progress.js` (`initQuizCta`) removes a moment later and replaces with the end-of-lesson bar (`.lesson-quiz-cta-bar`, `a.lesson-quiz-cta-btn`). Fix in `zorp-tour.js`: the `lessonquiz` target is now that bar's button; the spotlight waits, with no time limit, until the pupil scrolls it into view (so nothing shows at the top of the lesson); and any open spotlight now closes itself if its target is removed or hidden, so a card can never point at nothing. Copy: "Here’s the quiz. It covers the whole lesson, and afterwards you can retry any you missed." Checked in a browser at 1280 and 390 wide: no card at the top, amber outline on "Take the quiz" with the card clear of it, no card on a second visit. `zorp-tour.js?v=3` (cap 34,600), `sw.js` `pb-v122`.
+
+### 11.16 Phase 9 (2026-11-13): the whole-change review
+
+David chose this as the next phase once E11 and the celebration sounds were done. It is the review the phase table planned: everything E10, E11 and the sounds built, checked in a browser, with fixes. Nothing committed.
+
+**What was checked.**
+- **Automated accessibility (axe-core 4.10, WCAG 2.2 A and AA, plus best practice).** Pupil pages: the arrival film, the welcome choice, the coach's first question, Practice, a lesson after its quick checks, quiz results with its badge sequence, the profile and its Milestones tab, the badge sheet and Settings. Gallery: five badge families, the 10/10, level up, Lesson complete with its badge, Your week, a full sequence, a streak round, a story chapter, five corner cards and the story offer. Desktop and phone, light and dark.
+- **Keyboard.** Focus moves into each stage (on Continue), Tab stays inside, Esc closes, and focus goes back to the button that opened it. Skip all and the story's buttons can be reached. The badge sheet opens and closes the same way.
+- **Corner cards.** Each is `role="status"` in a polite live region, with a named 44 by 44 Dismiss.
+- **Reduced motion.** Still frames, with no animations running.
+- **Small screens.** At 320 by 568 and at 200% zoom (640 by 430) nothing scrolls sideways and no button is cut off. Phones on their side (844 by 390, 667 by 375, 568 by 320): see finding 7.
+- **Wording.** Every copy block was read, and the voice lint run.
+- **Code.** The document and window listeners were counted over two rounds of every celebration: they stay level. The corner cards register their Esc listener more than once, but the browser keeps a single registration of the same function, so nothing piles up. No stage, card or layer is left behind. The sound library loads once.
+
+**Found and fixed.**
+
+1. **Three buttons showed although hidden.** A display rule (`.btn`, `.btn-link`) beat each one's own `[hidden]` rule.
+   - The coach's "Got it" on the answer step: a pupil could move the coach on before answering, so its next tips came out of order.
+   - An empty, nameless spotlight skip button: keyboard users could reach it.
+   - Watch again on a badge not earned yet: it replayed a badge the pupil does not have.
+
+   Fix: `[hidden] { display: none !important; }` in `base.css`. No rule anywhere shows a hidden element on purpose (checked).
+2. **Brand blue on dark backgrounds (2.66:1).** `#126aae` text on the dark surface failed in these places:
+   - the badge stage's "New badge";
+   - a corner card's "See it";
+   - the shelf's "Next up", its badge link and "Show all subjects";
+   - the mastery percentages;
+   - the wardrobe's "why" link.
+
+   A new token, `--brand-text`, uses brand 600 on light (5.68:1) and brand 300 on dark (8.4:1).
+3. **Light and dark, site-wide pieces on these pages.**
+   - `.btn-link` and the profile's section links were brand 500 (3.89:1 on white); they now use `--brand-text`.
+   - The active filter pill was white on brand 500 (3.89:1); it is now brand 600.
+   - The current recent-topic chip in dark was 1.3:1; it now uses `--on-brand`.
+   - The XP number on the profile in dark was 2.64:1; it now uses `--on-xp`.
+4. **No main landmark on any page.** The site wrapper is now `<main id="main">`. This also ends the profile's second "banner", since a header inside main is not a banner.
+5. **Profile headings.** h3s followed the h1 with no h2. "Progress charts" and "Milestones" are now h2, styled as before.
+6. **The lesson progress bar on phones had no name.** It is now "Lesson progress".
+7. **A phone on its side hid the picture behind the panel.** The medal was 25 to 31% visible at 844 by 390 and 667 by 375, and not visible at all at 568 by 320.
+   - Now the picture sits on the left and the panel on the right, and scrolls if needed. Every medal, seal, ring and Zorp is fully in view.
+   - The sounds button moves to the picture's corner.
+   - The arrival film follows the same layout; its level and topic choice keeps its own.
+8. **Wording.**
+   - Full marks, Bullseye and Flawless say "lesson quiz", since Quick Tests stopped counting (12.1).
+   - "Question of the day" everywhere, as on the page itself (the shelf line and the week card said "Daily question").
+   - Lesson complete: "You finished every quick check in this lesson. Well done." It was "...is done. Well done."
+   - The back-fill card drops "new" ("You already earned 4 badges").
+   - The small-card switch says "lesson quiz".
+   - The Settings step of the tour: "Choose light or dark, how much I move, and how I cheer, with or without sound."
+
+**Left for David.**
+- **Corner cards close after 9 seconds** (they pause while hovered or focused). A keyboard user can hardly reach a card's "See it" link in time; the message itself is read out. Leave as is, or keep cards with a link longer?
+- **"Sharp week"** says how to earn it with a ranking phrase ("the highest quiz accuracy of your friends"), which the voice rules avoid elsewhere. It is the honest rule. Keep it or reword it?
+- **Outside this review:** one note on the BIDMAS lesson's sign tiles is 4.35:1 (lesson CSS).
+
+**Versions and caps.**
+- Versions: `base.css` v27, `tokens.css` v26, `components.css` v37, `pages.css` v60, `chrome.css` v49, `stage.css` v3, `badge-stage.css` v3 (the profile had still loaded v1), `shelf.css` v2, `wardrobe.css` v2, `lesson-progress.js` v29, `moments.js` v8, `zorp-tour.js` v5, `sw.js` `pb-v131`.
+- Caps raised: `stage.css` 11,000 to 12,200 (11,587 B); CSS tree 283,000 to 284,400 (283,808 B); core CSS 216,000 to 216,800 (216,135 B).
+- Test: `scripts/test_e10_phase9_smoke.py`. It computes the contrast ratios from `tokens.css` and checks one `<main>` on four rendered pages.
+- The review walks (axe, keyboard, small screens, listeners) are scratch scripts, not part of the suite.
+
+**David's answers (2026-11-13).**
+- Corner cards: leave them as they are.
+- Sharp week: reword it. The rule stays (the friends' weekly accuracy board, 10 answers or more). The line now reads "Get a higher share of quiz answers right than any friend in a week (10 or more)." The rule compares with friends, so the line still has to say so; it no longer says "highest". (Its first rewording used "accurately", which the voice lint does not allow.)
+

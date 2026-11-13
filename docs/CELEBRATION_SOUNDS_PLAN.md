@@ -1,6 +1,6 @@
 # Celebration sounds: a small sound library (plan)
 
-2026-11-13. Planned, then built the same day after David's answers (section 6.1). What was built is in section 7; nothing is committed yet.
+2026-11-13. Planned, then built the same day after David's answers (section 6.1). S1 and S2, with the mute button and the Settings copy of S3, are in section 7 (committed as 04a4564). The rest of S3, the loudness balance and a sample in Settings, is in section 8 (not committed).
 
 The goal: the celebrations and badges get short, pleasant sounds, from a small library of named sounds. It stays quiet and safe for a classroom.
 
@@ -195,4 +195,46 @@ Each sound is timed with the scene's own timers, so a card that is skipped never
 - Changed: `test_zorp_sound_smoke.py` (the settings copy; the gallery may pass force and arm, like the styleguide), `test_zorp_charm_smoke.py`.
 
 **Not testable headless:** how the sounds sound. David listens on the gallery; gains change after that (S3).
+
+---
+
+## 8. S3: the polish (2026-11-13, not committed)
+
+The mute button and the Settings copy of S3 were built with S2 (section 7). This phase adds the rest that does not need David's ears: every sound measured and the gains evened out, and a sample in Settings. Gain changes by ear stay open for David (on the gallery) and for a class session.
+
+**Measured, not guessed.** `scripts/celebration_sound_loudness.py` (new, dev only, like `zorp_gallery_snapshot.py`) renders every sound offline in headless Chromium with the real library. It weights the sound the way the ear hears it (K-weighting, ITU-R BS.1770, the weighting behind LUFS) and takes its loudest 400 ms. Today's answer tones and Zorp's cues are rendered the same way, so every number is comparable. A sound's gain number alone misleads in both directions:
+- high notes count for more, because the ear is most sensitive between 2 and 5 kHz;
+- a filtered noise burst keeps only a small share of its gain.
+
+**What the first measurement showed** (400 ms, K-weighted; the correct-answer tone is -37.7):
+- `gem` (the 10/10) was the loudest sound in the app's celebrations, at -32.9: 5 dB above the correct-answer tone, and louder than the old confetti arpeggio (-34.8);
+- `whoosh` was at -57.7, 20 dB under the stamps and too quiet to hear on laptop speakers;
+- `pop` (-52.1), `fire` (-42.9) and the `week` notes (-42.2) were quieter than they should be for what they do.
+
+**The balance.** All relative to the correct-answer tone, measured in the same run:
+- **Ceiling:** no celebration sound louder than the correct-answer tone plus 1 dB.
+- **Main sounds:** the stamps, `gem`, `level`, `book`, `sprout`, `fire`, `week` and `story`, all within 6 dB below the ceiling.
+- **Layers:** `whoosh`, `sparkle`, `confetti` and `pop`, 3 to 14 dB below the ceiling: audible, under the main sound.
+
+`celebration_sound_loudness.py --check` fails when a sound leaves its band, and `test_celebration_sounds_smoke.py` runs it when Playwright and a Chromium are there (here: `PB_CHROMIUM=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`). On a machine without them it says so and passes.
+
+| Sound | Before | After | Change |
+|---|---|---|---|
+| `gem` | -32.9 | -37.0 | all five voices x0.6 |
+| `whoosh` | -57.7 | -48.0 | noise gain 0.04 to 0.13 |
+| `pop` | -52.1 | -48.4 | 0.03 to 0.048 |
+| `fire` | -42.9 | -41.8 | noise 0.05 to 0.065, hum 0.03 to 0.035 |
+| `week` | -42.2 | -40.1 | note 0.05 to 0.065, octave 0.012 to 0.016 |
+| `stamp-silver` | -36.9 | -37.7 | chord 0.05 to 0.045, E5 0.025 to 0.022 (now level with gold and violet) |
+| the others | | unchanged | bronze -39.0, gold and violet -37.7, level -38.8, book -39.1, sprout -40.1, story -38.3, sparkle -41.4, confetti -45.0 |
+
+For comparison: wrong answer -38.5, soft -41.6, Zorp's jump -43.2, tada -38.2. Reduced motion plays everything 4.4 dB lower (gain 0.6).
+
+**A noise cap of its own.** Tones keep the 0.08 cap. Noise bursts get 0.15, since a filter keeps only a share of the noise; their real loudness is checked by the measurement. `meta()` now reports `noise` beside `peak` and `loud` (tones only), and the harness checks both caps.
+
+**A sample in Settings.** Picking "On" under Celebration sounds plays the gold stamp once, as the answer-sound switch already does. Picking "Off" cuts any sound. The sample plays on the pupil's own tap only, with `force`, because the choice saves only with the form. `settings-sound.js` v2 is the third file allowed to pass `force` (tested).
+
+**Pins and caps.** `sound-library.js` v2 (7,421 B; cap raised 7,500 to 8,200); `settings-sound.js` v2; `sw.js` `pb-v130`.
+
+**Still open (by ear).** David listens on the gallery: which sounds are too loud, too quiet or not right. After a class session, if he runs one: whether the levels suit a classroom.
 

@@ -121,7 +121,7 @@ def test_rules_from_history():
                          (uid, (datetime.now(timezone.utc).date() - timedelta(days=d)).isoformat(), now()))
         for i in range(25):
             conn.execute("INSERT INTO user_activity_events (user_id, event_type, payload_json, visibility, created_at) "
-                         "VALUES (?, 'topic_opened', ?, 'private', ?)",
+                         "VALUES (?, 'mcq_answered', ?, 'private', ?)",   # 2026-11-13: a topic counts once a question in it is answered
                          (uid, json.dumps({'level': 'gcse', 'subject': 'maths', 'topic': f't{i}'}), now()))
         for i in range(10):
             conn.execute("INSERT INTO class_assignment_recipients (assignment_id, student_id, status, completed_at) "
@@ -216,6 +216,40 @@ def test_recovery_mcq_retry():
 
 
 # ---- the quiet back-fill ----
+def test_curious_waits_for_an_answer():
+    """2026-11-13 (David): Curious came on switching to a third topic, before any answer there. A topic now counts once a question in
+    it is answered (a practice check, typed or multiple choice; a finished quiz; a lesson step), never for opening it or for being
+    given a new question. Through the real routes."""
+    c, uid = new_pupil('cu')
+    for topic in ('bidmas', 'geometry_angles'):
+        bind(c, STRAIGHT, topic=topic)
+        check(c, '139')
+    assert 'topics_3' not in keys(uid)
+    # the third topic: its page opened, a question given, nothing answered yet
+    assert c.get('/topic/gcse/maths/decimals').status_code in (200, 302)
+    r = c.post('/api/v1/problems/generate', json={'level': 'gcse', 'subject': 'maths', 'topic': 'decimals', 'difficulty': 'foundational'},
+               headers=HDR)
+    assert r.status_code == 200, r.data
+    got = [m['key'] for m in (r.get_json() or {}).get('new_milestones') or []]
+    assert 'topics_3' not in got and 'topics_3' not in keys(uid), 'no badge for opening a topic or being given a question'
+    assert events(uid, 'question_generated') >= 1
+    with get_db() as conn:
+        assert gam._distinct_topics_count(conn, uid) == 2
+    # the first answer there earns it, on that answer
+    bind(c, STRAIGHT, topic='decimals')
+    right = check(c, '41')
+    assert not right['correct'], 'a wrong answer still counts: the topic is practised'
+    assert 'topics_3' in [m['key'] for m in right.get('new_milestones') or []] and 'topics_3' in keys(uid)
+    # the shelf counts the same way
+    from models import badge_shelf
+    with get_db() as conn:
+        assert badge_shelf.counts(conn, uid)['topics'] == 3
+    cat = gam.MILESTONE_CATALOG
+    assert cat['topics_3']['how'] == 'Answer questions on 3 different topics.' and cat['topics_3']['blurb'] == 'You answered questions on 3 different topics.'
+    assert gam.TOPIC_ANSWER_EVENTS == ('mcq_answered', 'quiz_completed', 'lesson_step_completed')
+    assert 'highest' not in cat['accuracy_top_friend']['how'] and 'highest' not in cat['accuracy_top_friend']['description'].lower()
+
+
 def test_backfill_phase2():
     c, uid = new_pupil()
     with get_db() as conn:
@@ -294,7 +328,7 @@ def test_no_shadowed_functions():
 
 def main():
     tests = [test_catalogue, test_rules_from_history, test_recovery_typed, test_recovery_mcq_retry, test_backfill_phase2,
-             test_families_and_hats, test_class_only_on_the_shelf, test_client_wiring, test_no_shadowed_functions]
+             test_families_and_hats, test_class_only_on_the_shelf, test_client_wiring, test_no_shadowed_functions, test_curious_waits_for_an_answer]
     for t in tests:
         t()
         print('ok', t.__name__)

@@ -207,7 +207,7 @@
       page: 'settings',
       heading: 'Settings',
       target: 'panel:Motion',
-      lines: ['Choose light or dark, how much I move, and whether I make sounds.'],
+      lines: ['Choose light or dark, how much I move, and how I cheer, with or without sound.'],
       face: 'happy',
       clip: 'wave',
     },

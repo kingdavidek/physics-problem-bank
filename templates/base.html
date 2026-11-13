@@ -2,7 +2,7 @@
 {% from "partials/wordmark.html" import wordmark %}
 {% from "partials/buddy.html" import buddy_mascot %}
 <!DOCTYPE html>
-<html lang="en" data-theme="{{ theme_preference }}" data-motion="{{ motion_preference }}" data-zorp-sound="{{ zorp_sound }}" data-pb-sound-lib="{{ url_for('static', filename='js/sound-library.js') }}?v=1">
+<html lang="en" data-theme="{{ theme_preference }}" data-motion="{{ motion_preference }}" data-zorp-sound="{{ zorp_sound }}" data-pb-sound-lib="{{ url_for('static', filename='js/sound-library.js') }}?v=2">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -24,13 +24,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}?v=1">
 
     <!-- App CSS - load order is significant (docs/UI_REDESIGN.md U0) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v=25">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=26">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=36">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=48">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v=26">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=27">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=37">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=49">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/motion.css') }}?v=9">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=32">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=59">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=60">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=21">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/diagrams.css') }}?v=27">
     {% if lesson_meta or ibl is defined %}
@@ -83,7 +83,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/around.css') }}?v=2">
     {% endif %}
     {% if lesson_meta and not lesson_meta.get('quizReview') %}
-    <script src="{{ url_for('static', filename='js/lesson-progress.js') }}?v=28" defer></script>
+    <script src="{{ url_for('static', filename='js/lesson-progress.js') }}?v=29" defer></script>
     {% endif %}
 </head>
 
@@ -254,9 +254,9 @@
 <script type="application/json" id="pb-guide-state"{% if guide_json_persisted %} data-guide-persisted="1"{% endif %}>{{ guide_state | tojson }}</script>
 {% endif %}
 
-<div class="site-wrapper{% if quiz_runner_mode %} site-wrapper--quiz-runner{% endif %}" data-user-logged-in="{% if current_user.is_authenticated %}1{% else %}0{% endif %}"{% if lesson_meta %} data-lesson-level="{{ lesson_meta.level }}" data-lesson-subject="{{ lesson_meta.subject }}" data-lesson-topic="{{ lesson_meta.topic }}" data-lesson-title="{{ lesson_meta.topicTitle|e }}"{% if lesson_meta.get('quizUrl') %} data-lesson-quiz-url="{{ lesson_meta.quizUrl }}" data-lesson-quiz-count="{{ lesson_meta.quizCount }}"{% endif %}{% if lesson_meta.get('practiceUrl') %} data-lesson-practice-url="{{ lesson_meta.practiceUrl }}"{% endif %}{% if lesson_meta.get('path') %} data-lesson-path='{{ lesson_meta.path|tojson }}'{% endif %}{% if lesson_meta.get('quizReview') %} data-quiz-review="1"{% elif not quiz_runner_mode %} data-lesson-content{% endif %}{% elif ibl is defined %} data-lesson-subject="science"{% endif %}>
+<main id="main" class="site-wrapper{% if quiz_runner_mode %} site-wrapper--quiz-runner{% endif %}" data-user-logged-in="{% if current_user.is_authenticated %}1{% else %}0{% endif %}"{% if lesson_meta %} data-lesson-level="{{ lesson_meta.level }}" data-lesson-subject="{{ lesson_meta.subject }}" data-lesson-topic="{{ lesson_meta.topic }}" data-lesson-title="{{ lesson_meta.topicTitle|e }}"{% if lesson_meta.get('quizUrl') %} data-lesson-quiz-url="{{ lesson_meta.quizUrl }}" data-lesson-quiz-count="{{ lesson_meta.quizCount }}"{% endif %}{% if lesson_meta.get('practiceUrl') %} data-lesson-practice-url="{{ lesson_meta.practiceUrl }}"{% endif %}{% if lesson_meta.get('path') %} data-lesson-path='{{ lesson_meta.path|tojson }}'{% endif %}{% if lesson_meta.get('quizReview') %} data-quiz-review="1"{% elif not quiz_runner_mode %} data-lesson-content{% endif %}{% elif ibl is defined %} data-lesson-subject="science"{% endif %}>
     {% block content %}{% endblock %}
-</div>
+</main>
 
 {% block sticky_footer %}{% endblock %}
 

@@ -17,8 +17,9 @@ const LIB_SRC = fs.readFileSync(libPath, 'utf8');
 const tick = async () => { for (let i = 0; i < 8; i += 1) await new Promise((r) => setImmediate(r)); };
 const NAMES = ['whoosh', 'stamp-bronze', 'stamp-silver', 'stamp-gold', 'stamp-violet', 'sparkle', 'confetti', 'gem', 'level', 'book',
   'sprout', 'fire', 'week', 'story', 'pop'];
-const PEAK = 0.08;   // soft, the quietest answer tone: no voice is louder
-const LOUD = 0.1;    // the sum of every voice sounding at once stays near that
+const PEAK = 0.08;   // soft, the quietest answer tone: no tone is louder
+const LOUD = 0.1;    // the sum of every tone sounding at once stays near that
+const NOISE = 0.15;  // a filtered noise burst keeps a small share of its gain; its real loudness is measured (celebration_sound_loudness.py)
 const MAX_MS = 1800;
 
 function load(o) {
@@ -128,13 +129,13 @@ async function scenario(name, fn) {
 }
 
 (async () => {
-  await scenario('the library: the planned names, each one plays; no voice above 0.08, no moment above 0.1, none longer than 1.8 s', async () => {
+  await scenario('the library: the planned names, each one plays; no tone above 0.08, no noise above 0.15, no moment above 0.1, none longer than 1.8 s', async () => {
     const h = load({ preload: true });
     const lib = h.sb.pbSoundLib;
     assert.deepStrictEqual([...lib.names].sort(), [...NAMES].sort());
     for (const name of NAMES) {
       const m = lib.meta(name);
-      assert.ok(m.peak > 0 && m.peak <= PEAK, `${name} peak ${m.peak}`);
+      assert.ok(m.peak + m.noise > 0 && m.peak <= PEAK && m.noise <= NOISE, `${name} peak ${m.peak} noise ${m.noise}`);
       assert.ok(m.loud <= LOUD, `${name} loud ${m.loud}`);
       assert.ok(m.ms > 0 && m.ms <= MAX_MS, `${name} ${m.ms} ms`);
       const ac = new h.sb.AudioContext();
@@ -144,7 +145,7 @@ async function scenario(name, fn) {
       assert.ok(ac.voices.length > 0, `${name} made no voice`);
       ac.voices.forEach((v) => {
         assert.ok(route(v, ac.destination).reaches && route(v, ac.destination).chain.includes(out), `${name}: every voice goes through the shared node`);
-        assert.ok(peakOf(v) <= PEAK + 1e-9, `${name} voice peak ${peakOf(v)}`);
+        assert.ok(peakOf(v) <= (v.kind === 'noise' ? NOISE : PEAK) + 1e-9, `${name} ${v.kind} peak ${peakOf(v)}`);
         assert.ok(v.stopAt > v.startAt && v.stopAt - 10 <= MAX_MS / 1000 + 0.1, `${name} stops`);
       });
     }

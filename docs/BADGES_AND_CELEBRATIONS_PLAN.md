@@ -623,3 +623,28 @@ David found the 10/10 stage underwhelming: a gold medal ringed by yellow five-po
 - a confetti burst (strips and dots) from the seal as it lands, then a light confetti rain in the same colours.
 
 With reduced motion it is a still scene: the gem, its glow and the twinkles. The topic master badge keeps its own stars prop. `moments.js` v6 (cap 43,500), `moments.css` v3 (cap 5,600), CSS total 282,200, `pb-v128`.
+
+## 14. A topic counts once it is answered in (2026-11-13)
+
+**What David saw.** Curious (3 topics) came when he switched to a third topic, before he answered anything there.
+
+**Why.** The Explorer badges (Curious, Broad explorer, Globetrotter) counted every topic with a `topic_opened` or `question_generated` event, so opening a topic page or being given a new question was enough. The shelf's meter, the badge back-fill and the weekly recap's "topics practised" counted the same way.
+
+**Now.** A topic counts once a question in it is answered:
+- a practice check, typed or multiple choice (both log `mcq_answered`, right or wrong);
+- a finished quiz;
+- a lesson step.
+
+`TOPIC_ANSWER_EVENTS` in `models/gamification.py` is the one list. It is used by:
+- `_distinct_topics_count` (the badges, the shelf's meter and Close to a badge);
+- the topics back-fill rules;
+- the weekly recap.
+
+**Copy.**
+- The three badges now say "You answered questions on 3 different topics" and "Answer questions on 3 different topics" (10 and 25 the same way).
+- The shelf says "Answer a question on one more topic."
+
+**Badges already earned are kept**, as for every rule change.
+
+**Test.** `test_curious_waits_for_an_answer` in `scripts/test_e11_phase2_smoke.py`, through the real routes. A pupil answers in two topics, then opens a third and is given a question there: no badge, and the count stays at 2. The first answer there earns Curious on that answer, a wrong one included. The test fails under the old rule (checked).
+

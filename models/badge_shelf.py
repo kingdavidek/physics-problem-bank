@@ -41,7 +41,7 @@ LINES = (
     ('hint', 'Hints', ('hint_1', 'hint_25')),
     ('retry', 'Retries', ('retry_fixed',)),
     ('streak', 'Streaks', ('streak_3', 'streak_7', 'streak_30', 'streak_100')),
-    ('daily', 'Daily question', ('qotd_first', 'qotd_7', 'qotd_30')),
+    ('daily', 'Question of the day', ('qotd_first', 'qotd_7', 'qotd_30')),
     ('explorer', 'Explorer', ('topics_3', 'topics_10', 'topics_25')),
     ('ninja', 'Topic ninjas', ('topics_ninja_5', 'topics_ninja_10', 'topics_ninja_20')),
     ('master', 'Topic masters', ('topics_master_5', 'topics_master_10', 'topics_master_20')),
@@ -85,8 +85,8 @@ COPY = {
     'bounce': ('right after a wrong try', 'Get one more right after a wrong try.', 'Get {n} more right after a wrong try.', 'practice'),
     'hint': ('right after the bigger hint', 'Get one more right after the bigger hint.', 'Get {n} more right after the bigger hint.', 'practice'),
     'streak': ('days in a row', 'Study one more day in a row.', 'Study {n} more days in a row.', 'study'),
-    'qotd': ('days', 'Answer the daily question on one more day.', 'Answer the daily question on {n} more days.', 'daily'),
-    'topics': ('topics', 'Practise one more topic.', 'Practise {n} more topics.', 'topics'),
+    'qotd': ('days', 'Answer the question of the day on one more day.', 'Answer the question of the day on {n} more days.', 'daily'),
+    'topics': ('topics', 'Answer a question on one more topic.', 'Answer questions on {n} more topics.', 'topics'),
     'setwork': ('pieces of set work', 'Finish one more piece of set work.', 'Finish {n} more pieces of set work.', 'classwork'),
 }
 LINKS = {

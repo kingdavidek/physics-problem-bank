@@ -22,7 +22,7 @@ os.environ['PB_TESTING'] = '1'
 
 JS = ROOT / 'static' / 'js'
 LIB = JS / 'sound-library.js'
-LIB_MAX_BYTES = 7_500   # 2026-11-13 (new): 15 sounds and the noise, filter and chord helpers (6,924 B); loads only when a sound may play
+LIB_MAX_BYTES = 8_200   # 2026-11-13 RAISED 7_500 -> 8_200 (S3): the noise cap in meta and the balance note (7,421 B). 2026-11-13 (new): 15 sounds and the noise, filter and chord helpers (6,924 B); loads only when a sound may play
 HARNESS = ROOT / 'scripts' / 'celebration_sound_harness.js'
 HDR = {'Accept': 'application/json'}
 
@@ -57,7 +57,7 @@ def test_made_in_code_and_loaded_on_demand():
         assert banned not in src, banned
     assert len(library_names()) == 15, sorted(library_names())
     base = read('templates/base.html')
-    assert "data-pb-sound-lib=\"{{ url_for('static', filename='js/sound-library.js') }}?v=1\"" in base
+    assert "data-pb-sound-lib=\"{{ url_for('static', filename='js/sound-library.js') }}?v=2\"" in base   # v2: S3 gains
     for path in sorted((ROOT / 'templates').rglob('*.html')):
         n = path.read_text(encoding='utf-8').count('js/sound-library.js')
         assert n == (1 if path.name == 'base.html' else 0), f'{path.name}: the library loads only through sound.js'
@@ -170,16 +170,50 @@ def test_gallery_auditions_every_sound():
         assert needle in js, needle
 
 
+def test_settings_preview():
+    """S3 (plan section 8): choosing On in Settings plays one sample; choosing Off cuts any sound."""
+    js = read('static/js/settings-sound.js')
+    page = read('templates/profile_settings.html')
+    assert 'id="zorp-sound-group"' in page and "settings-sound.js') }}?v=2" in page
+    assert "document.getElementById('zorp-sound-group')" in js and "group.addEventListener('change'" in js
+    assert "else window.pbSound.stopAll();" in js
+    assert js.index("var input = document.querySelector('input[name=\"sound_enabled\"]');") < js.index('zorp-sound-group'), 'the switch keeps its preview'
+
+
+def test_loudness_tool_and_bands():
+    """S3 (plan section 8): scripts/celebration_sound_loudness.py renders every sound in Chromium and checks its measured loudness
+    against the correct-answer tone. Dev only (Playwright stays out of requirements.txt, imported lazily); with Playwright and a
+    Chromium (PB_CHROMIUM may name one) the bands are checked here, otherwise the tool says so and exits 0."""
+    tool = ROOT / 'scripts' / 'celebration_sound_loudness.py'
+    src = tool.read_text(encoding='utf-8')
+    assert 'playwright' not in read('requirements.txt').lower()
+    import ast
+    for node in ast.parse(src).body:
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            mods = [a.name for a in node.names] if isinstance(node, ast.Import) else [node.module or '']
+            assert not any(m.split('.')[0] == 'playwright' for m in mods), 'Playwright is imported lazily'
+    for needle in ("CEILING_DB = 1.0", "MAIN_SPAN_DB = 6.0", "LAYER_BAND_DB = (3.0, 14.0)", "LAYERS = ('whoosh', 'sparkle', 'confetti', 'pop')",
+                   "'answer: correct': (c, g) => { tone(c, g, 523.25, 90, 'sine', 0.11, 0); tone(c, g, 659.25, 110, 'sine', 0.1, 70); }"):
+        assert needle in src, needle
+    # the reference tone is today's correct-answer tone in sound.js
+    assert "{ freq: 523.25, dur: 90, type: 'sine', gain: 0.11, delay: 0 }" in read('static/js/sound.js')
+    assert "{ freq: 659.25, dur: 110, type: 'sine', gain: 0.1, delay: 70 }" in read('static/js/sound.js')
+    r = subprocess.run([sys.executable, str(tool), '--check'], cwd=str(ROOT), capture_output=True, text=True, check=False, timeout=300)
+    print(r.stdout[-2500:])
+    assert r.returncode == 0, 'a celebration sound left its loudness band (see the table above)'
+
+
 def test_docs():
     plan = read('docs/CELEBRATION_SOUNDS_PLAN.md')
-    assert '## 7. Built' in plan and '6.1' in plan
+    assert '## 7. Built' in plan and '6.1' in plan and '## 8. S3' in plan
     assert 'Off by default' not in plan, 'new accounts start on (decision 6)'
     assert 'celebration sounds' in read('docs/ZORP_CHARM.md').lower()
 
 
 def main():
     for t in (test_harness, test_made_in_code_and_loaded_on_demand, test_every_sound_asked_for_exists, test_stage_button_and_quiet_on_close,
-              test_setting_saves_both_ways_and_new_accounts_start_on, test_gallery_auditions_every_sound, test_docs):
+              test_setting_saves_both_ways_and_new_accounts_start_on, test_gallery_auditions_every_sound, test_settings_preview,
+              test_loudness_tool_and_bands, test_docs):
         t()
         print('ok', t.__name__)
     print('Celebration sounds smoke passed.')

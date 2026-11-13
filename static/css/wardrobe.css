@@ -23,7 +23,7 @@
 .wd-dot[data-wd-colour=violet] { background: var(--xp-500); }
 .wd-name { font-size: .9rem; font-weight: 600; }
 .wd-why { position: relative; z-index: 1; max-width: 120px; font-size: .78rem; line-height: 1.3; color: var(--text-muted); text-align: center; }
-button.wd-why { min-height: 24px; text-decoration: underline; color: var(--brand-600); }
+button.wd-why { min-height: 24px; text-decoration: underline; color: var(--brand-text); }
 .wd-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-top: var(--space-4); }
 .wd-status { margin: 0; flex: 1 1 200px; font-size: .95rem; }
 @media (max-width: 640px) {

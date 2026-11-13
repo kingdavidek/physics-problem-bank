@@ -162,6 +162,7 @@
 
     /* -- Semantic status -- */
     --on-brand:   var(--brand-700);
+    --brand-text: var(--brand-600);   /* links and labels in brand blue: 4.5:1 on both themes (E10 Phase 9 review) */
     --on-correct: var(--correct-700);
     --on-wrong:   var(--wrong-700);
     --on-streak:  var(--streak-700);
@@ -340,6 +341,7 @@
         --edge:          #4a5d73;
 
         --on-brand:   var(--brand-300);
+        --brand-text: var(--brand-300);
         --on-correct: var(--correct-300);
         --on-wrong:   var(--wrong-300);
         --on-streak:  var(--streak-300);
@@ -406,6 +408,7 @@
     --edge:          #4a5d73;
 
     --on-brand:   var(--brand-300);
+    --brand-text: var(--brand-300);
     --on-correct: var(--correct-300);
     --on-wrong:   var(--wrong-300);
     --on-streak:  var(--streak-300);

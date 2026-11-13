@@ -453,7 +453,7 @@ def test_lazy_loading():
     assert c.get(urls['js']).status_code == 200 and c.get(urls['css']).status_code == 200
     sw = read('static/js/sw.js')
     assert 'moments.js' not in sw and 'moments.css' not in sw
-    assert "pb-v129" in sw   # 2026-11-13: the celebration sounds (was pb-v128); 2026-11-12: the 10/10 redrawn (was pb-v127); 2026-11-11: E11 Phase 4 bump (was pb-v126, Phase 3); 2026-11-11: E11 Phase 3 bump (was pb-v125, Phase 2); 2026-11-10: E11 Phase 2 bump (was pb-v124, Phase 1); 2026-11-10: E11 Phase 1 bump (was pb-v123, Phase 0); 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115); 2026-11-08: E10 review fixes bump (was pb-v118)
+    assert "pb-v131" in sw   # 2026-11-13: E10 Phase 9 review (was pb-v130); 2026-11-13: the sounds' gains and the Settings sample (S3, was pb-v129); 2026-11-13: the celebration sounds (was pb-v128); 2026-11-12: the 10/10 redrawn (was pb-v127); 2026-11-11: E11 Phase 4 bump (was pb-v126, Phase 3); 2026-11-11: E11 Phase 3 bump (was pb-v125, Phase 2); 2026-11-10: E11 Phase 2 bump (was pb-v124, Phase 1); 2026-11-10: E11 Phase 1 bump (was pb-v123, Phase 0); 2026-11-10: E11 Phase 0 bump (was pb-v122, lesson-quiz spotlight); 2026-11-08: E10 phase 8 bump (was pb-v119, review fixes); 2026-11-08: E10 phase 6b bump (was pb-v116, phase 6); 2026-11-08: E10 phase 6 bump (was pb-v115); 2026-11-08: E10 review fixes bump (was pb-v118)
 
 
 # ---- E10 review fixes (2026-11-08) ----

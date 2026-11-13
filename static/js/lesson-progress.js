@@ -158,6 +158,7 @@
     topbarEl = document.createElement('div');
     topbarEl.className = 'lesson-progress-topbar is-pinned';
     topbarEl.setAttribute('role', 'progressbar');
+    topbarEl.setAttribute('aria-label', 'Lesson progress');   // E10 Phase 9 review: a progress bar needs a name
     topbarEl.setAttribute('aria-valuemin', '0');
     topbarEl.innerHTML = topbarMarkup;
     shell.insertBefore(topbarEl, contentRoot);

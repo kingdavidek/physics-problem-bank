@@ -330,8 +330,8 @@ pre {
 }
 .pill--filter.is-active,
 .profile-reflection-filter.is-active {
-    background: var(--brand-500);
-    border-color: var(--brand-600);
+    background: var(--brand-600);
+    border-color: var(--brand-700);
     color: #fff;
 }
 
@@ -584,7 +584,7 @@ a.list-row {
 .mastery-pct {
     font-size: 0.75rem;
     font-weight: 700;
-    color: var(--brand-600);
+    color: var(--brand-text);
 }
 .mastery-bar {
     height: 6px;
@@ -692,7 +692,7 @@ a.list-row {
 .recent-practised-chip.is-current {
     background: var(--brand-100);
     border-color: var(--brand-400);
-    color: var(--brand-800);
+    color: var(--on-brand);
 }
 .practice-picker-card {
     padding: var(--space-5);

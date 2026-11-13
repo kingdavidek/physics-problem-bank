@@ -1,8 +1,9 @@
 /* Celebration sounds (docs/CELEBRATION_SOUNDS_PLAN.md section 2). A small library of named sounds, all made in code with WebAudio: tones,
    a noise burst made here (no files: nothing to license, download or cache, and it works offline). Loaded only when a celebration may
    sound, by sound.js (pbSound.play), which owns the rules (the setting, a recent tap, a visible page, no question page) and the audio
-   context. Every sound goes into the shared output node, so pbSound.stopAll() cuts it. No peak is above 0.08, the gain of the quietest
-   answer tone (`soft`). */
+   context. Every sound goes into the shared output node, so pbSound.stopAll() cuts it. No tone is above 0.08, the gain of the quietest
+   answer tone (`soft`); noise has its own cap (meta below). 2026-11-13 (plan section 8): the gains were evened out by measured
+   loudness, so no sound is louder than the correct-answer tone. */
 (function () {
   'use strict';
   var NOTE = { C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99, A5: 880, C6: 1046.5, E6: 1318.51, G6: 1567.98, A6: 1760, B6: 1975.53,
@@ -74,23 +75,23 @@
 
   // name -> { t: tones, n: noise bursts }. `step` (Your week) picks one note.
   var SOUNDS = {
-    whoosh: { n: [['bandpass', 380, 2600, 320, 0, 0.04, 140, 0]] },
+    whoosh: { n: [['bandpass', 380, 2600, 320, 0, 0.13, 140, 0]] },
     'stamp-bronze': { t: [THUD].concat(chord([392, 784], 520, 90, 0.05)) },
-    'stamp-silver': { t: [THUD].concat(chord([NOTE.C5, NOTE.C6], 600, 90, 0.05), chord([NOTE.E5], 560, 150, 0.025)) },
+    'stamp-silver': { t: [THUD].concat(chord([NOTE.C5, NOTE.C6], 600, 90, 0.045), chord([NOTE.E5], 560, 150, 0.022)) },
     'stamp-gold': { t: [THUD].concat(chord([NOTE.C5, NOTE.E5, NOTE.G5], 720, 90, 0.06, 50), pings([NOTE.G6], 300, 0, 0.02)) },
     'stamp-violet': { t: [THUD].concat(chord([NOTE.C5, NOTE.E5, NOTE.G5, NOTE.C6], 860, 90, 0.06, 50), pings([NOTE.A6, NOTE.C7, NOTE.D7, NOTE.E7], 360, 60, 0.02)) },
     sparkle: { t: pings([NOTE.B6, NOTE.D7, NOTE.E7], 0, 90, 0.03) },
     confetti: { n: [['highpass', 3200, 5200, 360, 0, 0.03, 8, 6]] },
-    gem: { t: [['sine', NOTE.E5, NOTE.E5, 220, 0, 0.06, 6], ['sine', NOTE.A5, NOTE.A5, 220, 90, 0.06, 6], ['sine', NOTE.C6, NOTE.C6, 220, 180, 0.065, 6],
-      ['sine', NOTE.E6, NOTE.E6, 480, 270, 0.07, 6], ['triangle', NOTE.E6 * 2, NOTE.E6 * 2, 380, 280, 0.015, 6]] },
+    gem: { t: [['sine', NOTE.E5, NOTE.E5, 220, 0, 0.036, 6], ['sine', NOTE.A5, NOTE.A5, 220, 90, 0.036, 6], ['sine', NOTE.C6, NOTE.C6, 220, 180, 0.039, 6],
+      ['sine', NOTE.E6, NOTE.E6, 480, 270, 0.042, 6], ['triangle', NOTE.E6 * 2, NOTE.E6 * 2, 380, 280, 0.009, 6]] },
     level: { t: pings([NOTE.C5, NOTE.D5, NOTE.E5, NOTE.G5], 0, 85, 0.045).concat(chord([NOTE.C5, NOTE.E5, NOTE.G5, NOTE.C6], 600, 1100, 0.07, 30)) },
     book: { t: [['triangle', 220, 110, 100, 0, 0.06, 4], ['sine', NOTE.A5, NOTE.A5, 240, 450, 0.05, 6], ['sine', NOTE.E6, NOTE.E6, 260, 520, 0.045, 6]] },
     sprout: { t: [['sine', 330, 880, 460, 0, 0.05, 30], ['sine', NOTE.E6, NOTE.E6, 200, 440, 0.03, 4]] },
-    fire: { n: [['lowpass', 500, 1200, 700, 0, 0.05, 300, 0]], t: [['sine', 110, 110, 650, 0, 0.03, 200]] },
+    fire: { n: [['lowpass', 500, 1200, 700, 0, 0.065, 300, 0]], t: [['sine', 110, 110, 650, 0, 0.035, 200]] },
     week: { steps: [NOTE.C5, NOTE.E5, NOTE.G5] },
     story: { t: [['triangle', NOTE.E6, NOTE.E6, 220, 0, 0.04, 4], ['triangle', NOTE.G6, NOTE.G6, 220, 150, 0.04, 4], ['triangle', NOTE.C7, NOTE.C7, 220, 300, 0.04, 4],
       ['triangle', NOTE.B6, NOTE.B6, 220, 450, 0.04, 4], ['triangle', NOTE.G6, NOTE.G6, 420, 600, 0.04, 4]] },
-    pop: { t: [['sine', 600, 900, 70, 0, 0.03, 4]] }
+    pop: { t: [['sine', 600, 900, 70, 0, 0.048, 4]] }
   };
 
   function parts(name, o) {
@@ -98,13 +99,15 @@
     if (!def) return null;
     if (def.steps) {
       var f = def.steps[Math.max(0, Math.min(def.steps.length - 1, (o && o.step) || 0))];
-      return { t: [['sine', f, f, 260, 0, 0.05, 8], ['sine', f * 2, f * 2, 200, 0, 0.012, 8]], n: [] };
+      return { t: [['sine', f, f, 260, 0, 0.065, 8], ['sine', f * 2, f * 2, 200, 0, 0.016, 8]], n: [] };
     }
     return { t: def.t || [], n: def.n || [] };
   }
 
-  // how long a sound lasts, its loudest single voice, and its loudest moment: the sum of the peaks of every voice sounding at once,
-  // a cautious upper bound (each voice decays from its peak). The tests read these.
+  // how long a sound lasts; its loudest tone; its loudest moment of tones (the sum of the peaks of every tone sounding at once, a
+  // cautious upper bound: each decays from its peak); its loudest noise burst. A noise gain is not its loudness (a filter keeps a
+  // small share of the noise), so noise has its own cap, and every sound's real loudness is measured by
+  // scripts/celebration_sound_loudness.py (section 8 of the plan). The tests read these.
   function meta(name) {
     var p = parts(name, { step: 2 });
     if (!p) return null;
@@ -113,10 +116,11 @@
     var loud = 0;
     for (var t = 0; t <= ms; t += 5) {
       var sum = 0;
-      all.forEach(function (s) { if (t >= s[4] && t < s[4] + Math.max(60, s[3] * 0.35)) sum += s[5]; });
+      p.t.forEach(function (s) { if (t >= s[4] && t < s[4] + Math.max(60, s[3] * 0.35)) sum += s[5]; });
       loud = Math.max(loud, sum);
     }
-    return { ms: ms, peak: Math.max.apply(null, all.map(function (s) { return s[5]; })), loud: Math.round(loud * 1000) / 1000 };
+    var top = function (list) { return Math.max.apply(null, [0].concat(list.map(function (s) { return s[5]; }))); };
+    return { ms: ms, peak: top(p.t), loud: Math.round(loud * 1000) / 1000, noise: top(p.n) };
   }
 
   // play `name` into `out` now; k scales the gain (soft: 0.6). Returns false for an unknown name.

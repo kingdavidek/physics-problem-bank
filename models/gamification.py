@@ -6,6 +6,7 @@ from models.avatar import attach_avatars
 from models.social import (
     ACTIVITY_HINT_CORRECT,
     ACTIVITY_LESSON_STEP_COMPLETED,
+    ACTIVITY_MCQ_ANSWERED,
     ACTIVITY_RETRY_CORRECT,
     ACTIVITY_QUESTION_GENERATED,
     ACTIVITY_QUIZ_COMPLETED,
@@ -96,7 +97,7 @@ MILESTONE_CATALOG = {
     MILESTONE_PERFECT_1: {
         'title': 'Full marks',
         'description': 'Get every answer right on a lesson quiz',
-        'blurb': 'You got every answer right on a quiz.',
+        'blurb': 'You got every answer right on a lesson quiz.',
         'how': 'Get every answer right on a lesson quiz.',
         'next': MILESTONE_PERFECT_5,
         'family': 'perfect',
@@ -116,9 +117,9 @@ MILESTONE_CATALOG = {
     },
     MILESTONE_TOPICS_10: {
         'title': 'Broad explorer',
-        'description': 'Practise 10 different topics',
-        'blurb': 'You practised 10 different topics.',
-        'how': 'Practise 10 different topics.',
+        'description': 'Answer questions on 10 different topics',
+        'blurb': 'You answered questions on 10 different topics.',
+        'how': 'Answer questions on 10 different topics.',
         'next': MILESTONE_TOPICS_25,
         'family': 'explorer',
         'emoji': '🧭',
@@ -201,9 +202,9 @@ MILESTONE_CATALOG = {
     # states the rule plainly. Nothing Zorp says about it compares.
     MILESTONE_ACCURACY_TOP_FRIEND: {
         'title': 'Sharp week',
-        'description': 'Highest quiz accuracy among your friends in a week',
+        'description': 'A higher share of quiz answers right than any friend in a week',
         'blurb': 'Your quiz answers were very accurate this week.',
-        'how': 'Have the highest quiz accuracy of your friends in a week (10 answers or more).',
+        'how': 'Get a higher share of quiz answers right than any friend in a week (10 or more).',   # 2026-11-13 reworded (David): no "highest"
         'next': None,
         'family': 'accuracy',
         'emoji': '🎯',
@@ -233,7 +234,7 @@ MILESTONE_CATALOG = {
     MILESTONE_PERFECT_5: {
         'title': 'Bullseye',
         'description': 'Get every answer right on 5 lesson quizzes',
-        'blurb': 'You got every answer right on 5 quizzes.',
+        'blurb': 'You got every answer right on 5 lesson quizzes.',
         'how': 'Get every answer right on 5 lesson quizzes.',
         'next': MILESTONE_PERFECT_20,
         'family': 'perfect',
@@ -243,7 +244,7 @@ MILESTONE_CATALOG = {
     MILESTONE_PERFECT_20: {
         'title': 'Flawless',
         'description': 'Get every answer right on 20 lesson quizzes',
-        'blurb': 'You got every answer right on 20 quizzes.',
+        'blurb': 'You got every answer right on 20 lesson quizzes.',
         'how': 'Get every answer right on 20 lesson quizzes.',
         'next': None,
         'family': 'perfect',
@@ -342,9 +343,9 @@ MILESTONE_CATALOG = {
     },
     MILESTONE_TOPICS_3: {
         'title': 'Curious',
-        'description': 'Practise 3 different topics',
-        'blurb': 'You practised 3 different topics.',
-        'how': 'Practise 3 different topics.',
+        'description': 'Answer questions on 3 different topics',
+        'blurb': 'You answered questions on 3 different topics.',
+        'how': 'Answer questions on 3 different topics.',
         'next': MILESTONE_TOPICS_10,
         'family': 'explorer',
         'emoji': '🔎',
@@ -352,9 +353,9 @@ MILESTONE_CATALOG = {
     },
     MILESTONE_TOPICS_25: {
         'title': 'Globetrotter',
-        'description': 'Practise 25 different topics',
-        'blurb': 'You practised 25 different topics.',
-        'how': 'Practise 25 different topics.',
+        'description': 'Answer questions on 25 different topics',
+        'blurb': 'You answered questions on 25 different topics.',
+        'how': 'Answer questions on 25 different topics.',
         'next': None,
         'family': 'explorer',
         'emoji': '🌍',
@@ -663,13 +664,13 @@ BACKFILL_RULES.update({
     MILESTONE_SETWORK_10: _count_rule('class_assignment_recipients', "status = 'complete'", 10, user_col='student_id', at_col='completed_at'),
 })
 for _key, _need in ((MILESTONE_TOPICS_3, 3), (MILESTONE_TOPICS_25, 25)):
-    BACKFILL_RULES[_key] = (
+    BACKFILL_RULES[_key] = (   # the same topics as _distinct_topics_count: answered in, not only opened (2026-11-13)
         '''SELECT user_id, MAX(created_at) AS at FROM user_activity_events
-           WHERE event_type IN (?, ?, ?, ?) AND json_extract(payload_json, '$.topic') IS NOT NULL
+           WHERE event_type IN (?, ?, ?) AND json_extract(payload_json, '$.topic') IS NOT NULL
            GROUP BY user_id
            HAVING COUNT(DISTINCT json_extract(payload_json, '$.level') || '|' || json_extract(payload_json, '$.subject') || '|' ||
                                  json_extract(payload_json, '$.topic')) >= ?''',
-        (ACTIVITY_TOPIC_OPENED, ACTIVITY_QUESTION_GENERATED, ACTIVITY_QUIZ_COMPLETED, ACTIVITY_LESSON_STEP_COMPLETED, _need),
+        (ACTIVITY_MCQ_ANSWERED, ACTIVITY_QUIZ_COMPLETED, ACTIVITY_LESSON_STEP_COMPLETED, _need),
     )
 PHASE2_BACKFILL_KEYS = (
     MILESTONE_QUIZZES_5, MILESTONE_QUIZZES_25, MILESTONE_PERFECT_5, MILESTONE_PERFECT_20, MILESTONE_RETRY_FIXED,
@@ -813,9 +814,15 @@ def _in_a_class(conn, user_id):
     return row is not None
 
 
+# 2026-11-13 (David): the topics a pupil has answered a question in. A practice question checked (typed or multiple choice, both log
+# mcq_answered), a finished quiz, a lesson step done. Opening a topic or being given a new question does not count: Curious had come
+# on switching to a third topic, before any answer there.
+TOPIC_ANSWER_EVENTS = (ACTIVITY_MCQ_ANSWERED, ACTIVITY_QUIZ_COMPLETED, ACTIVITY_LESSON_STEP_COMPLETED)
+
+
 def _distinct_topics_count(conn, user_id):
     row = conn.execute(
-        '''
+        f'''
         SELECT COUNT(DISTINCT
             json_extract(payload_json, '$.level') || '|' ||
             json_extract(payload_json, '$.subject') || '|' ||
@@ -823,16 +830,10 @@ def _distinct_topics_count(conn, user_id):
         ) AS n
         FROM user_activity_events
         WHERE user_id = ?
-          AND event_type IN (?, ?, ?, ?)
+          AND event_type IN ({','.join('?' * len(TOPIC_ANSWER_EVENTS))})
           AND json_extract(payload_json, '$.topic') IS NOT NULL
         ''',
-        (
-            user_id,
-            ACTIVITY_TOPIC_OPENED,
-            ACTIVITY_QUESTION_GENERATED,
-            ACTIVITY_QUIZ_COMPLETED,
-            ACTIVITY_LESSON_STEP_COMPLETED,
-        ),
+        (user_id, *TOPIC_ANSWER_EVENTS),
     ).fetchone()
     return row['n'] if row else 0
 
@@ -1263,17 +1264,10 @@ def get_weekly_recap(conn, user_id, days=7):
         FROM user_activity_events
         WHERE user_id = ?
           AND created_at >= ?
-          AND event_type IN (?, ?, ?, ?)
+          AND event_type IN (?, ?, ?)
           AND json_extract(payload_json, '$.topic') IS NOT NULL
         ''',
-        (
-            user_id,
-            start_day,
-            ACTIVITY_TOPIC_OPENED,
-            ACTIVITY_QUESTION_GENERATED,
-            ACTIVITY_QUIZ_COMPLETED,
-            ACTIVITY_LESSON_STEP_COMPLETED,
-        ),
+        (user_id, start_day, *TOPIC_ANSWER_EVENTS),   # topics answered in this week, as the Explorer badges count them
     ).fetchone()['n']
 
     best_quiz = conn.execute(

@@ -143,3 +143,15 @@ body.pb-stage-open .study-buddy { visibility: hidden; }
   [data-layout=choose] .pb-st-prop--planet { width: 38vw; }
   [data-layout=choose] .pb-st-panel { max-height: none; bottom: 0; }
 }
+
+/* A phone on its side (E10 Phase 9 review, plan 11.16): the picture on the left, the text panel on the right, so the medal, the seal
+   or the scene is never hidden behind the panel; the sounds button moves to the picture's corner */
+@media (orientation: landscape) and (max-height: 500px) {
+  .pb-stage:not([data-layout=choose]) { --st-panel: 0px; }
+  .pb-stage:not([data-layout=choose]) .pb-st-set { right: 48%; }
+  .pb-stage:not([data-layout=choose]) .pb-st-panel { left: auto; right: 12px; top: 12px; bottom: 12px; width: 46%; min-height: 0; margin: 0; overflow-y: auto; border-radius: var(--radius-lg); padding: var(--space-4); }
+  .pb-stage:not([data-layout=choose]) .pb-st-actor { left: 24%; width: min(150px, 36vh); margin-left: max(-75px, -18vh); bottom: 5%; }
+  .pb-stage:not([data-layout=choose]) .bd-box, .pb-stage:not([data-layout=choose]) .mo-box { left: 64%; top: 6%; width: min(30vw, 56vh); }
+  .pb-stage:not([data-layout=choose]) .pb-st-mute { right: auto; left: calc(12px + var(--safe-left, 0px)); }
+}
+

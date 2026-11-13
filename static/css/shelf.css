@@ -4,7 +4,7 @@
 .shelf-next-medal { flex: none; padding: 0; border: 0; background: none; cursor: pointer; }
 .shelf-next-body { flex: 1; min-width: 0; }
 .shelf-next-body p { margin: 0 0 var(--space-1); }
-.shelf-next-kicker { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--brand-600); }
+.shelf-next-kicker { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--brand-text); }
 .shelf-next-title .badge-next-link { font-size: 1.05rem; }
 .shelf-next-line { color: var(--text); }
 .shelf-next-go { margin-top: var(--space-2); }
@@ -30,7 +30,7 @@
 .shelf-meter::-moz-progress-bar { background: var(--brand-500); border-radius: 999px; }
 .shelf-topic-head { margin: var(--space-3) 0 0; font-size: .78rem; font-weight: 700; color: var(--text-muted); }
 .shelf-more { margin: 0 0 var(--space-5); }
-.shelf-more > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 700; color: var(--brand-600); }
+.shelf-more > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 700; color: var(--brand-text); }
 .shelf-more[open] > summary { margin-bottom: var(--space-3); }
 .badge-sheet-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 @media (max-width: 480px) {

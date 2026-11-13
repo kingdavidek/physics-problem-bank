@@ -216,7 +216,7 @@ textarea:focus {
     display: inline-block;
     margin-top: 6px;
     font-weight: 700;
-    color: var(--brand-600);
+    color: var(--brand-text);
     text-decoration: none;
 }
 .app-toast-action:hover,

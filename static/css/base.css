@@ -25,6 +25,8 @@ body {
 }
 
 /* ---- LAYOUT ---- */
+[hidden] { display: none !important; }   /* E10 Phase 9 review: .btn and other display rules had shown hidden buttons */
+
 .site-wrapper {
     max-width: var(--shell-max);
     margin: 0 auto;

@@ -23,28 +23,28 @@
 } | tojson }}</script>
 {# E10 phase 6: the app tour and the spotlights load only when one is due (guide.js loadTour); these are its files. inClass: the pupil is in a class, so the tour has a Classes stop. #}
 <script type="application/json" id="pb-tour-assets">{{ {
-    'js': url_for('static', filename='js/zorp-tour.js') ~ '?v=4',
+    'js': url_for('static', filename='js/zorp-tour.js') ~ '?v=5',
     'css': url_for('static', filename='css/tour.css') ~ '?v=2',
     'inClass': tour_in_class,
 } | tojson }}</script>
 {# E10: the full-screen stage loads only when one plays (guide.js loadStage); these are its files, not loaded here. #}
 <script type="application/json" id="pb-stage-assets">{{ {
     'js': url_for('static', filename='js/zorp-stage.js') ~ '?v=3',
-    'css': url_for('static', filename='css/stage.css') ~ '?v=2',
+    'css': url_for('static', filename='css/stage.css') ~ '?v=3',
     'catalog': url_for('static', filename='js/stage-catalog.js') ~ '?v=1',
     'props': url_for('static', filename='images/stage-props.svg') ~ '?v=1',
 } | tojson }}</script>
 {# E10 phase 4: the badge stage (badges and streak moments, full screen) loads only when one plays (guide.js loadBadgeStage); these are its files. #}
 <script type="application/json" id="pb-badge-assets">{{ {
     'js': url_for('static', filename='js/badge-stage.js') ~ '?v=7',
-    'css': url_for('static', filename='css/badge-stage.css') ~ '?v=2',
+    'css': url_for('static', filename='css/badge-stage.css') ~ '?v=3',
     'props': url_for('static', filename='images/badge-props.svg') ~ '?v=2',
     'profile': url_for('profile') ~ '#milestones',
 } | tojson }}</script>
 
 {# E10 phase 5: moments (level-up, perfect quiz and finished lesson on the stage; toasts; micro reactions) load only when one is due (guide.js loadMoments); these are its files. The props are the badge stage's. #}
 <script type="application/json" id="pb-moment-assets">{{ {
-    'js': url_for('static', filename='js/moments.js') ~ '?v=7',
+    'js': url_for('static', filename='js/moments.js') ~ '?v=8',
     'css': url_for('static', filename='css/moments.css') ~ '?v=3',
     'props': url_for('static', filename='images/badge-props.svg') ~ '?v=2',
     'profile': url_for('profile'),

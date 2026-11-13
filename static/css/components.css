@@ -169,6 +169,7 @@ a.hero-pill.is-active,
     content-visibility: auto;
     contain-intrinsic-size: auto 280px;
 }
+.section-panel-header h2 { margin: 0; font: inherit; color: inherit; letter-spacing: inherit; }   /* a real heading where h3s follow (E10 Phase 9 review) */
 .section-panel-header {
     background: transparent;
     padding: var(--space-5) var(--space-5) var(--space-2);
@@ -186,7 +187,7 @@ a.hero-pill.is-active,
 .profile-section-link {
     font-size: 0.8125rem;
     font-weight: 600;
-    color: var(--primary);
+    color: var(--brand-text);
     text-decoration: none;
 }
 .profile-section-link:hover { text-decoration: underline; }
@@ -197,7 +198,7 @@ a.hero-pill.is-active,
     margin: 0;
     font: inherit;
     font-weight: 600;
-    color: var(--primary);
+    color: var(--brand-text);
     text-decoration: none;
     cursor: pointer;
 }
@@ -513,7 +514,7 @@ html.pwa-standalone .site-wrapper {
 .profile-stat-card--correct  { --stat-accent: var(--correct-500); }
 .profile-stat-card--xp       { --stat-accent: var(--xp-500); }
 .profile-stat-card--social   { --stat-accent: var(--brand-500); }
-.profile-stat-card--xp strong { color: var(--xp-600); }
+.profile-stat-card--xp strong { color: var(--on-xp); }
 
 /* ---- XP CHIP (profile + home) ---- */
 .profile-xp-chip {

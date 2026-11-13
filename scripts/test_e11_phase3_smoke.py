@@ -210,7 +210,7 @@ def test_profile_page():
     assert set(gam.MILESTONE_CATALOG) <= set(data) and data['first_quiz']['earned'] and not data['streak_7']['earned']
     assert set(data['first_quiz']) == {'title', 'blurb', 'how', 'family', 'emoji', 'tier', 'next_title', 'next_how', 'earned', 'date'}
     assert 'id="badge-sheet-replay" hidden>Watch again</button>' in html
-    assert "css/shelf.css') }}" not in html and '/static/css/shelf.css?v=1' in html and '/static/js/badge-sheet.js?v=2' in html
+    assert "css/shelf.css') }}" not in html and '/static/css/shelf.css?v=2' in html and '/static/js/badge-sheet.js?v=2' in html
     # a wardrobe "Earn ... to unlock" link names a badge the sheet can open even when it has no button on the shelf
     for key in re.findall(r'data-badge-open="([^"]+)"', html):
         assert key in data, key

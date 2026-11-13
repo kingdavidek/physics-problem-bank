@@ -100,8 +100,9 @@ def test_cue_gate_harness():
 
 
 def test_force_and_blips_only_from_styleguide():
-    """3.4.7: only the dev pages may pass force or arm the tap listeners (styleguide.js; since 2026-11-13 also the celebrations
-    gallery, which auditions each celebration sound), and only styleguide.js turns the D7 blips on; D7 blips are not wired to pupils."""
+    """3.4.7: only the dev pages may arm the tap listeners (styleguide.js; since 2026-11-13 also the celebrations gallery, which
+    auditions each celebration sound), and only styleguide.js turns the D7 blips on; D7 blips are not wired to pupils. force is
+    passed by those two and, since 2026-11-13, by settings-sound.js: one sample when the pupil taps On in Settings."""
     hits = {'force': [], 'blips': [], 'arm': []}
     for path in sorted(JS_DIR.glob('*.js')) + sorted(TEMPLATES.rglob('*.html')):
         text = _read(path)
@@ -112,7 +113,10 @@ def test_force_and_blips_only_from_styleguide():
         if re.search(r'pbSound\.arm\(|\bs\.arm\(', text):
             hits['arm'].append(path.name)
     dev = ['celebrations-gallery.js', 'styleguide.js']
-    assert hits == {'force': dev, 'blips': ['styleguide.js'], 'arm': dev}, hits
+    assert hits == {'force': ['celebrations-gallery.js', 'settings-sound.js', 'styleguide.js'], 'blips': ['styleguide.js'], 'arm': dev}, hits
+    ss = _read(JS_DIR / 'settings-sound.js')
+    one = "t.value === 'celebrations' && t.checked) window.pbSound.play('stamp-gold', { force: true });"
+    assert ss.count('force: true') == 1 and one in ss, "settings: one sample, only on the pupil's own tap on On"
     talk = _read(JS_DIR / 'zorp-talk.js')
     assert 'o.blips' in talk and 'force: o.force' in talk and 'force: true' not in talk, 'talk passes the styleguide options through, never its own'
     for name in ('guide.js', 'study-buddy.js', 'welcome.js', 'celebrate.js', 'zorp-poses.js'):
